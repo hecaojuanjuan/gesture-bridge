@@ -1,0 +1,54 @@
+---
+# =============================================================================
+# UNNC AIM team canonical C++ formatting rules (.clang-format)
+# -----------------------------------------------------------------------------
+# Source: the .clang-format actually used across the team's ros2_hik_camera
+#         packages (Google base + team customizations).
+# Usage:
+#   1. Copy this file to YOUR repo root as .clang-format (note the leading dot).
+#   2. Install clang-format (>= 14 recommended).
+#        Ubuntu:  apt install clang-format
+#        macOS:   brew install clang-format
+#        VSCode:  install the xaver.clang-format extension and enable
+#                 "[cpp]": { "editor.formatOnSave": true }
+#   3. Format all sources:
+#        clang-format -i $(git ls-files '*.cpp' '*.cc' '*.hpp' '*.h')
+#   4. Check only, no changes (CI / gate):
+#        clang-format --dry-run -Werror $(git ls-files '*.cpp' '*.hpp' '*.h')
+# Note: clang-format only handles layout (indentation, line wrapping, braces,
+#       alignment, column limit). It does NOT check naming. For naming rules
+#       see .github/profile/standard.cpp.md, or use assets/.clang-tidy.
+# =============================================================================
+Language: Cpp
+BasedOnStyle: Google
+Standard: c++17
+
+# --- Indentation --------------------------------------------------------------
+IndentWidth: 2                       # 2-space indent (Google base; differs from the 4-space shown in standard.cpp.md examples — this file wins)
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 100                     # max 100 chars per line
+ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 0
+
+# --- Braces -------------------------------------------------------------------
+# Custom: opening brace of class / function / namespace / struct goes on its own
+# line (Allman style).
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+
+# Access modifiers (public/private/protected) flush with the class body
+AccessModifierOffset: -2
+
+# --- Pointers / references ----------------------------------------------------
+# Pointer/reference symbol in the middle: int * a, const int & b (not derived)
+DerivePointerAlignment: false
+PointerAlignment: Middle
+
+# --- Other --------------------------------------------------------------------
+AlignAfterOpenBracket: AlwaysBreak   # always break after an open bracket
+ReflowComments: false                # do not reflow comment contents

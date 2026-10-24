@@ -218,3 +218,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# HeadVoice local dependencies and outputs
+/vendor/
+/.tools/
+/.work/
+/host-install.log
+/python-env-install.log
+/headvoice/audio/*.wav
+/artifacts/*.log
+/artifacts/*.bin
+/artifacts/*.elf
+/artifacts/*.map

@@ -1,0 +1,159 @@
+--- a/apps/main/qm_config/qm_config.h
++++ b/apps/main/qm_config/qm_config.h
+@@ -180,3 +180,5 @@
+ 
+ /* 0 关，1 打方向和命令，2 再打整帧十六进制 */
+ #define VB701N_UART_TRACE 0
++
++#define CONFIG_HEADVOICE_SUPPORT 1
+--- a/apps/main/main.c
++++ b/apps/main/main.c
+@@ -1,4 +1,5 @@
+ #include "qm.h"
++#include "headvoice_app.h"
+ #include "qm_work.h"
+ #include "bsp_io.h"
+ /* #include "bsp_mpu6050.h" */
+@@ -44,7 +45,9 @@
+ void qm_application_start(void)
+ {
+ #if defined(CONFIG_QM_POSE_SUPPORT) && CONFIG_QM_POSE_SUPPORT
++#if !defined(CONFIG_HEADVOICE_SUPPORT) || !CONFIG_HEADVOICE_SUPPORT
+     example_pose_run();
++#endif
+ #endif
+     // if (bsp_servo_init() != QM_EOK) {
+     //     QM_LOGE("main", "servo init failed");
+@@ -105,6 +108,12 @@
+     }
+ #endif
+ 
++#if CONFIG_HEADVOICE_SUPPORT
++    if (headvoice_start() != ESP_OK) {
++        QM_LOGE("main", "HeadVoice unavailable; see diagnostics");
++    }
++#endif
++
+ #if defined(CONFIG_QM_POMODORO_SUPPORT) && CONFIG_QM_POMODORO_SUPPORT
+     pomodoro_init();
+ #endif
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -315,3 +315,5 @@
+         "${AGORA_SDK}/libs/libagora-cjson.a"
+     )
+ endif()
++
++include("C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/integration.cmake")
+--- a/apps/main/peripheral/bsp_camera.h
++++ b/apps/main/peripheral/bsp_camera.h
+@@ -7,6 +7,10 @@
+ 
+ #include "esp_err.h"
+ #include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++typedef void (*bsp_camera_frame_fn)(const uint8_t *, size_t, uint32_t, uint32_t, uint32_t, uint64_t);
++esp_err_t bsp_camera_set_frame_callback(bsp_camera_frame_fn callback);
+ 
+ /*
+  * BF3901 模组丝印是 DVP 名，驱动按 1-bit SPI 收：
+--- a/apps/main/peripheral/bsp_camera.c
++++ b/apps/main/peripheral/bsp_camera.c
+@@ -1,4 +1,13 @@
+ #include "bsp_camera.h"
++#include "esp_timer.h"
++static bsp_camera_frame_fn s_frame_callback;
++esp_err_t bsp_camera_set_frame_callback(bsp_camera_frame_fn callback)
++{
++  if (s_frame_callback) return ESP_ERR_INVALID_STATE;
++  s_frame_callback = callback;
++  return ESP_OK;
++}
++
+ 
+ #include "esp_cam_ctlr_spi.h"
+ #include "esp_cam_sensor_xclk.h"
+@@ -232,6 +241,12 @@
+             continue;
+         }
+ 
++        /* MMAP bytes are borrowed until QBUF below. */
++        if (s_frame_callback) {
++            s_frame_callback(buf.index < CAM_BUF_NUM ? s_cam.buffer[buf.index] : NULL,
++                buf.bytesused, s_cam.width, s_cam.height, s_cam.pixel_format,
++                (uint64_t)(esp_timer_get_time() / 1000));
++        }
+         frames++;
+         if (buf.bytesused == expect) {
+             good++;
+--- a/apps/main/pose/yolo11_pose.h
++++ b/apps/main/pose/yolo11_pose.h
+@@ -3,6 +3,7 @@
+ 
+ #include "esp_err.h"
+ #include <stddef.h>
++#include <stdbool.h>
+ #include <stdint.h>
+ 
+ #ifdef __cplusplus
+@@ -27,6 +28,9 @@
+ typedef struct {
+     yolo11_pose_frame_status_t status;
+     yolo11_pose_err_type_t err_type;
++    unsigned person_count;
++    float eye_x1, eye_y1, eye_x2, eye_y2;
++    bool head_valid;
+     float yaw;
+     float roll;
+     float shoulder_diff;
+--- a/apps/main/pose/yolo11_pose.cpp
++++ b/apps/main/pose/yolo11_pose.cpp
+@@ -499,6 +499,23 @@
+         return ESP_OK;
+     }
+ 
++    if (out) {
++        out->person_count = pose_results.size();
++        if (pose_results.size() == 1) {
++            const auto &r = pose_results.front();
++            const auto &k = r.keypoint;
++            if (k.size() >= 10 && r.score >= 0.5f) {
++                out->eye_x1 = k[2]; out->eye_y1 = k[3];
++                out->eye_x2 = k[4]; out->eye_y2 = k[5];
++                out->head_valid = kpt_valid(k[0], k[1]) &&
++                    kpt_valid(k[2], k[3]) && kpt_valid(k[4], k[5]) &&
++                    k[0] > 0 && k[1] > 0 && k[0] < (int)img.width && k[1] < (int)img.height &&
++                    k[2] > 0 && k[3] > 0 && k[4] > 0 && k[5] > 0 &&
++                    k[2] < (int)img.width && k[4] < (int)img.width &&
++                    k[3] < (int)img.height && k[5] < (int)img.height;
++            }
++        }
++    }
+     const auto &res = pose_results.front();
+     ESP_LOGI(TAG,
+              "%s [score: %f, x1: %d, y1: %d, x2: %d, y2: %d]",
+@@ -840,6 +857,23 @@
+         return ESP_OK;              /* img.data 是常驻缓冲，不能释放 */
+     }
+ 
++    if (out) {
++        out->person_count = pose_results.size();
++        if (pose_results.size() == 1) {
++            const auto &r = pose_results.front();
++            const auto &k = r.keypoint;
++            if (k.size() >= 10 && r.score >= 0.5f) {
++                out->eye_x1 = k[2]; out->eye_y1 = k[3];
++                out->eye_x2 = k[4]; out->eye_y2 = k[5];
++                out->head_valid = kpt_valid(k[0], k[1]) &&
++                    kpt_valid(k[2], k[3]) && kpt_valid(k[4], k[5]) &&
++                    k[0] > 0 && k[1] > 0 && k[0] < (int)img.width && k[1] < (int)img.height &&
++                    k[2] > 0 && k[3] > 0 && k[4] > 0 && k[5] > 0 &&
++                    k[2] < (int)img.width && k[4] < (int)img.width &&
++                    k[3] < (int)img.height && k[5] < (int)img.height;
++            }
++        }
++    }
+     const auto &res = pose_results.front();
+     ESP_LOGI(TAG,
+              "%s [score: %f, x1: %d, y1: %d, x2: %d, y2: %d]",

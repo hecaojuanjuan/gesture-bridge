@@ -1,0 +1,36 @@
+{
+  "source": "Windows SAPI Microsoft Huihui Desktop, rate 0",
+  "format": "PCM S16LE 16000 Hz mono",
+  "listening_verified": false,
+  "note": "Synthesized exact text offline; human listening and board playback pending",
+  "assets": [
+    {
+      "code": "AA",
+      "text": "我想喝水。",
+      "bytes": 59360,
+      "duration_ms": 1855,
+      "sha256": "f7dcb00b5ab890bf32fa74dc5b492d200f1777b8b57b392eef404b94969919f5"
+    },
+    {
+      "code": "AB",
+      "text": "我想休息一下。",
+      "bytes": 71840,
+      "duration_ms": 2245,
+      "sha256": "1c06b3758d02c21f2acfe655cb8db0167d87ce6430f3a8b2635b39398377f7a4"
+    },
+    {
+      "code": "BA",
+      "text": "请过来协助我。",
+      "bytes": 71360,
+      "duration_ms": 2230,
+      "sha256": "54db3c033978e34354735ab2428ec2420a5e8c02a3f49ef0e88ef4adfb34306c"
+    },
+    {
+      "code": "BB",
+      "text": "我想自己来。",
+      "bytes": 65920,
+      "duration_ms": 2060,
+      "sha256": "a507dcc63a529d24d5c210cda35936a22627a16b5f730dabb4fcfe89076858df"
+    }
+  ]
+}

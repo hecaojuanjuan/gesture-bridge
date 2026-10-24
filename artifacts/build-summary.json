@@ -1,0 +1,67 @@
+{
+  "sdk_commit": "89020f5e04bf777ae1672b8f3d320bc6e0ef3e0c",
+  "builds": {
+    "baseline": {
+      "version": "89020f5e04bf-baseline",
+      "target": "esp32s3",
+      "files": {
+        "vb701n.bin": {
+          "bytes": 3116912,
+          "sha256": "fbe61d294916200bf1ca0a1cd6242e51cea46d69ec3d38deda85bd02083f3320"
+        },
+        "bootloader/bootloader.bin": {
+          "bytes": 21312,
+          "sha256": "e7de5f3d8b3de778ebabb1583e56717aefb4fb657eb501198505325f420ca589"
+        },
+        "partition_table/partition-table.bin": {
+          "bytes": 3072,
+          "sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9"
+        },
+        "espdl_models/coco_pose.espdl": {
+          "bytes": 3103472,
+          "sha256": "8cf94811d0541e0780d62f51dbe5da37dc0604f8a7a94843ac190f36c6941d5f"
+        },
+        "flash_args": {
+          "bytes": 247,
+          "sha256": "b9b35d89ff814c9ba2bc642821aa49d3304dfe3120c064009f68a6742b9a31c2"
+        }
+      },
+      "headvoice_options": {},
+      "hardware_verified": false
+    },
+    "headvoice": {
+      "version": "89020f5e04bf-headvoice",
+      "target": "esp32s3",
+      "files": {
+        "vb701n.bin": {
+          "bytes": 3283728,
+          "sha256": "2e42a1b346f4816b121c86d853bb723759abfa993ef5e6890cf9fc3d3baf0413"
+        },
+        "bootloader/bootloader.bin": {
+          "bytes": 21312,
+          "sha256": "a2e7b9cd54585ffeb4f4001978bb844853a55bfa9feab830c6e5be1cd3ea23b4"
+        },
+        "partition_table/partition-table.bin": {
+          "bytes": 3072,
+          "sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9"
+        },
+        "espdl_models/coco_pose.espdl": {
+          "bytes": 3103472,
+          "sha256": "8cf94811d0541e0780d62f51dbe5da37dc0604f8a7a94843ac190f36c6941d5f"
+        },
+        "flash_args": {
+          "bytes": 247,
+          "sha256": "b9b35d89ff814c9ba2bc642821aa49d3304dfe3120c064009f68a6742b9a31c2"
+        }
+      },
+      "headvoice_options": {
+        "HEADVOICE_INVERT_TILT": "0",
+        "HEADVOICE_ROTATE_CW90": "0",
+        "HEADVOICE_STAGE": "3"
+      },
+      "hardware_verified": false
+    }
+  },
+  "device_metrics": null,
+  "note": "Successful local cross-compilation; no board connected"
+}
