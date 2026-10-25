@@ -1,0 +1,51 @@
+{
+  "observed_at": "2026-10-25T18:07:40.549419+08:00",
+  "port": "COM3",
+  "pid": 11785,
+  "baseline_flashed": true,
+  "flash_hash_verified": true,
+  "local_audio_heard_after_rewire": true,
+  "new_pid_observed": {
+    "new_pid_dynreg": true,
+    "cloud_connected": true,
+    "wake_detected": true,
+    "rtc_connected": true,
+    "remote_agent_joined": true,
+    "asr_received": true,
+    "tts_received": true
+  },
+  "camera_connected": false,
+  "camera_and_pose_verified": false,
+  "device_pose_metrics": null,
+  "builds": {
+    "baseline": {
+      "build_completed": true,
+      "sha256": "a7573af7c69ba0f9e64ec355d948926b4f542af90d8bc438bd1390a796b6fbdb",
+      "bytes": 3118416,
+      "pid": 11785,
+      "provision_cli_included": true,
+      "voice_probe_included": true
+    },
+    "headvoice": {
+      "build_completed": true,
+      "sha256": "ea94a1edc5a6f42f7fd9690674f64bfefb1405ed0255402df76596d522a7512a",
+      "bytes": 1908608,
+      "pid": 11785,
+      "stage": 1,
+      "provision_cli_included": true,
+      "voice_probe_included": true
+    }
+  },
+  "account_binding_confirmed_by_user": true,
+  "ble_reprovision_verified": true,
+  "provision_cli_status_and_usage_verified": true,
+  "new_pid_audible_voice_reply_verified": true,
+  "latest_runtime_log": "artifacts/voice-input-probe.jsonl",
+  "voice_probe": {
+    "raw_audio_retained": false,
+    "mic_bytes_per_second_median": 31989,
+    "rtc_packets_per_second_median": 50.0,
+    "rtc_errors_observed": 0,
+    "downlink_busy_warnings": 135
+  }
+}

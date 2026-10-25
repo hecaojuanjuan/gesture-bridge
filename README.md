@@ -16,6 +16,7 @@ SPI BF3901 摄像头 → 连续 YOLO11n-pose → 有符号眼线倾斜 → 两�
 在本项目根目录打开 PowerShell。本机系统 `python` 是 Store 别名，使用已验证的 Python：
 
 ```powershell
+Set-Location -LiteralPath 'C:\Users\jiawa\Desktop\gesture-bridge'
 $py = 'C:\Users\jiawa\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
 $env:PYTHONUTF8 = '1'
 # 依赖已安装；新环境首次执行这一行。
@@ -35,6 +36,8 @@ $env:PYTHONUTF8 = '1'
 
 `baseline` 和 `headvoice` 使用独立应用/构建目录。相应固件分别在 `.work/baseline/apps/build/` 和 `.work/headvoice/apps/build/`，应用文件名均为 `vb701n.bin`。构建脚本启用响应文件，避免 Windows 长路径超过命令行长度限制。构建时核对官方 HEAD、固定音频哈希和文本；官方源码始终位于 `vendor/official-sdk`，不直接修改。`artifacts/integration.patch` 记录应用接入差异。
 
+产品身份可通过本机 `.local/cloud.json` 设置，内容为 `pid`（正整数）和 `secret`（32 位十六进制字符串）。此目录由 Git 忽略；每次构建仅修改 `.work` 下的应用副本，官方源码及公开接入补丁不包含个人密钥。缺少该文件时使用官方默认配置。更换身份后先验证动态注册及 AGENT 绑定，不主动清除已保存的 Wi-Fi。
+
 枚举真实端口后再烧录，COM1 是本机 ACPI UART，并非已识别的开发板：
 
 ```powershell
@@ -50,6 +53,10 @@ $port = 'COMx' # 替换为开发板实际端口
 ```
 
 `flash` 使用官方 `idf.py flash`，烧录分区表、应用、引导程序及姿态模型；首次不要只烧应用。不执行整片擦除。串口日志为 115200 8N1；监视器与采集脚本不要同时占用端口。退出 IDF monitor 使用 `Ctrl+]`。
+
+更换 PID 后，新设备需要重新通过小程序 BLE 配网并绑定账号。串口输入 `hv_provision status` 可核对 PID；输入 `hv_provision restart` 会调用官方复位配网函数，清除已保存的 Wi-Fi、配网环境及本地绑定标记，然后重启进入 BLE 配网。它不会请求删除旧账号设备或整片擦除 Flash。手机在配套小程序内发现蓝牙设备并下发 2.4 GHz Wi-Fi 信息，通常不需要先在系统蓝牙设置里手动配对。
+
+语音链路诊断：`hv_voice stats` 输出自启动以来的麦克风 PCM 包数、字节数、非零采样数、累计峰值、最后一包帧龄，以及真实 Agora 发送成功包数、字节数和失败计数。间隔 5 秒查询并比较增量；发送成功仅表示 SDK 接收了上行数据，不证明云端收到或识别成功。`hv_voice debug` 打开生命周期、上/下行和计数日志，不开启鉴权载荷打印。统计不保存原始录音，也不改变动作识别或正式短句播放规则。
 
 ## 上板操作顺序
 

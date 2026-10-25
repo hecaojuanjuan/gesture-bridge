@@ -1,6 +1,8 @@
 """Prepare an isolated app from the pinned SDK; never edit vendor."""
 import argparse
 import difflib
+import json
+import re
 import shutil
 import subprocess
 import sys
@@ -15,6 +17,37 @@ def replace(text, old, new, count=1):
     if text.count(old) != count:
         raise RuntimeError(f"Upstream seam changed: {old[:90]!r}")
     return text.replace(old, new)
+
+
+def apply_cloud_identity(app, config_path=ROOT / ".local/cloud.json"):
+    """Override only the copied app; keep credentials out of shared patches."""
+    if not config_path.exists():
+        return None
+    try:
+        identity = json.loads(config_path.read_text(encoding="utf-8"))
+    except (ValueError, UnicodeError):
+        raise ValueError("Invalid local cloud configuration") from None
+    if not isinstance(identity, dict):
+        raise ValueError("Local cloud configuration must be an object")
+    pid, secret = identity.get("pid"), identity.get("secret")
+    if type(pid) is not int or not 0 < pid <= 0xffffffff:
+        raise ValueError("Local cloud PID must be a positive uint32")
+    valid_secret = (isinstance(secret, str) and
+                    re.fullmatch(r"[0-9A-Fa-f]{32}", secret))
+    if not valid_secret:
+        raise ValueError(
+            "Local cloud secret must contain 32 hexadecimal digits")
+    path = app / "main/cloud/ljyd_cloud.h"
+    source = path.read_text(encoding="utf-8")
+    for macro, value in (("CONFIG_XJIANG_CLOUD_PID", str(pid)),
+                         ("CONFIG_XJIANG_CLOUD_SECERT", f'"{secret}"')):
+        source, count = re.subn(
+            rf"^#define[ \t]+{macro}[ \t]+[^\r\n]*",
+            f"#define {macro} {value}", source, flags=re.MULTILINE)
+        if count != 1:
+            raise RuntimeError("Cloud identity macro seam changed")
+    path.write_text(source, encoding="utf-8")
+    return pid
 
 
 def prepare(mode):
@@ -40,10 +73,9 @@ def prepare(mode):
     project = project.replace('project(vb701n)',
                               f'set(PROJECT_VER "{version}")\nproject(vb701n)')
     (app / "CMakeLists.txt").write_text(project, encoding="utf-8")
-    if mode == "baseline":
-        return app
-    subprocess.run([sys.executable, str(
-        ROOT / "tools/verify_audio.py")], check=True)
+    pid = apply_cloud_identity(app)
+    if pid is not None:
+        print(f"Using local cloud product PID={pid}")
     patches = []
 
     def edit(name, transform):
@@ -54,6 +86,60 @@ def prepare(mode):
         patches.extend(difflib.unified_diff(
             before.splitlines(True), after.splitlines(True),
             fromfile=f"a/apps/main/{name}", tofile=f"b/apps/main/{name}"))
+
+    firmware = (ROOT / "headvoice/firmware").as_posix()
+    edit("CMakeLists.txt", lambda s: s.rstrip() +
+         '\ntarget_sources(${COMPONENT_LIB} PRIVATE "' + firmware +
+         '/hv_provision_cli.c" "' + firmware +
+         '/hv_voice_probe.c")\ntarget_include_directories('
+         '${COMPONENT_LIB} PRIVATE "' + firmware + '")\n')
+
+    def probe_source(relative, transform):
+        original = SDK / "qumios-dev" / relative
+        before = original.read_text(encoding="utf-8")
+        after = transform(before)
+        target = app / "main/hv_diagnostics" / original.name
+        target.parent.mkdir(exist_ok=True)
+        target.write_text(after, encoding="utf-8")
+        edit("CMakeLists.txt", lambda s: replace(
+            s, '${QDEV}/' + relative, target.as_posix()))
+        patches.extend(difflib.unified_diff(
+            before.splitlines(True), after.splitlines(True),
+            fromfile=f"a/qumios-dev/{relative}",
+            tofile=f"b/apps/main/hv_diagnostics/{original.name}"))
+
+    probe_source("platform/mcu/esp32s3/qm_audio/"
+                 "qm_audio_device_vb701n.c", lambda s: replace(
+                     replace(s, '#include "qm.h"',
+                             '#include "qm.h"\n#include "hv_voice_probe.h"'),
+                     '    if (!g_mic_logged) {',
+                     '    hv_voice_probe_mic(data, len);\n'
+                     '    if (!g_mic_logged) {'))
+    probe_source("components/qm_agent/src/transport/"
+                 "qm_agent_transport_agora.c", lambda s: replace(
+                     replace(s, '#include "qm_agent_internal.h"',
+                             '#include "qm_agent_internal.h"\n'
+                             '#include "hv_voice_probe.h"'),
+                     '    return agora_rtc_send_audio_data('
+                     'ctx->conn_id, data, len, &info);',
+                     '    int result = agora_rtc_send_audio_data('
+                     'ctx->conn_id, data, len, &info);\n'
+                     '    hv_voice_probe_tx(len, result);\n'
+                     '    return result;'))
+    edit("main.c", lambda s: replace(
+        replace(s, '#include "ljyd_provision.h"',
+                '#include "ljyd_provision.h"\n'
+                '#include "hv_provision_cli.h"'),
+        '    if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {',
+        '    hv_provision_cli_init();\n'
+        '    if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {'))
+    (ROOT / "artifacts").mkdir(exist_ok=True)
+    if mode == "baseline":
+        (ROOT / "artifacts/baseline-integration.patch").write_text(
+            "".join(patches), encoding="utf-8")
+        return app
+    subprocess.run([sys.executable, str(
+        ROOT / "tools/verify_audio.py")], check=True)
 
     edit("qm_config/qm_config.h", lambda s: s +
          "\n#define CONFIG_HEADVOICE_SUPPORT 1\n")

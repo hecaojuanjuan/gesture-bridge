@@ -223,10 +223,12 @@ __marimo__/
 /vendor/
 /.tools/
 /.work/
+/.local/
 /host-install.log
 /python-env-install.log
 /headvoice/audio/*.wav
 /artifacts/*.log
+/artifacts/*.jsonl
 /artifacts/*.bin
 /artifacts/*.elf
 /artifacts/*.map

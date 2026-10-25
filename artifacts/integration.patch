@@ -1,3 +1,88 @@
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -315,3 +315,5 @@
+         "${AGORA_SDK}/libs/libagora-cjson.a"
+     )
+ endif()
++target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
++target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -84,7 +84,7 @@
+     "${QDEV}/utility/sprintf/qm_sprintf.c"
+ 
+     "${QDEV}/drivers/VB701N/src/vb701n.c"
+-    "${QDEV}/platform/mcu/esp32s3/qm_audio/qm_audio_device_vb701n.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_audio_device_vb701n.c"
+     "${QDEV}/components/qm_audio/src/audio/qm_audio.c"
+     "${QDEV}/components/qm_audio/src/capture/qm_audio_capture.c"
+     "${QDEV}/components/qm_audio/src/control/qm_audio_control.c"
+--- a/qumios-dev/platform/mcu/esp32s3/qm_audio/qm_audio_device_vb701n.c
++++ b/apps/main/hv_diagnostics/qm_audio_device_vb701n.c
+@@ -1,4 +1,5 @@
+ #include "qm.h"
++#include "hv_voice_probe.h"
+ #include "adapter/qm_audio_device.h"
+ #include "qm_audio.h"
+ #include "qm_gpio.h"
+@@ -251,6 +252,7 @@
+     if ((len & 1u) != 0) {
+         return;
+     }
++    hv_voice_probe_mic(data, len);
+     if (!g_mic_logged) {
+         g_mic_logged = 1;
+         QM_LOGD(LOG_TAG, "mic %u bytes", (unsigned)len);
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -190,7 +190,7 @@
+ 
+ list(APPEND COMPONENT_SRCS
+     "./agent/private/opus.c"
+-    "${QDEV}/components/qm_agent/src/transport/qm_agent_transport_agora.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_agent_transport_agora.c"
+     "${QDEV}/components/qm_agent/src/transport/qm_agent_agora_stream.c"
+ )
+ 
+--- a/qumios-dev/components/qm_agent/src/transport/qm_agent_transport_agora.c
++++ b/apps/main/hv_diagnostics/qm_agent_transport_agora.c
+@@ -10,6 +10,7 @@
+  */
+ 
+ #include "qm_agent_internal.h"
++#include "hv_voice_probe.h"
+ 
+ /* 1: let the SDK create its built-in encoder for the negotiated codec.
+  * 0: disable the built-in encoder. Defaults to 1 when undefined.
+@@ -1003,7 +1004,9 @@
+                 qm_agent_audio_codec_name(qm_agent_audio_data_type(&ctx->input_format)));
+         s_agora_uplink_log_emitted = QM_TRUE;
+     }
+-    return agora_rtc_send_audio_data(ctx->conn_id, data, len, &info);
++    int result = agora_rtc_send_audio_data(ctx->conn_id, data, len, &info);
++    hv_voice_probe_tx(len, result);
++    return result;
+ #else
+     return -QM_ENOSYS;
+ #endif
+--- a/apps/main/main.c
++++ b/apps/main/main.c
+@@ -9,6 +9,7 @@
+ #include "agent_app.h"
+ #include "ljyd_cloud.h"
+ #include "ljyd_provision.h"
++#include "hv_provision_cli.h"
+ #include "iot_control.h"
+ #include "pomodoro.h"
+ #include "ljyd_course.h"
+@@ -94,6 +95,7 @@
+     if (ljyd_provision_init() != QM_EOK) {
+         QM_LOGE("main", "ljyd_provision_init failed");
+     }
++    hv_provision_cli_init();
+     if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {
+         QM_LOGE("main", "agent_app_init failed");
+     }
 --- a/apps/main/qm_config/qm_config.h
 +++ b/apps/main/qm_config/qm_config.h
 @@ -180,3 +180,5 @@
@@ -14,7 +99,7 @@
  #include "qm_work.h"
  #include "bsp_io.h"
  /* #include "bsp_mpu6050.h" */
-@@ -44,7 +45,9 @@
+@@ -45,7 +46,9 @@
  void qm_application_start(void)
  {
  #if defined(CONFIG_QM_POSE_SUPPORT) && CONFIG_QM_POSE_SUPPORT
@@ -24,7 +109,7 @@
  #endif
      // if (bsp_servo_init() != QM_EOK) {
      //     QM_LOGE("main", "servo init failed");
-@@ -105,6 +108,12 @@
+@@ -107,6 +110,12 @@
      }
  #endif
  
@@ -39,10 +124,10 @@
  #endif
 --- a/apps/main/CMakeLists.txt
 +++ b/apps/main/CMakeLists.txt
-@@ -315,3 +315,5 @@
-         "${AGORA_SDK}/libs/libagora-cjson.a"
-     )
+@@ -317,3 +317,5 @@
  endif()
+ target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
+ target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
 +
 +include("C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/integration.cmake")
 --- a/apps/main/peripheral/bsp_camera.h
