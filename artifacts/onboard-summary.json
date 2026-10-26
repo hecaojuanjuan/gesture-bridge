@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-25T18:07:40.549419+08:00",
+  "observed_at": "2026-10-26T20:48:27.796882+08:00",
   "port": "COM3",
   "pid": 11785,
   "baseline_flashed": true,
@@ -14,9 +14,50 @@
     "asr_received": true,
     "tts_received": true
   },
-  "camera_connected": false,
+  "camera_connected": true,
   "camera_and_pose_verified": false,
-  "device_pose_metrics": null,
+  "device_pose_metrics": {
+    "evaluated_pose_samples": 27,
+    "inference_ms": {
+      "count": 27,
+      "minimum": 2551,
+      "median": 2676,
+      "p95": 2802,
+      "maximum": 2845
+    },
+    "frame_age_ms": {
+      "count": 27,
+      "minimum": 2578,
+      "median": 2721,
+      "p95": 2836,
+      "maximum": 2871
+    },
+    "non_inference_age_ms": {
+      "count": 27,
+      "minimum": 14,
+      "median": 53,
+      "p95": 111,
+      "maximum": 129
+    },
+    "median_pose_interval_ms": 2679,
+    "pose_hz_from_median_interval": 0.373,
+    "fresh_pose_samples": 0,
+    "fresh_age_limit_ms": 400,
+    "internal_free_bytes": {
+      "count": 20,
+      "minimum": 72103,
+      "median": 72103.0,
+      "p95": 72103,
+      "maximum": 72103
+    },
+    "psram_free_bytes": {
+      "count": 20,
+      "minimum": 3332792,
+      "median": 3337178.0,
+      "p95": 3341972,
+      "maximum": 3342060
+    }
+  },
   "builds": {
     "baseline": {
       "build_completed": true,
@@ -28,12 +69,16 @@
     },
     "headvoice": {
       "build_completed": true,
-      "sha256": "ea94a1edc5a6f42f7fd9690674f64bfefb1405ed0255402df76596d522a7512a",
-      "bytes": 1908608,
+      "sha256": "785638753fe489906aaf97a9bb042b472e44d97d62e968ba75550879e9c6cd25",
+      "bytes": 3073680,
       "pid": 11785,
-      "stage": 1,
+      "stage": 2,
       "provision_cli_included": true,
-      "voice_probe_included": true
+      "voice_probe_included": true,
+      "rotate_cw90": true,
+      "preview_cli_included": true,
+      "latest_frame_queue_fix_included": true,
+      "nano_format_disabled": true
     }
   },
   "account_binding_confirmed_by_user": true,
@@ -47,5 +92,13 @@
     "rtc_packets_per_second_median": 50.0,
     "rtc_errors_observed": 0,
     "downlink_busy_warnings": 135
-  }
+  },
+  "camera_capture_verified": true,
+  "headvoice_stage1_flashed": true,
+  "latest_camera_test_summary": "artifacts/camera-stage1-retest-summary.json",
+  "latest_camera_runtime_log": "artifacts/camera-stage1-retest-20261026.jsonl",
+  "headvoice_stage2_flashed": true,
+  "camera_pose_pipeline_running": true,
+  "pose_action_readiness_verified": false,
+  "latest_pose_test_summary": "artifacts/pose-accuracy-summary.json"
 }

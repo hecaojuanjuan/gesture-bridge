@@ -16,6 +16,7 @@
 #include "freertos/idf_additions.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
+#include "hv_camera_preview.h"
 #include "hv_core.h"
 #include "hv_settings.h"
 #include "qm_audio.h"
@@ -94,17 +95,18 @@ static void camera_frame(
     epoch(true);
     return;
   }
+  hv_camera_preview_offer(bytes, length, capturedMs);
   if (HV_STAGE == 1) {
     ++s_captured;
     return;
   }
   hv_frame_t * frame = NULL;
-  if (xQueueReceive(s_free, &frame, 0) != pdTRUE) {
-    if (xQueueReceive(s_pending, &frame, 0) != pdTRUE) {
-      ++s_dropped;
-      return;
-    }
+  /* Replace pending data even when a returned free slot is available. */
+  if (xQueueReceive(s_pending, &frame, 0) == pdTRUE) {
     ++s_dropped;
+  } else if (xQueueReceive(s_free, &frame, 0) != pdTRUE) {
+    ++s_dropped;
+    return;
   }
   memcpy(frame->data, bytes, RAW_BYTES);
   frame->capturedMs = capturedMs;
@@ -285,13 +287,13 @@ static void core_task(void * argument)
       valid += fresh;
       printf(
         "HV {\"event\":\"pose\",\"captured_ms\":%llu,\"age_ms\":%llu,"
-        "\"tilt\":%.2f,\"people\":%u,\"valid\":%s,\"infer_ms\":%u}\n",
+        "\"tilt\":%.2f,\"people\":%u,\"tracking_valid\":%s,\"valid\":%s,\"infer_ms\":%u}\n",
         (unsigned long long)result.observation.capturedMs,
         (unsigned long long)(now >= result.observation.capturedMs
                                ? now - result.observation.capturedMs
                                : 0),
-        result.observation.tiltDegrees, result.people, fresh ? "true" : "false",
-        (unsigned)result.inferenceMs);
+        result.observation.tiltDegrees, result.people, result.observation.valid ? "true" : "false",
+        fresh ? "true" : "false", (unsigned)result.inferenceMs);
       if (fresh && HV_STAGE == 3)
         out = hv_observe(&core, result.observation, now);
       else
@@ -383,6 +385,7 @@ esp_err_t headvoice_start(void)
   if (!s_ledReady) ESP_LOGW(TAG, "RGB unavailable");
   ret = bsp_camera_early_init();
   if (ret != ESP_OK) return ret;
+  if (hv_camera_preview_init() != ESP_OK) ESP_LOGW(TAG, "Camera preview unavailable");
   if (
     (HV_STAGE >= 2 && xTaskCreatePinnedToCoreWithCaps(
                         inference_task, "hv_infer", 16 * 1024, NULL, 3, NULL, 1,

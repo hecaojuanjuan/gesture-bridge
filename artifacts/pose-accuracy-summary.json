@@ -1,0 +1,176 @@
+{
+  "observed_at": "2026-10-26T20:48:27.796882+08:00",
+  "firmware": {
+    "stage": 2,
+    "rotate_cw90": true,
+    "invert_tilt": false,
+    "bytes": 3073680,
+    "sha256": "785638753fe489906aaf97a9bb042b472e44d97d62e968ba75550879e9c6cd25",
+    "app_flash_hash_verified": true
+  },
+  "protocol": {
+    "participants": 1,
+    "independent_holds_per_confirmed_phase": 1,
+    "capture_seconds_per_phase": 25,
+    "settling_seconds_excluded": 5,
+    "exclude_in_flight_results": true,
+    "eligible_rule": "received_elapsed_s - age_ms / 1000 >= 5",
+    "ground_truth": "User-confirmed instructed pose, with a single preview before each confirmed hold; no reference angle instrument or frame-by-frame video annotation",
+    "not_a_general_accuracy_estimate": true,
+    "absolute_angle_accuracy_measured": false
+  },
+  "phases": {
+    "neutral-confirmed": {
+      "human_confirmed_before_capture": true,
+      "log": "artifacts/pose-trial-neutral-confirmed-20261026.jsonl",
+      "settled_samples": 7,
+      "single_person_samples": 7,
+      "tracking_valid_samples": 7,
+      "fresh_valid_samples": 0,
+      "tilt_degrees": {
+        "count": 7,
+        "minimum": -16.7,
+        "median": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "tilt_samples_degrees": [
+        0.0,
+        -12.53,
+        -16.7,
+        -14.53,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "positive_tilt_samples": 0,
+      "negative_tilt_samples": 3,
+      "rejected_tracking_samples": 0
+    },
+    "left-confirmed": {
+      "human_confirmed_before_capture": true,
+      "log": "artifacts/pose-trial-left-confirmed-20261026.jsonl",
+      "settled_samples": 7,
+      "single_person_samples": 7,
+      "tracking_valid_samples": 7,
+      "fresh_valid_samples": 0,
+      "tilt_degrees": {
+        "count": 7,
+        "minimum": 16.7,
+        "median": 19.29,
+        "p95": 25.71,
+        "maximum": 25.71
+      },
+      "tilt_samples_degrees": [
+        25.71,
+        19.29,
+        19.29,
+        19.29,
+        19.29,
+        16.7,
+        16.7
+      ],
+      "positive_tilt_samples": 7,
+      "negative_tilt_samples": 0,
+      "rejected_tracking_samples": 0
+    },
+    "right-confirmed": {
+      "human_confirmed_before_capture": true,
+      "log": "artifacts/pose-trial-right-confirmed-20261026.jsonl",
+      "settled_samples": 6,
+      "single_person_samples": 6,
+      "tracking_valid_samples": 6,
+      "fresh_valid_samples": 0,
+      "tilt_degrees": {
+        "count": 6,
+        "minimum": -45.0,
+        "median": -34.99,
+        "p95": -25.71,
+        "maximum": -25.71
+      },
+      "tilt_samples_degrees": [
+        -36.53,
+        -28.44,
+        -34.99,
+        -34.99,
+        -45.0,
+        -25.71
+      ],
+      "positive_tilt_samples": 0,
+      "negative_tilt_samples": 6,
+      "rejected_tracking_samples": 0
+    },
+    "occluded-confirmed": {
+      "human_confirmed_before_capture": true,
+      "log": "artifacts/pose-trial-occluded-confirmed-20261026.jsonl",
+      "settled_samples": 7,
+      "single_person_samples": 0,
+      "tracking_valid_samples": 0,
+      "fresh_valid_samples": 0,
+      "tilt_degrees": null,
+      "tilt_samples_degrees": [],
+      "positive_tilt_samples": 0,
+      "negative_tilt_samples": 0,
+      "rejected_tracking_samples": 7
+    }
+  },
+  "performance": {
+    "evaluated_pose_samples": 27,
+    "inference_ms": {
+      "count": 27,
+      "minimum": 2551,
+      "median": 2676,
+      "p95": 2802,
+      "maximum": 2845
+    },
+    "frame_age_ms": {
+      "count": 27,
+      "minimum": 2578,
+      "median": 2721,
+      "p95": 2836,
+      "maximum": 2871
+    },
+    "non_inference_age_ms": {
+      "count": 27,
+      "minimum": 14,
+      "median": 53,
+      "p95": 111,
+      "maximum": 129
+    },
+    "median_pose_interval_ms": 2679,
+    "pose_hz_from_median_interval": 0.373,
+    "fresh_pose_samples": 0,
+    "fresh_age_limit_ms": 400,
+    "internal_free_bytes": {
+      "count": 20,
+      "minimum": 72103,
+      "median": 72103.0,
+      "p95": 72103,
+      "maximum": 72103
+    },
+    "psram_free_bytes": {
+      "count": 20,
+      "minimum": 3332792,
+      "median": 3337178.0,
+      "p95": 3341972,
+      "maximum": 3342060
+    }
+  },
+  "checks": {
+    "structured_diagnostics_passed": true,
+    "latest_frame_queue_regression_passed": true,
+    "complete_camera_frame_reports": 47,
+    "camera_empty_frames_in_reports": 0,
+    "crash_or_reset_markers": 0,
+    "action_readiness_passed": false,
+    "servo_enabled": false
+  },
+  "excluded_preliminary_trials": [
+    "neutral-1",
+    "neutral-2",
+    "left",
+    "right",
+    "occluded"
+  ],
+  "conclusion": "Static left/right sign separation and occlusion rejection observed. Neutral tilt is unstable, and every evaluated result exceeds the 400 ms age limit; stage 2 is not ready for continuous action input."
+}

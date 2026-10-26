@@ -2,7 +2,7 @@
 
 SPI BF3901 摄像头 → 连续 YOLO11n-pose → 有符号眼线倾斜 → 两动作编码 → 新动作确认 → 设备本地 PCM 播放。候选通过串口显示，不需要云端逐句核对。官方联网、配网、语音入口保留，舵机不初始化。
 
-当前验证范围见 [验证记录](docs/validation.md)。没有连接 ESP32 开发板，不把主机测试或固件编译视为实机通过。
+当前验证范围见 [验证记录](docs/validation.md)。基础联网语音及摄像头 stage 1 连续取帧已有实机记录。stage 2 已测到左右侧倾符号可分及遮挡拒识，但中立读数波动、约 2.68 秒推理耗时尚不满足连续动作输入；动作组合和固定短句播放仍待实测。不把主机测试或固件编译视为实机通过。
 
 | 编码 | 固定短句 |
 | --- | --- |
@@ -53,6 +53,21 @@ $port = 'COMx' # 替换为开发板实际端口
 ```
 
 `flash` 使用官方 `idf.py flash`，烧录分区表、应用、引导程序及姿态模型；首次不要只烧应用。不执行整片擦除。串口日志为 115200 8N1；监视器与采集脚本不要同时占用端口。退出 IDF monitor 使用 `Ctrl+]`。
+
+### 单张摄像头预览
+
+已烧录的 HeadVoice 固件支持 `hv_camera snapshot`。关闭其他串口程序后，在项目根目录执行：
+
+```powershell
+& '.\.tools\espressif\python_env\idf5.4_py3.12_env\Scripts\python.exe' tools/camera_preview.py --port COM3 --output .local/camera-preview.png
+if ($LASTEXITCODE -eq 0) {
+    Invoke-Item -LiteralPath '.local/camera-preview.png'
+}
+```
+
+端口改变时先重新枚举。每次导出一张低分辨率 PNG，覆盖同名文件；脚本检查数据块顺序和整帧校验和后才保存。图像保存在 Git 忽略的 `.local` 中。原始预览为 120×160 RGB565，脚本依据固件旋转配置显示；当前装配启用顺时针 90°，PNG 为 160×120。导出占用串口带宽，性能采样时不要同时拍照。
+
+当前装配构建命令为 `& $py tools/build.py headvoice build --stage 2 --rotate-cw90`。后续构建其他阶段时也要显式传入当前装配所需的旋转选项。HeadVoice 构建副本关闭 nano printf，以正确输出 64 位时间戳和结构化诊断；官方基线配置保持原样。
 
 更换 PID 后，新设备需要重新通过小程序 BLE 配网并绑定账号。串口输入 `hv_provision status` 可核对 PID；输入 `hv_provision restart` 会调用官方复位配网函数，清除已保存的 Wi-Fi、配网环境及本地绑定标记，然后重启进入 BLE 配网。它不会请求删除旧账号设备或整片擦除 Flash。手机在配套小程序内发现蓝牙设备并下发 2.4 GHz Wi-Fi 信息，通常不需要先在系统蓝牙设置里手动配对。
 

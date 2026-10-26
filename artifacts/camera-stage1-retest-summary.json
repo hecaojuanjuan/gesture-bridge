@@ -1,0 +1,30 @@
+{
+  "observed_at": "2026-10-26T19:19:07.856556+08:00",
+  "port": "COM3",
+  "stage": 1,
+  "firmware_sha256": "ea94a1edc5a6f42f7fd9690674f64bfefb1405ed0255402df76596d522a7512a",
+  "reflashed_this_run": false,
+  "user_reported_change": "Corrected two swapped camera wires; exact wire pair not specified",
+  "capture_seconds_requested": 120,
+  "capture_seconds_observed": 119.385,
+  "sensor_detected": "BF3901 PID=0x3901",
+  "format": "240x320 UYVY",
+  "last_reported_counters": {
+    "frames": 2160,
+    "good": 2160,
+    "empty": 0,
+    "last_bytes": 153600
+  },
+  "frame_report_count": 72,
+  "capture_hz_between_first_and_last_report": 18.265,
+  "batch_hz_median": 18.382,
+  "capture_passed": true,
+  "boot_banners": 1,
+  "crash_markers": 0,
+  "cloud_connected_observed": false,
+  "image_content_and_orientation_verified": false,
+  "pose_tested": false,
+  "runtime_log": "artifacts/camera-stage1-retest-20261026.jsonl",
+  "previous_failed_test": "artifacts/camera-stage1-summary.json",
+  "memory_metrics_usable": false
+}

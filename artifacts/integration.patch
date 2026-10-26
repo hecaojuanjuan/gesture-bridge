@@ -83,6 +83,17 @@
      if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {
          QM_LOGE("main", "agent_app_init failed");
      }
+--- a/apps/sdkconfig
++++ b/apps/sdkconfig
+@@ -1950,7 +1950,7 @@
+ # CONFIG_NEWLIB_STDIN_LINE_ENDING_CRLF is not set
+ # CONFIG_NEWLIB_STDIN_LINE_ENDING_LF is not set
+ CONFIG_NEWLIB_STDIN_LINE_ENDING_CR=y
+-CONFIG_NEWLIB_NANO_FORMAT=y
++# CONFIG_NEWLIB_NANO_FORMAT is not set
+ CONFIG_NEWLIB_TIME_SYSCALL_USE_RTC_HRT=y
+ # CONFIG_NEWLIB_TIME_SYSCALL_USE_RTC is not set
+ # CONFIG_NEWLIB_TIME_SYSCALL_USE_HRT is not set
 --- a/apps/main/qm_config/qm_config.h
 +++ b/apps/main/qm_config/qm_config.h
 @@ -180,3 +180,5 @@

@@ -138,6 +138,15 @@ def prepare(mode):
         (ROOT / "artifacts/baseline-integration.patch").write_text(
             "".join(patches), encoding="utf-8")
         return app
+    # Nano printf does not support the 64-bit timestamps in HV JSON logs.
+    config_path = app / "sdkconfig"
+    before = config_path.read_text(encoding="utf-8")
+    after = replace(before, "CONFIG_NEWLIB_NANO_FORMAT=y",
+                    "# CONFIG_NEWLIB_NANO_FORMAT is not set")
+    config_path.write_text(after, encoding="utf-8")
+    patches.extend(difflib.unified_diff(
+        before.splitlines(True), after.splitlines(True),
+        fromfile="a/apps/sdkconfig", tofile="b/apps/sdkconfig"))
     subprocess.run([sys.executable, str(
         ROOT / "tools/verify_audio.py")], check=True)
 

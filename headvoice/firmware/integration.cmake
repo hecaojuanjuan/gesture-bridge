@@ -14,7 +14,8 @@ if(NOT QM_POSE_SUPPORT OR NOT LJYD_PLAYBACK_SUPPORT)
 endif()
 target_sources(${COMPONENT_LIB} PRIVATE
   "${headvoice_root}/core/hv_core.c"
-  "${headvoice_root}/firmware/headvoice_app.c")
+  "${headvoice_root}/firmware/headvoice_app.c"
+  "${headvoice_root}/firmware/hv_camera_preview.c")
 # The upstream test-camera macro stays off: HeadVoice owns stream startup.
 target_sources(${COMPONENT_LIB} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/peripheral/bsp_camera.c")
 target_include_directories(${COMPONENT_LIB} PRIVATE

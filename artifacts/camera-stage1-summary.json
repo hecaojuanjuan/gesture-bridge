@@ -1,0 +1,27 @@
+{
+  "observed_at": "2026-10-26T19:09:31.203933+08:00",
+  "port": "COM3",
+  "stage": 1,
+  "capture_seconds_requested": 120,
+  "capture_seconds_observed": 120.007,
+  "flash_hash_checks_passed": 6,
+  "sensor_detected": "BF3901 PID=0x3901",
+  "format": "240x320 UYVY",
+  "stream_started": true,
+  "last_reported_counters": {
+    "frames": 2190,
+    "good": 0,
+    "empty": 2190,
+    "last_bytes": 0
+  },
+  "capture_passed": false,
+  "boot_banners": 1,
+  "crash_markers": 0,
+  "cloud_connected_observed": false,
+  "malformed_hv_metric_lines": 23,
+  "memory_metrics_usable": false,
+  "root_cause": "Unresolved: image transport or frame parsing; check VSYNC/PCLK/D0 wiring before further probes",
+  "runtime_log": "artifacts/camera-stage1-20261026.jsonl",
+  "flash_log": "artifacts/camera-stage1-flash-20261026.log",
+  "pose_tested": false
+}
