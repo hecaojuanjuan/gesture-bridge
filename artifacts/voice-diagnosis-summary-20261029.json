@@ -1,0 +1,177 @@
+{
+  "observed_at": "2026-10-29T20:04:13.893215+08:00",
+  "port": "COM3",
+  "user_report": "Boot sound or wake prompt, but no dialog response",
+  "headvoice_crash": {
+    "exception": "InstrFetchProhibited",
+    "elf_sha256_prefix": "eb6ae65ea",
+    "local_elf_matches": true,
+    "decoded_stack": [
+      "esp_vApplicationTickHook",
+      "xPortSysTickHandler",
+      "SysTickIsrHandler",
+      "esp_vApplicationIdleHook",
+      "prvIdleTask"
+    ],
+    "root_cause": "Not yet established; invalid callback execution observed in the tick hook"
+  },
+  "comparison": {
+    "voice-diagnosis": {
+      "log": "artifacts/voice-diagnosis-20261029.jsonl",
+      "panic_count": 1,
+      "cloud_connected_observed": true,
+      "wake_events": 0,
+      "remote_agent_joined": false,
+      "asr_final_count": 0,
+      "tts_text_events": 0,
+      "tts_playback_started": 0,
+      "audio_enqueue_failures": 0,
+      "stats_first": {
+        "mic_packets": 183,
+        "mic_bytes": 93696,
+        "mic_nonzero": 29003,
+        "mic_peak": 649,
+        "mic_age_ms": 30,
+        "tx_packets": 0,
+        "tx_bytes": 0,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 5083
+      },
+      "stats_last": {
+        "mic_packets": 921,
+        "mic_bytes": 471552,
+        "mic_nonzero": 103521,
+        "mic_peak": 2843,
+        "mic_age_ms": 6,
+        "tx_packets": 0,
+        "tx_bytes": 0,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 16862
+      }
+    },
+    "voice-baseline-compare": {
+      "log": "artifacts/voice-baseline-compare-20261029.jsonl",
+      "panic_count": 0,
+      "cloud_connected_observed": true,
+      "wake_events": 2,
+      "remote_agent_joined": true,
+      "asr_final_count": 0,
+      "tts_text_events": 0,
+      "tts_playback_started": 0,
+      "audio_enqueue_failures": 0,
+      "stats_first": {
+        "mic_packets": 311,
+        "mic_bytes": 159232,
+        "mic_nonzero": 19535,
+        "mic_peak": 506,
+        "mic_age_ms": 22,
+        "tx_packets": 0,
+        "tx_bytes": 0,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 9124
+      },
+      "stats_last": {
+        "mic_packets": 6688,
+        "mic_bytes": 3424256,
+        "mic_nonzero": 573315,
+        "mic_peak": 16303,
+        "mic_age_ms": 19,
+        "tx_packets": 380,
+        "tx_bytes": 15200,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 23808
+      }
+    },
+    "voice-baseline-dialog": {
+      "log": "artifacts/voice-baseline-dialog-20261029.jsonl",
+      "panic_count": 0,
+      "cloud_connected_observed": false,
+      "wake_events": 0,
+      "remote_agent_joined": false,
+      "asr_final_count": 0,
+      "tts_text_events": 0,
+      "tts_playback_started": 0,
+      "audio_enqueue_failures": 0,
+      "stats_first": {
+        "mic_packets": 11165,
+        "mic_bytes": 5716480,
+        "mic_nonzero": 1232903,
+        "mic_peak": 16303,
+        "mic_age_ms": 27,
+        "tx_packets": 380,
+        "tx_bytes": 15200,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 95447
+      },
+      "stats_last": {
+        "mic_packets": 15624,
+        "mic_bytes": 7999488,
+        "mic_nonzero": 2006036,
+        "mic_peak": 16303,
+        "mic_age_ms": 22,
+        "tx_packets": 380,
+        "tx_bytes": 15200,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 166785
+      }
+    },
+    "voice-single-wake": {
+      "log": "artifacts/voice-single-wake-20261029.jsonl",
+      "panic_count": 0,
+      "cloud_connected_observed": true,
+      "wake_events": 1,
+      "remote_agent_joined": true,
+      "asr_final_count": 3,
+      "tts_text_events": 9,
+      "tts_playback_started": 1,
+      "audio_enqueue_failures": 0,
+      "stats_first": {
+        "mic_packets": 319,
+        "mic_bytes": 163328,
+        "mic_nonzero": 53028,
+        "mic_peak": 6069,
+        "mic_age_ms": 13,
+        "tx_packets": 0,
+        "tx_bytes": 0,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 9249
+      },
+      "stats_last": {
+        "mic_packets": 6678,
+        "mic_bytes": 3419136,
+        "mic_nonzero": 934253,
+        "mic_peak": 15647,
+        "mic_age_ms": 27,
+        "tx_packets": 1700,
+        "tx_bytes": 68000,
+        "tx_errors": 0,
+        "tx_last_result": 0,
+        "tx_age_ms": 17
+      }
+    }
+  },
+  "current_firmware": {
+    "mode": "baseline",
+    "sha256": "a7573af7c69ba0f9e64ec355d948926b4f542af90d8bc438bd1390a796b6fbdb",
+    "app_flash_hash_verified": true,
+    "pid": 11785,
+    "camera_preview_available": false,
+    "continuous_pose_enabled": false
+  },
+  "wifi_and_binding_preserved": true,
+  "user_confirmed_audible_reply": true,
+  "voice_recovered": true,
+  "repeat_wake_root_cause_proven": false,
+  "limitations": [
+    "HeadVoice crash root cause remains unresolved",
+    "An earlier baseline session stalled at 380 sent packets; clean single-wake test recovered",
+    "No claim of long-term or camera/voice concurrency stability"
+  ]
+}

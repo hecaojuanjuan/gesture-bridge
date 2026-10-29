@@ -2,6 +2,8 @@
 
 SPI BF3901 摄像头 → 连续 YOLO11n-pose → 有符号眼线倾斜 → 两动作编码 → 新动作确认 → 设备本地 PCM 播放。候选通过串口显示，不需要云端逐句核对。官方联网、配网、语音入口保留，舵机不初始化。
 
+2026-10-29 当前开发板已切回官方 `baseline` 进行语音故障对照，并恢复可听语音回答；保留原 Wi-Fi 和绑定。HeadVoice stage 2 本轮出现崩溃，根因尚未修复，因此当前板上暂不提供摄像头预览或连续姿态识别。详情见验证记录的同日条目。
+
 当前验证范围见 [验证记录](docs/validation.md)。基础联网语音及摄像头 stage 1 连续取帧已有实机记录。stage 2 已测到左右侧倾符号可分及遮挡拒识，但中立读数波动、约 2.68 秒推理耗时尚不满足连续动作输入；动作组合和固定短句播放仍待实测。不把主机测试或固件编译视为实机通过。
 
 | 编码 | 固定短句 |
@@ -56,7 +58,7 @@ $port = 'COMx' # 替换为开发板实际端口
 
 ### 单张摄像头预览
 
-已烧录的 HeadVoice 固件支持 `hv_camera snapshot`。关闭其他串口程序后，在项目根目录执行：
+HeadVoice 固件支持 `hv_camera snapshot`；当前回退到 baseline 时该命令不可用。需要恢复经过验证的 HeadVoice 固件后，关闭其他串口程序，在项目根目录执行：
 
 ```powershell
 & '.\.tools\espressif\python_env\idf5.4_py3.12_env\Scripts\python.exe' tools/camera_preview.py --port COM3 --output .local/camera-preview.png

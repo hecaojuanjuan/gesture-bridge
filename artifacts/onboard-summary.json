@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-26T20:48:27.796882+08:00",
+  "observed_at": "2026-10-29T20:04:13.893215+08:00",
   "port": "COM3",
   "pid": 11785,
   "baseline_flashed": true,
@@ -100,5 +100,17 @@
   "headvoice_stage2_flashed": true,
   "camera_pose_pipeline_running": true,
   "pose_action_readiness_verified": false,
-  "latest_pose_test_summary": "artifacts/pose-accuracy-summary.json"
+  "latest_pose_test_summary": "artifacts/pose-accuracy-summary.json",
+  "current_firmware": {
+    "mode": "baseline",
+    "sha256": "a7573af7c69ba0f9e64ec355d948926b4f542af90d8bc438bd1390a796b6fbdb",
+    "app_flash_hash_verified": true,
+    "pid": 11785,
+    "camera_preview_available": false,
+    "continuous_pose_enabled": false
+  },
+  "latest_voice_diagnosis_summary": "artifacts/voice-diagnosis-summary-20261029.json",
+  "voice_reverified_20261029": true,
+  "headvoice_runtime_crash_observed": true,
+  "headvoice_runtime_crash_fixed": false
 }

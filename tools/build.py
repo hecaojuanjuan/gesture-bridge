@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--stage", choices=[1, 2, 3], type=int, default=3)
     parser.add_argument("--rotate-cw90", action="store_true")
     parser.add_argument("--invert-tilt", action="store_true")
+    parser.add_argument("--gimbal", action="store_true")
     args = parser.parse_args()
     if args.action != "build" and not args.port:
         parser.error("--port is required; never guess the board port")
@@ -53,7 +54,8 @@ if __name__ == "__main__":
     if args.mode == "headvoice" and args.action == "build":
         command += [f"-DHEADVOICE_STAGE={args.stage}",
                     f"-DHEADVOICE_ROTATE_CW90={int(args.rotate_cw90)}",
-                    f"-DHEADVOICE_INVERT_TILT={int(args.invert_tilt)}"]
+                    f"-DHEADVOICE_INVERT_TILT={int(args.invert_tilt)}",
+                    f"-DHEADVOICE_GIMBAL={int(args.gimbal)}"]
     if args.port:
         command += ["-p", args.port]
     command += [args.action]

@@ -2,6 +2,7 @@ get_filename_component(headvoice_root "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(HEADVOICE_STAGE 3 CACHE STRING "1=camera, 2=pose and voice, 3=expression")
 set(HEADVOICE_ROTATE_CW90 0 CACHE STRING "Rotate mounted camera clockwise")
 set(HEADVOICE_INVERT_TILT 0 CACHE STRING "Swap signed A and B")
+set(HEADVOICE_GIMBAL 0 CACHE STRING "Build the on-demand gimbal controller")
 if(NOT HEADVOICE_STAGE MATCHES "^[123]$")
   message(FATAL_ERROR "HEADVOICE_STAGE must be 1, 2 or 3")
 endif()
@@ -12,10 +13,16 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
 if(NOT QM_POSE_SUPPORT OR NOT LJYD_PLAYBACK_SUPPORT)
   message(FATAL_ERROR "HeadVoice requires the upstream pose and audio components")
 endif()
-target_sources(${COMPONENT_LIB} PRIVATE
-  "${headvoice_root}/core/hv_core.c"
-  "${headvoice_root}/firmware/headvoice_app.c"
-  "${headvoice_root}/firmware/hv_camera_preview.c")
+target_sources(${COMPONENT_LIB} PRIVATE "${headvoice_root}/firmware/hv_camera_preview.c")
+if(HEADVOICE_GIMBAL)
+  target_sources(${COMPONENT_LIB} PRIVATE
+    "${headvoice_root}/core/hv_gimbal_core.c"
+    "${headvoice_root}/firmware/hv_gimbal_app.c")
+else()
+  target_sources(${COMPONENT_LIB} PRIVATE
+    "${headvoice_root}/core/hv_core.c"
+    "${headvoice_root}/firmware/headvoice_app.c")
+endif()
 # The upstream test-camera macro stays off: HeadVoice owns stream startup.
 target_sources(${COMPONENT_LIB} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/peripheral/bsp_camera.c")
 target_include_directories(${COMPONENT_LIB} PRIVATE
