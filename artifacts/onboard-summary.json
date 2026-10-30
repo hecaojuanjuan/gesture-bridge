@@ -1,5 +1,5 @@
 {
-  "observed_at": "2026-10-29T20:04:13.893215+08:00",
+  "observed_at": "2026-10-30T11:53:34.178461+00:00",
   "port": "COM3",
   "pid": 11785,
   "baseline_flashed": true,
@@ -79,13 +79,25 @@
       "preview_cli_included": true,
       "latest_frame_queue_fix_included": true,
       "nano_format_disabled": true
+    },
+    "gimbal": {
+      "build_completed": true,
+      "sha256": "a581cff4b3fa9c553a389cffcd701bb6f64287472bc862ef063a7a95baf650b3",
+      "bytes": 3054528,
+      "pid": 11785,
+      "stage": 2,
+      "rotate_cw90": true,
+      "gimbal_enabled": true,
+      "pwm_diagnostics_included": true,
+      "mqtt_topic_explicit_state": true,
+      "pwm_waveform_diagnostics_included": true
     }
   },
   "account_binding_confirmed_by_user": true,
   "ble_reprovision_verified": true,
   "provision_cli_status_and_usage_verified": true,
   "new_pid_audible_voice_reply_verified": true,
-  "latest_runtime_log": "artifacts/voice-input-probe.jsonl",
+  "latest_runtime_log": "artifacts/gimbal-pwm-20261030-185726-941518.jsonl",
   "voice_probe": {
     "raw_audio_retained": false,
     "mic_bytes_per_second_median": 31989,
@@ -98,19 +110,69 @@
   "latest_camera_test_summary": "artifacts/camera-stage1-retest-summary.json",
   "latest_camera_runtime_log": "artifacts/camera-stage1-retest-20261026.jsonl",
   "headvoice_stage2_flashed": true,
-  "camera_pose_pipeline_running": true,
+  "camera_pose_pipeline_running": false,
   "pose_action_readiness_verified": false,
   "latest_pose_test_summary": "artifacts/pose-accuracy-summary.json",
   "current_firmware": {
-    "mode": "baseline",
-    "sha256": "a7573af7c69ba0f9e64ec355d948926b4f542af90d8bc438bd1390a796b6fbdb",
+    "mode": "gimbal",
+    "sha256": "a581cff4b3fa9c553a389cffcd701bb6f64287472bc862ef063a7a95baf650b3",
     "app_flash_hash_verified": true,
     "pid": 11785,
-    "camera_preview_available": false,
-    "continuous_pose_enabled": false
+    "camera_preview_available": true,
+    "continuous_pose_enabled": false,
+    "on_demand_pose_enabled": true,
+    "mqtt_topic_explicit_state": true,
+    "pwm_waveform_diagnostics_included": true,
+    "last_gimbal_state": {
+      "pan_us": 1500,
+      "tilt_us": 1500,
+      "pan_armed": false,
+      "tilt_armed": false,
+      "active": false
+    },
+    "restored_after_servo_isolation": true,
+    "pan_mechanical_motion_verified": true,
+    "tilt_bracket_motion_verified": false,
+    "voice_reverified_after_restore": false
   },
   "latest_voice_diagnosis_summary": "artifacts/voice-diagnosis-summary-20261029.json",
   "voice_reverified_20261029": true,
   "headvoice_runtime_crash_observed": true,
-  "headvoice_runtime_crash_fixed": false
+  "headvoice_runtime_crash_fixed": false,
+  "latest_gimbal_summary": "artifacts/gimbal-waveform-summary-20261030.json",
+  "gimbal_auto_centering_verified": false,
+  "previous_full_firmware_before_servo_isolation": {
+    "mode": "gimbal",
+    "sha256": "a581cff4b3fa9c553a389cffcd701bb6f64287472bc862ef063a7a95baf650b3",
+    "app_flash_hash_verified": true,
+    "pid": 11785,
+    "camera_preview_available": true,
+    "continuous_pose_enabled": false,
+    "on_demand_pose_enabled": true,
+    "mqtt_topic_explicit_state": true,
+    "pwm_waveform_diagnostics_included": true,
+    "last_gimbal_state": {
+      "pan_us": 1500,
+      "tilt_us": 1500,
+      "pan_armed": false,
+      "tilt_armed": false,
+      "active": false
+    }
+  },
+  "latest_servo_isolation_summary": "artifacts/servo-minimal-summary-20261030.json",
+  "last_isolation_firmware": {
+    "mode": "servo-minimal",
+    "sha256": "da7127713f07a18573b8bb690975d16ba13d3c799701256bca0c7b899c3b25f3",
+    "app_flash_hash_verified": true,
+    "camera_preview_available": false,
+    "voice_available": false,
+    "wifi_enabled": false,
+    "last_servo_state": {
+      "axis": -1,
+      "pulse_us": 0,
+      "both_outputs_off": true
+    },
+    "restore_image": ".local\\servo-restore\\gimbal-a581cff4.bin",
+    "restore_sha256": "a581cff4b3fa9c553a389cffcd701bb6f64287472bc862ef063a7a95baf650b3"
+  }
 }

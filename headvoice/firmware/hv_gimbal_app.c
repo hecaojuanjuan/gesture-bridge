@@ -6,8 +6,10 @@
 #include <string.h>
 
 #include "bsp_camera.h"
+#include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "esp_heap_caps.h"
+#include "esp_rom_sys.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -74,6 +76,63 @@ static bool number(const char * text, int low, int high, int * out)
   return true;
 }
 
+static void pwm_diagnostics_locked(void)
+{
+  enum { SAMPLES = 8000 };
+  unsigned high[2] = {0}, rising[2] = {0};
+  unsigned pulseCount[2] = {0}, periodCount[2] = {0};
+  unsigned pulseMin[2] = {UINT32_MAX, UINT32_MAX}, pulseMax[2] = {0};
+  unsigned periodMin[2] = {UINT32_MAX, UINT32_MAX}, periodMax[2] = {0};
+  uint64_t lastRise[2] = {0};
+  int previous[2] = {0};
+  for (int axis = 0; axis < 2; ++axis) gpio_input_enable((gpio_num_t)PINS[axis]);
+  uint64_t started = esp_timer_get_time();
+  uint64_t lastSample = started;
+  unsigned maxSampleGap = 0;
+  for (unsigned sample = 0; sample < SAMPLES; ++sample) {
+    uint64_t timestamp = esp_timer_get_time();
+    unsigned gap = (unsigned)(timestamp - lastSample);
+    if (gap > maxSampleGap) maxSampleGap = gap;
+    lastSample = timestamp;
+    for (int axis = 0; axis < 2; ++axis) {
+      int level = gpio_get_level((gpio_num_t)PINS[axis]);
+      high[axis] += level;
+      if (sample && level && !previous[axis]) {
+        ++rising[axis];
+        if (lastRise[axis]) {
+          unsigned period = (unsigned)(timestamp - lastRise[axis]);
+          if (period < periodMin[axis]) periodMin[axis] = period;
+          if (period > periodMax[axis]) periodMax[axis] = period;
+          ++periodCount[axis];
+        }
+        lastRise[axis] = timestamp;
+      } else if (sample && !level && previous[axis] && lastRise[axis]) {
+        unsigned pulse = (unsigned)(timestamp - lastRise[axis]);
+        if (pulse < pulseMin[axis]) pulseMin[axis] = pulse;
+        if (pulse > pulseMax[axis]) pulseMax[axis] = pulse;
+        ++pulseCount[axis];
+      }
+      previous[axis] = level;
+    }
+    esp_rom_delay_us(10);
+  }
+  uint64_t elapsed = esp_timer_get_time() - started;
+  for (int axis = 0; axis < 2; ++axis) {
+    printf(
+      "GIMBAL {\"event\":\"pwm\",\"gpio\":%d,\"armed\":%s,\"frequency_hz\":%u,"
+      "\"duty\":%u,\"samples\":%u,\"high_samples\":%u,\"rising_edges\":%u,"
+      "\"elapsed_us\":%u,\"pulse_count\":%u,\"pulse_min_us\":%u,\"pulse_max_us\":%u,"
+      "\"period_count\":%u,\"period_min_us\":%u,\"period_max_us\":%u,"
+      "\"max_sample_gap_us\":%u}\n",
+      PINS[axis], s_armed[axis] ? "true" : "false",
+      (unsigned)ledc_get_freq(LEDC_LOW_SPEED_MODE, LEDC_TIMER_0),
+      (unsigned)ledc_get_duty(LEDC_LOW_SPEED_MODE, (ledc_channel_t)axis), SAMPLES, high[axis],
+      rising[axis], (unsigned)elapsed, pulseCount[axis], pulseCount[axis] ? pulseMin[axis] : 0,
+      pulseMax[axis], periodCount[axis], periodCount[axis] ? periodMin[axis] : 0, periodMax[axis],
+      maxSampleGap);
+  }
+}
+
 static void command(char * buffer, int length, int argc, char ** argv)
 {
   (void)buffer;
@@ -83,6 +142,8 @@ static void command(char * buffer, int length, int argc, char ** argv)
     stop_locked();
   } else if (argc == 2 && strcmp(argv[1], "status") == 0) {
     /* Status never changes PWM output. */
+  } else if (argc == 2 && strcmp(argv[1], "pwm") == 0 && !s_core.active && !s_probe) {
+    pwm_diagnostics_locked();
   } else if (argc == 2 && strcmp(argv[1], "probe") == 0 && !s_core.active) {
     s_probe = true;
   } else if (argc == 2 && strcmp(argv[1], "start") == 0) {
@@ -120,7 +181,7 @@ static void command(char * buffer, int length, int argc, char ** argv)
       printf("GIMBAL ERROR directions_must_be_plus_or_minus_one\n");
   } else {
     printf(
-      "hv_gimbal status|probe|arm pan|arm tilt|jog pan <us>|jog tilt <us>|dir <pan_sign> "
+      "hv_gimbal status|pwm|probe|arm pan|arm tilt|jog pan <us>|jog tilt <us>|dir <pan_sign> "
       "<tilt_sign>|start|stop\n");
   }
   status_locked();
@@ -245,7 +306,7 @@ esp_err_t headvoice_start(void)
     return ESP_ERR_NO_MEM;
   static const struct qm_cli_command cli = {
     .name = "hv_gimbal",
-    .help = "status|probe|arm <axis>|jog <axis> <us>|dir <pan> <tilt>|start|stop",
+    .help = "status|pwm|probe|arm <axis>|jog <axis> <us>|dir <pan> <tilt>|start|stop",
     .function = command};
   if (qm_cli_register_command(&cli) != 0) return ESP_FAIL;
   ret = bsp_camera_set_frame_callback(camera_frame);

@@ -19,6 +19,16 @@ def replace(text, old, new, count=1):
     return text.replace(old, new)
 
 
+def reentrant_mqtt(source):
+    """Keep topic tokenization independent of newlib's implicit strtok state."""
+    source = replace(source, '    char *delim = "/";',
+                     '    char *delim = "/";\n    char *context = NULL;')
+    source = replace(source, 'strtok(topicString, delim)',
+                     'strtok_r(topicString, delim, &context)')
+    return replace(source, 'strtok(NULL, delim)',
+                   'strtok_r(NULL, delim, &context)')
+
+
 def apply_cloud_identity(app, config_path=ROOT / ".local/cloud.json"):
     """Override only the copied app; keep credentials out of shared patches."""
     if not config_path.exists():
@@ -138,6 +148,7 @@ def prepare(mode):
         (ROOT / "artifacts/baseline-integration.patch").write_text(
             "".join(patches), encoding="utf-8")
         return app
+    probe_source("components/mqtt/iot_mqtt_client.c", reentrant_mqtt)
     # Nano printf does not support the 64-bit timestamps in HV JSON logs.
     config_path = app / "sdkconfig"
     before = config_path.read_text(encoding="utf-8")

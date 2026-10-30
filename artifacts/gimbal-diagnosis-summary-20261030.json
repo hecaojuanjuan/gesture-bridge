@@ -1,0 +1,55 @@
+{
+  "observed_at": "2026-10-30T18:28:48.371320+08:00",
+  "port": "COM3",
+  "firmware_sha256": "4f0160ef94c4a365da984c0cb72702772783a2ab0c40a0616b386147ae5b389c",
+  "firmware_bytes": 3054096,
+  "app_flash_hash_verified": true,
+  "reset_before": {
+    "log": "artifacts/gimbal-reset-20261030.jsonl",
+    "capture_seconds": 65,
+    "panic_count": 5,
+    "exception": "StoreProhibited",
+    "invalid_save_pointer": "0x00060120",
+    "path": "strtok -> iot_mc_check_topic -> device info report"
+  },
+  "reset_after": {
+    "log": "artifacts/gimbal-mqtt-retest-20261030.jsonl",
+    "capture_seconds": 90,
+    "panic_count": 0,
+    "rom_restart_count": 0,
+    "cloud_connected": true,
+    "long_term_stability_verified": false,
+    "initial_strtok_state_corruption_cause_known": false
+  },
+  "pwm": {
+    "gpio": [
+      17,
+      18
+    ],
+    "frequency_hz": 50,
+    "gpio_transitions_verified": true,
+    "off_state_low_verified": true,
+    "servo_connector_signal_measured": false,
+    "servo_connector_voltage_measured": false,
+    "supply_on_confirmed_by_user": true,
+    "log_on": "artifacts/gimbal-pwm-20261030-182544.jsonl",
+    "log_off": "artifacts/gimbal-pwm-20261030-182811.jsonl"
+  },
+  "servo_motion_verified": false,
+  "tilt_horn_did_not_move_confirmed_by_user": true,
+  "directions_calibrated": false,
+  "auto_centering_verified": false,
+  "final_state": {
+    "pan_us": 1550,
+    "tilt_us": 1500,
+    "pan_armed": false,
+    "tilt_armed": false,
+    "active": false
+  },
+  "host_checks": {
+    "mqtt_upstream_failed": true,
+    "mqtt_fixed_passed": true,
+    "python_tests_passed": 8,
+    "firmware_build_passed": true
+  }
+}

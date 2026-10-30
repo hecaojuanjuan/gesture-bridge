@@ -15,14 +15,14 @@ def main():
     parser.add_argument("--seconds", type=float)
     parser.add_argument("words", nargs="+")
     args = parser.parse_args()
-    arity = {"status": 1, "probe": 1, "arm": 2, "jog": 3,
+    arity = {"status": 1, "pwm": 1, "probe": 1, "arm": 2, "jog": 3,
              "dir": 3, "start": 1, "stop": 1}
     action = args.words[0]
     if (action not in arity or len(args.words) != arity[action] or
             any(not re.fullmatch(r"[a-z]+|[-+]?\d+", w) for w in args.words)):
         parser.error("Invalid gimbal command")
     limit = args.seconds or (110 if action == "start" else 20)
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     path = Path("artifacts") / f"gimbal-{action}-{stamp}.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
     device = serial.Serial()
@@ -52,7 +52,8 @@ def main():
                 target.flush()
                 print(line, flush=True)
                 if re.search(r"GIMBAL ERROR|GIMBAL STOP|Guru Meditation|ESP-ROM:|rst:", line):
-                    raise RuntimeError("Device rejected, stopped, or restarted")
+                    raise RuntimeError(
+                        "Device rejected, stopped, or restarted")
                 if event:
                     if action == "probe" and event["event"] == "observation":
                         completed = True

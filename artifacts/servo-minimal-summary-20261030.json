@@ -1,0 +1,89 @@
+{
+  "observed_at": "2026-10-30T11:38:53.865674+00:00",
+  "mode": "servo-minimal",
+  "sha256": "da7127713f07a18573b8bb690975d16ba13d3c799701256bca0c7b899c3b25f3",
+  "bytes": 247232,
+  "app_flash_hash_verified": true,
+  "partition_table_matches_full_app": true,
+  "restore_image": ".local\\servo-restore\\gimbal-a581cff4.bin",
+  "restore_sha256": "a581cff4b3fa9c553a389cffcd701bb6f64287472bc862ef063a7a95baf650b3",
+  "excluded_services": [
+    "camera",
+    "wifi",
+    "cloud",
+    "audio",
+    "recognition"
+  ],
+  "same_pwm_settings_as_full_app": true,
+  "range_us": [
+    1300,
+    1700
+  ],
+  "maximum_step_us": 50,
+  "command_lease_ms": 2500,
+  "tests": [
+    {
+      "axis": "pan",
+      "log": "artifacts/servo-minimal-20261030-193412-360664.jsonl",
+      "user_observation": "Horizontal axis moved",
+      "lease_expiration_verified": true
+    },
+    {
+      "axis": "tilt",
+      "log": "artifacts/servo-minimal-20261030-193448-771046.jsonl",
+      "user_observation": "Initially uncertain",
+      "lease_expiration_verified": true
+    },
+    {
+      "axis": "tilt",
+      "log": "artifacts/servo-minimal-20261030-193609-293477.jsonl",
+      "user_observation": "White servo horn turns but camera bracket does not move",
+      "lease_expiration_verified": true
+    }
+  ],
+  "finding": "Tilt horn motion is not transmitted to the camera bracket; exact attachment defect needs physical inspection",
+  "software_conflict_proven": false,
+  "full_firmware_retest_pending": false,
+  "auto_centering_verified": false,
+  "final_state": {
+    "axis": -1,
+    "pulse_us": 0,
+    "both_outputs_off": true
+  },
+  "next_action": "Inspect and repair tilt horn-to-bracket attachment with all power disconnected; then retest tilt and calibrate directions",
+  "retest_after_reconnect": {
+    "tilt_log": "artifacts/servo-minimal-20261030-194252-297342.jsonl",
+    "pan_log": "artifacts/servo-minimal-20261030-194335-043368.jsonl",
+    "tilt_user_observation": "Sound from tilt servo, camera bracket did not turn",
+    "both_sequences_and_lease_expiration_passed": true
+  },
+  "full_firmware_comparison": {
+    "recorded_at": "2026-10-30T11:53:34.178461+00:00",
+    "firmware_sha256": "a581cff4b3fa9c553a389cffcd701bb6f64287472bc862ef063a7a95baf650b3",
+    "flash_hash_verified": true,
+    "flash_log": "artifacts/gimbal-restore-after-isolation.log",
+    "trial_log": "artifacts/full-pan-comparison-20261030.log",
+    "axis": "pan",
+    "sequence_us": [
+      1500,
+      1700,
+      1300,
+      1500
+    ],
+    "step_us": 50,
+    "user_observation": "Horizontal axis carries camera back and forth",
+    "camera_snapshots_checksum_verified": true,
+    "camera_snapshots": [
+      ".local/full-compare-pan1500.png",
+      ".local/full-compare-pan1700.png",
+      ".local/full-compare-pan1300.png"
+    ],
+    "visual_observation": "Scene changes between commanded positions; no calibrated angle estimate",
+    "pan_mechanical_motion_verified": true,
+    "tilt_not_retested_in_full_firmware": true,
+    "both_outputs_off_verified": true,
+    "final_pwm_log": "artifacts/gimbal-pwm-20261030-194727-704289.jsonl",
+    "voice_response_not_retested": true
+  },
+  "tilt_full_firmware_retest_pending": true
+}

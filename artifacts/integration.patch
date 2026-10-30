@@ -83,6 +83,45 @@
      if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {
          QM_LOGE("main", "agent_app_init failed");
      }
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -121,7 +121,7 @@
+     "${QDEV}/components/qm_http_client/src/qm_http_client_transport.c"
+     "${QDEV}/components/http/util_httpc.c"
+     "${QDEV}/components/network/util_net.c"
+-    "${QDEV}/components/mqtt/iot_mqtt_client.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/iot_mqtt_client.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTConnectClient.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTDeserializePublish.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTPacket.c"
+--- a/qumios-dev/components/mqtt/iot_mqtt_client.c
++++ b/apps/main/hv_diagnostics/iot_mqtt_client.c
+@@ -69,6 +69,7 @@
+ {
+     int mask = 0;
+     char *delim = "/";
++    char *context = NULL;
+     char *iterm = NULL;
+     char topicString[IOT_MC_TOPIC_NAME_MAX_LEN];
+     if (NULL == topicName) {
+@@ -83,7 +84,7 @@
+     memset(topicString, 0x0, IOT_MC_TOPIC_NAME_MAX_LEN);
+     strncpy(topicString, topicName, IOT_MC_TOPIC_NAME_MAX_LEN - 1);
+ 
+-    iterm = strtok(topicString, delim);
++    iterm = strtok_r(topicString, delim, &context);
+ 
+     if (SUCCESS_RETURN != iot_mc_check_rule(iterm, type)) {
+         mqtt_log_err("run iot_check_rule error");
+@@ -91,7 +92,7 @@
+     }
+ 
+     for (;;) {
+-        iterm = strtok(NULL, delim);
++        iterm = strtok_r(NULL, delim, &context);
+ 
+         if (iterm == NULL) {
+             break;
 --- a/apps/sdkconfig
 +++ b/apps/sdkconfig
 @@ -1950,7 +1950,7 @@
