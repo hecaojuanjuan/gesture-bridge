@@ -1,0 +1,29 @@
+{
+  "errors": [],
+  "checks": [
+    {
+      "viewport": 800,
+      "width": 800,
+      "height": 1800,
+      "ratio": 2.25,
+      "horizontalOverflow": 0,
+      "textOutsidePage": []
+    },
+    {
+      "viewport": 360,
+      "width": 360,
+      "height": 810,
+      "ratio": 2.25,
+      "horizontalOverflow": 0,
+      "textOutsidePage": []
+    },
+    {
+      "viewport": 320,
+      "width": 320,
+      "height": 720,
+      "ratio": 2.25,
+      "horizontalOverflow": 0,
+      "textOutsidePage": []
+    }
+  ]
+}

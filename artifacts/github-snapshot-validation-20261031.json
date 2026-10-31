@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-31",
+  "local_source_snapshot": "8426810",
+  "remote_parent": "558195a05623d493db712e596322cda85b82a381",
+  "scope": "Frozen local snapshot plus preserved remote artwork, enclosure and archived prototype; later working-tree edits excluded.",
+  "checks": {
+    "python_unittest": {
+      "command": "<training-python> -m unittest discover -s tests -p 'test_*.py'",
+      "tests": 97,
+      "passed": true
+    },
+    "panel_tests": {
+      "command": "npm --prefix panel test",
+      "tests": 81,
+      "passed": true
+    },
+    "panel_build": {
+      "command": "npm --prefix panel run build",
+      "passed": true
+    },
+    "host_scripts": {
+      "scripts": [
+        "test_core.py",
+        "test_gimbal.py",
+        "test_face_landmarks.py",
+        "test_light.py",
+        "test_mqtt.py",
+        "verify_audio.py"
+      ],
+      "passed": true
+    },
+    "vendored_upstream_hashes": {
+      "files": 27,
+      "mismatches": 0
+    },
+    "remote_changed_files_preserved": {
+      "files": 74,
+      "byte_identical_at_original_or_archive_path": true
+    },
+    "secret_scan": {
+      "files_at_scan": 317,
+      "known_local_cloud_secret_occurrences": 0,
+      "token_or_private_key_matches": 0,
+      "credential_literals": "Synthetic cloud-identity test fixtures only"
+    }
+  },
+  "snapshot_fix": "Removed the unused second_count helper from hv_hand_app.c; -Werror previously rejected both hand-app host test builds.",
+  "limitations": [
+    "No new firmware build or hardware flash in this publishing task.",
+    "Hand detection is not gesture classification accuracy.",
+    "Native 11-class adapter and pinned model are saved; full application integration was still in progress at snapshot time.",
+    "No real training, gesture accuracy, long-duration stability or automatic centering acceptance performed.",
+    "Credentials, compiled firmware, raw serial logs, training photos, dependency installs and build caches remain local."
+  ]
+}

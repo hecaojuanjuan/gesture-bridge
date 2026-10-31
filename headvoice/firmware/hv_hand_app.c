@@ -156,15 +156,6 @@ static bool is_target(hv_hand_gate_kind_t kind)
   return kind == HV_HAND_GATE_OPEN_PALM || kind == HAND_SECOND_TARGET;
 }
 
-static unsigned second_count(const hand_inference_state_t *state)
-{
-#if HV_HAND_NATIVE_CLASSIFIER
-  return state->vCount;
-#else
-  return state->fistCount;
-#endif
-}
-
 /* Caller holds s_guard. hv_panel_status_light only copies under its own short
  * guard; fixed lock order is hand guard -> panel guard, with no I/O or inference. */
 static void feedback_light_locked(uint64_t now)

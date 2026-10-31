@@ -1,0 +1,35 @@
+# CMakeLists.txt 示例 - 添加手掌检测支持
+# 将此内容添加到 headvoice 组件的 CMakeLists.txt 中
+
+# 如果你的项目使用 ESP-IDF 构建系统
+# 在 headvoice/CMakeLists.txt 或相应的组件配置文件中添加：
+
+set(COMPONENT_SRCS
+    # 现有文件
+    "firmware/headvoice_app.c"
+    "firmware/hv_gimbal_app.c"
+    "firmware/hv_camera_preview.c"
+    # ... 其他文件 ...
+
+    # 核心算法
+    "core/hv_gimbal_core.c"
+
+    # 新增：手掌检测
+    "core/hv_hand_detector.c"
+)
+
+set(COMPONENT_ADD_INCLUDEDIRS
+    "firmware"
+    "core"
+)
+
+# 注册组件
+idf_component_register(
+    SRCS ${COMPONENT_SRCS}
+    INCLUDE_DIRS ${COMPONENT_ADD_INCLUDEDIRS}
+    REQUIRES
+        esp_timer
+        driver
+        freertos
+        # ... 其他依赖 ...
+)
