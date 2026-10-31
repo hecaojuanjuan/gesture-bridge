@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("--rotate-cw90", action="store_true")
     parser.add_argument("--invert-tilt", action="store_true")
     parser.add_argument("--gimbal", action="store_true")
-    parser.add_argument("--vision", choices=["coco", "face", "hand"],
+    parser.add_argument("--vision", choices=["coco", "face", "hand", "face-hand"],
                         help="Build backend (default: coco); for flash/monitor, require a matching cached build")
     parser.add_argument("--work-name",
                         help="Separate build workspace under .work (e.g. face-candidate)")
@@ -63,14 +63,14 @@ if __name__ == "__main__":
                         help="Explicit watchdog implementation for an isolated comparison build; omitted keeps the SDK default")
     args = parser.parse_args()
     vision = args.vision or "coco"
-    if vision in ("face", "hand") and (args.mode != "headvoice" or args.gimbal):
+    if vision in ("face", "hand", "face-hand") and (args.mode != "headvoice" or args.gimbal):
         parser.error("--vision face/hand requires headvoice without --gimbal")
-    if vision == "hand" and args.action == "build" and args.stage != 2:
+    if vision in ("hand", "face-hand") and args.action == "build" and args.stage != 2:
         parser.error("--vision hand currently requires --stage 2")
-    if args.hand_weights and (args.action != "build" or vision != "hand" or not args.hand_weights.is_file()):
+    if args.hand_weights and (args.action != "build" or vision not in ("hand", "face-hand") or not args.hand_weights.is_file()):
         parser.error("--hand-weights requires a hand build and an existing generated model header")
     if args.hand_native_partition and (
-            args.action != "build" or args.mode != "headvoice" or vision != "hand" or
+            args.action != "build" or args.mode != "headvoice" or vision not in ("hand", "face-hand") or
             args.hand_weights or not args.work_name or args.work_name in ("headvoice", "baseline") or
             not re.fullmatch(r"[a-zA-Z0-9_][a-zA-Z0-9_-]{0,14}", args.hand_native_partition)):
         parser.error("--hand-native-partition requires an isolated hand build, a valid partition label, and no --hand-weights")
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         config_path.write_text(config, encoding="utf-8")
     if args.action != "build" and args.mode == "headvoice" and args.vision:
         cache = app / "build/CMakeCache.txt"
-        match = re.search(r"^HEADVOICE_VISION:STRING=(coco|face|hand)$",
+        match = re.search(r"^HEADVOICE_VISION:STRING=(coco|face|hand|face-hand)$",
                           cache.read_text(encoding="utf-8") if cache.exists() else "",
                           re.MULTILINE)
         if not match or match[1] != args.vision:

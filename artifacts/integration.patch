@@ -4,23 +4,23 @@
          "${AGORA_SDK}/libs/libagora-cjson.a"
      )
  endif()
-+target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
-+target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware")
++target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
++target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
 --- a/apps/main/CMakeLists.txt
 +++ b/apps/main/CMakeLists.txt
 @@ -317,3 +317,6 @@
  endif()
- target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
- target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware")
+ target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
+ target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
 +
-+target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_panel.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core/hv_light.c")
-+target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core")
++target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_panel.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/core/hv_light.c")
++target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/core")
 --- a/apps/main/CMakeLists.txt
 +++ b/apps/main/CMakeLists.txt
 @@ -320,3 +320,5 @@
  
- target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_panel.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core/hv_light.c")
- target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core")
+ target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_panel.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/core/hv_light.c")
+ target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/core")
 +
 +target_compile_definitions(${COMPONENT_LIB} PRIVATE HV_PANEL_SIID=12)
 --- a/apps/main/lj_components/iot_control/iot_control.c
@@ -64,7 +64,7 @@
  
      "${QDEV}/drivers/VB701N/src/vb701n.c"
 -    "${QDEV}/platform/mcu/esp32s3/qm_audio/qm_audio_device_vb701n.c"
-+    "/Users/emt/Workspace/hackathon/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_audio_device_vb701n.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_audio_device_vb701n.c"
      "${QDEV}/components/qm_audio/src/audio/qm_audio.c"
      "${QDEV}/components/qm_audio/src/capture/qm_audio_capture.c"
      "${QDEV}/components/qm_audio/src/control/qm_audio_control.c"
@@ -91,7 +91,7 @@
  list(APPEND COMPONENT_SRCS
      "./agent/private/opus.c"
 -    "${QDEV}/components/qm_agent/src/transport/qm_agent_transport_agora.c"
-+    "/Users/emt/Workspace/hackathon/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_agent_transport_agora.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_agent_transport_agora.c"
      "${QDEV}/components/qm_agent/src/transport/qm_agent_agora_stream.c"
  )
  
@@ -141,7 +141,7 @@
      "${QDEV}/components/http/util_httpc.c"
      "${QDEV}/components/network/util_net.c"
 -    "${QDEV}/components/mqtt/iot_mqtt_client.c"
-+    "/Users/emt/Workspace/hackathon/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/iot_mqtt_client.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/iot_mqtt_client.c"
      "${QDEV}/components/mqtt/MQTTPacket/MQTTConnectClient.c"
      "${QDEV}/components/mqtt/MQTTPacket/MQTTDeserializePublish.c"
      "${QDEV}/components/mqtt/MQTTPacket/MQTTPacket.c"
@@ -184,6 +184,15 @@
              break;
          default:
              break;
+--- a/apps/main/qm_config/qm_config.h
++++ b/apps/main/qm_config/qm_config.h
+@@ -180,3 +180,6 @@
+ 
+ /* 0 关，1 打方向和命令，2 再打整帧十六进制 */
+ #define VB701N_UART_TRACE 0
++
++/* HeadVoice: measured qm_agent_ctl overflow during Agora startup. */
++#define CONFIG_QM_AGENT_CONTROL_TASK_STACK_SIZE (8 * 1024)
 --- a/apps/sdkconfig
 +++ b/apps/sdkconfig
 @@ -521,8 +521,8 @@
@@ -241,10 +250,10 @@
  # CONFIG_NEWLIB_TIME_SYSCALL_USE_HRT is not set
 --- a/apps/main/qm_config/qm_config.h
 +++ b/apps/main/qm_config/qm_config.h
-@@ -180,3 +180,5 @@
+@@ -183,3 +183,5 @@
  
- /* 0 关，1 打方向和命令，2 再打整帧十六进制 */
- #define VB701N_UART_TRACE 0
+ /* HeadVoice: measured qm_agent_ctl overflow during Agora startup. */
+ #define CONFIG_QM_AGENT_CONTROL_TASK_STACK_SIZE (8 * 1024)
 +
 +#define CONFIG_HEADVOICE_SUPPORT 1
 --- a/apps/main/main.c
@@ -281,11 +290,23 @@
 --- a/apps/main/CMakeLists.txt
 +++ b/apps/main/CMakeLists.txt
 @@ -322,3 +322,5 @@
- target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core")
+ target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/core")
  
  target_compile_definitions(${COMPONENT_LIB} PRIVATE HV_PANEL_SIID=12)
 +
-+include("/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/integration.cmake")
++include("C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/integration.cmake")
+--- a/apps/main/pose/private/coco_pose/CMakeLists.txt
++++ b/apps/main/pose/private/coco_pose/CMakeLists.txt
+@@ -49,6 +49,8 @@
+     if(CONFIG_COCO_POSE_MODEL_IN_FLASH_PARTITION)
+         add_custom_target(COCO_POSE_MODEL ALL DEPENDS ${packed_model})
+         add_dependencies(flash COCO_POSE_MODEL)
+-        esptool_py_flash_to_partition(flash "coco_pose" ${packed_model})
++        if(NOT DEFINED HEADVOICE_HAND_NATIVE_PARTITION OR HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "")
++            esptool_py_flash_to_partition(flash "coco_pose" ${packed_model})
++        endif()
+     endif()
+ endif()
 --- a/apps/main/peripheral/bsp_camera.h
 +++ b/apps/main/peripheral/bsp_camera.h
 @@ -7,6 +7,10 @@

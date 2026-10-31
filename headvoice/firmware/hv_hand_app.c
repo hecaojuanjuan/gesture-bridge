@@ -16,6 +16,10 @@
 #include "freertos/task.h"
 #include "hv_camera_preview.h"
 #include "hv_hand_detect.h"
+#if HV_CENTERING
+#include "hv_face_gimbal.h"
+#include "hv_face_pose.h"
+#endif
 #ifndef HV_HAND_NATIVE_CLASSIFIER
 #define HV_HAND_NATIVE_CLASSIFIER 0
 #endif
@@ -42,8 +46,8 @@
 #include HV_HAND_WEIGHTS_HEADER
 #endif
 
-/* Hand inference owns a separate application: no servo initialization,
- * head-tilt state machine, or expression/audio requests are linked here. */
+/* The face-hand build adds centering to this single camera/inference owner.
+ * Hand-only builds retain their original behavior without servo control. */
 #define RAW_BYTES (240 * 320 * 2)
 #define RAW_COUNT 2
 #define TAG "handvoice"
@@ -208,6 +212,9 @@ static void feedback_task(void *argument)
   (void)argument;
   for (;;) {
     feedback_tick(now_ms());
+#if HV_CENTERING
+    hv_face_gimbal_tick(now_ms());
+#endif
     vTaskDelay(pdMS_TO_TICKS(50));
   }
 }
@@ -218,6 +225,9 @@ static void camera_frame(const uint8_t *bytes, size_t length, uint32_t width,
   if (!bytes || length != RAW_BYTES || width != 240 || height != 320 ||
       format != V4L2_PIX_FMT_UYVY) {
     stream_epoch(true);
+#if HV_CENTERING
+    hv_face_gimbal_invalidate();
+#endif
     return;
   }
   hv_camera_preview_offer(bytes, length, capturedMs);
@@ -272,6 +282,27 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
       ret = hv_hand_detect_analyze_rgb888(rgb, width, height, &hand);
     }
     uint32_t detectMs = (uint32_t)(now_ms() - detectStarted);
+#if HV_CENTERING
+    /* Center before gesture classification. Only a successful zero-hand
+     * detection allows face fallback; ambiguous hands veto background faces. */
+    hv_face_target_t faceTarget = {0};
+    yolo11_pose_frame_result_t face = {0};
+    HvGimbalTarget source = HV_GIMBAL_TARGET_HAND;
+    unsigned targets = hand.count;
+    bool targetValid = ret == ESP_OK && hand.valid;
+    float targetX = (hand.normalized_box[0] + hand.normalized_box[2]) * 0.5f;
+    float targetY = (hand.normalized_box[1] + hand.normalized_box[3]) * 0.5f;
+    if (ret == ESP_OK && hand.count == 0) {
+      esp_err_t faceRet = hv_face_pose_analyze_rgb888(rgb, width, height, &face, &faceTarget);
+      source = HV_GIMBAL_TARGET_FACE;
+      targets = face.person_count;
+      targetValid = faceRet == ESP_OK && faceTarget.valid;
+      targetX = faceTarget.x;
+      targetY = faceTarget.y;
+    }
+    hv_face_gimbal_observe_target(source, targets,
+      targetValid && epoch == stream_epoch(false), targetX, targetY, captured, now_ms());
+#endif
     uint64_t now = now_ms();
     bool fresh = ret == ESP_OK && epoch == stream_epoch(false) && now >= captured &&
                  now - captured <= HV_HAND_GATE_MAX_AGE_MS;
@@ -460,11 +491,17 @@ esp_err_t headvoice_start(void)
   if (ret != ESP_OK) return ret;
   ret = hv_hand_detect_init();
   if (ret != ESP_OK) return ret;
+#if HV_CENTERING
+  ret = hv_face_pose_init();
+  if (ret != ESP_OK) return ret;
+  ret = hv_face_gimbal_init();
+  if (ret != ESP_OK) return ret;
+#endif
   esp_log_level_set("yolo11n-pose", ESP_LOG_WARN);
   ret = bsp_camera_early_init();
   if (ret != ESP_OK) return ret;
   if (hv_camera_preview_init() != ESP_OK) ESP_LOGW(TAG, "Camera preview unavailable");
-  if (xTaskCreateWithCaps(feedback_task, "hv_hand_feedback", 2048, NULL, 3,
+  if (xTaskCreateWithCaps(feedback_task, "hv_hand_feedback", 4096, NULL, 3,
                          NULL, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT) != pdPASS)
     return ESP_ERR_NO_MEM;
   if (xTaskCreatePinnedToCoreWithCaps(inference_task, "hv_hand", 16 * 1024, NULL, 3,
@@ -472,9 +509,20 @@ esp_err_t headvoice_start(void)
     return ESP_ERR_NO_MEM;
   ret = bsp_camera_set_frame_callback(camera_frame);
   if (ret != ESP_OK) return ret;
-  printf("HG {\"v\":1,\"event\":\"ready\",\"backend\":\"hand\","
+  printf("HG {\"v\":1,\"event\":\"ready\",\"backend\":\"%s\","
          HAND_CLASSIFIER_JSON
-         "\"classifier_ready\":%s,\"model_sha256\":\"%s\",\"servo_control\":false}\n",
-         s_classifierReady ? "true" : "false", classifier_hash());
+         "\"classifier_ready\":%s,\"model_sha256\":\"%s\",\"servo_control\":%s}\n",
+#if HV_CENTERING
+         "face-hand",
+#else
+         "hand",
+#endif
+         s_classifierReady ? "true" : "false", classifier_hash(),
+#if HV_CENTERING
+         "true"
+#else
+         "false"
+#endif
+  );
   return bsp_camera_stream_start();
 }

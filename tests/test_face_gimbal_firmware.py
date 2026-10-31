@@ -1,5 +1,6 @@
 """Host-simulate the face gimbal's PWM lease and stop behavior."""
 import json
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -166,24 +167,30 @@ int main(void)
 """
 
 
-def main():
+def run_harness(source=HARNESS, extra_flags=()):
     with tempfile.TemporaryDirectory(prefix="face-gimbal-") as directory:
         temp = Path(directory)
-        for name, source in HEADERS.items():
+        for name, header in HEADERS.items():
             path = temp / name
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(source, encoding="utf-8")
+            path.write_text(header, encoding="utf-8")
         harness = temp / "harness.c"
-        harness.write_text(HARNESS, encoding="utf-8")
-        binary = temp / "test_face_gimbal"
+        harness.write_text(source, encoding="utf-8")
+        binary = temp / "test_face_gimbal.exe"
         subprocess.run([
-            "cc", "-std=c11", "-Wall", "-Wextra", "-Werror", "-UNDEBUG",
+            shutil.which("cc") or shutil.which("gcc") or "cc",
+            "-std=c11", "-Wall", "-Wextra", "-Werror", "-UNDEBUG", *extra_flags,
             "-I", str(temp), "-I", str(ROOT / "headvoice/firmware"),
             "-I", str(ROOT / "headvoice/core"),
             str(ROOT / "headvoice/firmware/hv_face_gimbal.c"),
             str(ROOT / "headvoice/core/hv_gimbal_core.c"), str(harness),
             "-lm", "-o", str(binary)], check=True)
         output = subprocess.check_output([str(binary)], text=True)
+    return output
+
+
+def main():
+    output = run_harness()
     targets = [json.loads(line[7:]) for line in output.splitlines()
                if line.startswith("GIMBAL {\"event\":\"target\"")]
     assert [item["valid"] for item in targets] == [True, False, False, True, False, True, False], targets

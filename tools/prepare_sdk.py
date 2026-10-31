@@ -79,7 +79,7 @@ def apply_cloud_identity(app, config_path=ROOT / ".local/cloud.json"):
 
 
 def prepare(mode, vision="coco", work_name=None, face_selftest=False):
-    if mode not in ("baseline", "headvoice") or vision not in ("coco", "face", "hand"):
+    if mode not in ("baseline", "headvoice") or vision not in ("coco", "face", "hand", "face-hand"):
         raise ValueError("Unsupported firmware mode or vision backend")
     if mode != "headvoice" and vision != "coco":
         raise ValueError("The selected vision backend requires headvoice mode")
@@ -270,16 +270,23 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
         '        if(NOT DEFINED HEADVOICE_HAND_NATIVE_PARTITION OR HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "")\n'
         '            esptool_py_flash_to_partition(flash "coco_pose" ${packed_model})\n'
         '        endif()'))
-    if vision in ("face", "hand"):
-        component_name = "human_face_detect" if vision == "face" else "hand_detect"
+    components = {"face": ["human_face_detect"], "hand": ["hand_detect"],
+                  "face-hand": ["human_face_detect", "hand_detect"]}
+    for component_name in components.get(vision, []):
         component = ROOT / "headvoice/third_party" / component_name
         upstream = json.loads((component / "UPSTREAM.json").read_text(encoding="utf-8"))
         for name, expected in upstream["files"].items():
-            if hashlib.sha256((component / name).read_bytes()).hexdigest() != expected:
+            data = (component / name).read_bytes()
+            # Git may check text out as CRLF on Windows. Verify the pinned LF
+            # bytes without changing model binaries or accepting content edits.
+            if (Path(name).suffix in (".txt", ".yml", ".yaml", ".cpp", ".hpp", ".h", ".md")
+                    or Path(name).name in ("Kconfig", "LICENSE")):
+                data = data.replace(b"\r\n", b"\n")
+            if hashlib.sha256(data).hexdigest() != expected:
                 raise RuntimeError(f"Vendored {component_name} component changed: {name}")
         shutil.copytree(component, app / "main/pose/private" / component_name,
                         dirs_exist_ok=True)
-        if vision == "face":
+        if component_name == "human_face_detect":
             edit(f"pose/private/{component_name}/idf_component.yml", lambda s: replace(
                 s, "    version: ~3.2.0", "    version: ~3.2.0\n    override_path: ../esp-dl"))
         else:
@@ -289,11 +296,11 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
             s, "  coco_pose:\n", f"  {component_name}:\n"
             f"    path: pose/private/{component_name}\n  coco_pose:\n"))
         edit("CMakeLists.txt", lambda s: replace(
-            s, "list(APPEND COMPONENT_REQUIRES coco_pose esp-dl)",
-            f"list(APPEND COMPONENT_REQUIRES coco_pose esp-dl {component_name})"))
+            s, "list(APPEND COMPONENT_REQUIRES coco_pose esp-dl",
+            f"list(APPEND COMPONENT_REQUIRES coco_pose esp-dl {component_name}"))
         # Pin model storage to rodata: changing backends never changes partitions.
         with config_path.open("a", encoding="utf-8") as config:
-            prefix = "HUMAN_FACE_DETECT" if vision == "face" else "HAND_DETECT"
+            prefix = "HUMAN_FACE_DETECT" if component_name == "human_face_detect" else "HAND_DETECT"
             config.write(f"\nCONFIG_{prefix}_MODEL_IN_FLASH_RODATA=y\n"
                          f"# CONFIG_{prefix}_MODEL_IN_FLASH_PARTITION is not set\n"
                          f"# CONFIG_{prefix}_MODEL_IN_SDCARD is not set\n")

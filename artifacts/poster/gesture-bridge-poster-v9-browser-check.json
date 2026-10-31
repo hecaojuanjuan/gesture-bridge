@@ -1,0 +1,21 @@
+{
+  "errors": [],
+  "checks": [
+    {
+      "width": 800,
+      "height": 1800,
+      "ratio": 2.25,
+      "overflowX": 0,
+      "textOutsideAllowedArea": [],
+      "deviceOutsideProtectedArea": true
+    },
+    {
+      "width": 320,
+      "height": 720,
+      "ratio": 2.25,
+      "overflowX": 0,
+      "textOutsideAllowedArea": [],
+      "deviceOutsideProtectedArea": true
+    }
+  ]
+}

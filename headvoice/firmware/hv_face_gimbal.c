@@ -20,7 +20,11 @@ enum {
   PULSE_MAX_US = 1525,
   MAX_STEP_US = 25,
   MAX_FRAME_AGE_MS = 400,
+#if HV_CENTERING
+  LOST_TARGET_MS = 2000,
+#else
   LOST_TARGET_MS = 1000,
+#endif
   IDLE_ARM_LEASE_MS = 10000,
   CENTERED_HOLD_LEASE_MS = 60000,
 };
@@ -34,6 +38,10 @@ static bool s_targetValid;
 static unsigned s_targetPeople;
 static float s_targetX, s_targetY;
 static uint64_t s_targetCapturedMs;
+static HvGimbalTarget s_targetSource;
+static bool s_autoEnabled;
+static unsigned s_acquireCount;
+static uint64_t s_acquireCapturedMs;
 
 static uint64_t now_ms(void) { return (uint64_t)(esp_timer_get_time() / 1000); }
 static void lock(void) { xSemaphoreTake(s_lock, portMAX_DELAY); }
@@ -47,13 +55,14 @@ static void status_locked(void)
          "\"pan_armed\":%s,\"tilt_armed\":%s,\"pan_dir\":%d,\"tilt_dir\":%d,"
          "\"directions_ready\":%s,\"holding\":%s,\"output_fault\":%s,"
          "\"lease_remaining_ms\":%llu,\"last_stop_reason\":\"%s\",\"steps\":%u,"
-         "\"limits_us\":[%d,%d],"
+         "\"auto_enabled\":%s,\"limits_us\":[%d,%d],"
          "\"max_step_us\":%d,\"max_age_ms\":%d,\"lost_after_ms\":%d}\n",
          s_core.active ? "true" : "false", s_core.pulse[0], s_core.pulse[1],
          s_armed[0] ? "true" : "false", s_armed[1] ? "true" : "false",
          s_core.direction[0], s_core.direction[1], s_directionsReady ? "true" : "false",
          s_centeredHolding ? "true" : "false", s_outputFault ? "true" : "false",
          (unsigned long long)lease, s_lastStopReason, s_core.steps,
+         s_autoEnabled ? "true" : "false",
          PULSE_MIN_US, PULSE_MAX_US, MAX_STEP_US, MAX_FRAME_AGE_MS,
          LOST_TARGET_MS);
 }
@@ -71,14 +80,18 @@ static void target_locked(void)
   uint64_t age = s_targetCapturedMs && now >= s_targetCapturedMs ? now - s_targetCapturedMs : 0;
   bool valid = target_fresh_locked(now);
   printf("GIMBAL {\"event\":\"target\",\"valid\":%s,\"people\":%u,"
-         "\"x\":%.4f,\"y\":%.4f,\"captured_ms\":%llu,\"age_ms\":%llu}\n",
+         "\"source\":\"%s\",\"x\":%.4f,\"y\":%.4f,\"captured_ms\":%llu,\"age_ms\":%llu}\n",
          valid ? "true" : "false", s_targetPeople,
+         s_targetSource == HV_GIMBAL_TARGET_HAND ? "hand" : "face",
          valid ? (double)s_targetX : 0.0, valid ? (double)s_targetY : 0.0,
          (unsigned long long)s_targetCapturedMs, (unsigned long long)age);
 }
 
 static void close_outputs_locked(const char *reason, bool unexpected)
 {
+  s_autoEnabled = false;
+  s_acquireCount = 0;
+  s_acquireCapturedMs = 0;
   s_core.active = false;
   s_centeredHolding = false;
   s_leaseUntilMs = 0;
@@ -154,7 +167,22 @@ static void command(char *buffer, int length, int argc, char **argv)
     target_locked();
   } else if (argc == 2 && strcmp(argv[1], "stop") == 0) {
     close_outputs_locked("operator", false);
-  } else if (argc == 3 && strcmp(argv[1], "arm") == 0 && !s_core.active) {
+  } else if (argc == 3 && strcmp(argv[1], "auto") == 0 &&
+             strcmp(argv[2], "off") == 0) {
+    close_outputs_locked("operator", false);
+  } else if (argc == 3 && strcmp(argv[1], "auto") == 0 &&
+             strcmp(argv[2], "on") == 0) {
+    if (!s_armed[0] || !s_armed[1] || !s_directionsReady) {
+      printf("GIMBAL ERROR arm_both_axes_and_verify_directions_first\n");
+    } else {
+      s_autoEnabled = true;
+      s_acquireCount = 0;
+      s_acquireCapturedMs = 0;
+      s_lastAcceptedMs = now_ms();
+      s_leaseUntilMs = 0;
+      printf("GIMBAL {\"event\":\"auto_enabled\"}\n");
+    }
+  } else if (argc == 3 && strcmp(argv[1], "arm") == 0 && !s_core.active && !s_autoEnabled) {
     int axis = axis_name(argv[2]);
     if (axis < 0) {
       printf("GIMBAL ERROR arm_requires_pan_or_tilt\n");
@@ -170,7 +198,7 @@ static void command(char *buffer, int length, int argc, char **argv)
         s_lastStopReason = "none";
       }
     }
-  } else if (argc == 4 && strcmp(argv[1], "jog") == 0 && !s_core.active) {
+  } else if (argc == 4 && strcmp(argv[1], "jog") == 0 && !s_core.active && !s_autoEnabled) {
     int axis = axis_name(argv[2]);
     int delta;
     if (axis < 0 || !s_armed[axis] || !number(argv[3], -MAX_STEP_US, MAX_STEP_US, &delta) ||
@@ -186,7 +214,7 @@ static void command(char *buffer, int length, int argc, char **argv)
         s_leaseUntilMs = now + IDLE_ARM_LEASE_MS;
       }
     }
-  } else if (argc == 4 && strcmp(argv[1], "dir") == 0 && !s_core.active) {
+  } else if (argc == 4 && strcmp(argv[1], "dir") == 0 && !s_core.active && !s_autoEnabled) {
     int pan, tilt;
     if (number(argv[2], -1, 1, &pan) && number(argv[3], -1, 1, &tilt) && pan && tilt &&
         s_armed[0] && s_armed[1]) {
@@ -216,7 +244,7 @@ static void command(char *buffer, int length, int argc, char **argv)
     }
   } else {
     printf("hv_gimbal status|target|arm pan|arm tilt|jog pan <signed_us>|jog tilt <signed_us>|"
-           "dir <pan_sign> <tilt_sign>|start|stop\n");
+           "dir <pan_sign> <tilt_sign>|start|auto on|auto off|stop\n");
   }
   status_locked();
   unlock();
@@ -224,11 +252,21 @@ static void command(char *buffer, int length, int argc, char **argv)
 
 static const struct qm_cli_command s_cli = {
   .name = "hv_gimbal",
-  .help = "status|target|arm <axis>|jog <axis> <signed_us>|dir <pan> <tilt>|start|stop",
+  .help = "status|target|arm <axis>|jog <axis> <signed_us>|dir <pan> <tilt>|start|auto on|auto off|stop",
   .function = command};
 
 static void tick_locked(uint64_t nowMs)
 {
+  if (s_autoEnabled && nowMs >= s_lastAcceptedMs &&
+      nowMs - s_lastAcceptedMs > LOST_TARGET_MS && (s_armed[0] || s_armed[1])) {
+    /* Normal loss releases PWM; reacquisition may resume at the last pulse.
+     * Faults, limits, camera invalidation and stop disable automatic retries. */
+    close_outputs_locked("auto_waiting_target", false);
+    if (!s_outputFault) {
+      s_autoEnabled = true;
+      s_directionsReady = true;
+    }
+  }
   if (!s_core.active) {
     if ((s_armed[0] || s_armed[1]) && s_leaseUntilMs && nowMs >= s_leaseUntilMs)
       close_outputs_locked(s_centeredHolding ? "centered_hold_expired" :
@@ -263,6 +301,8 @@ void hv_face_gimbal_tick(uint64_t nowMs)
 
 static void clear_target_locked(void)
 {
+  s_acquireCount = 0;
+  s_acquireCapturedMs = 0;
   s_targetValid = false;
   s_targetPeople = 0;
   s_targetX = s_targetY = 0;
@@ -282,15 +322,30 @@ void hv_face_gimbal_invalidate(void)
   if (!s_initialized) return;
   lock();
   clear_target_locked();
-  if (s_core.active || s_armed[0] || s_armed[1]) close_outputs_locked("stream_invalidated", true);
+  if (s_core.active || s_armed[0] || s_armed[1] || s_autoEnabled)
+    close_outputs_locked("stream_invalidated", true);
   unlock();
 }
 
 void hv_face_gimbal_observe(unsigned people, bool faceValid, float x, float y,
                             uint64_t capturedMs, uint64_t nowMs)
 {
+  hv_face_gimbal_observe_target(HV_GIMBAL_TARGET_FACE, people, faceValid,
+                                x, y, capturedMs, nowMs);
+}
+
+void hv_face_gimbal_observe_target(HvGimbalTarget source, unsigned people, bool faceValid,
+                                  float x, float y, uint64_t capturedMs, uint64_t nowMs)
+{
   if (!s_initialized) return;
   lock();
+  bool sourceChanged = source != s_targetSource;
+  s_targetSource = source;
+  if (sourceChanged) {
+    s_acquireCount = 0;
+    s_core.previousAxis = -1;
+    s_core.centered = s_core.worsening = 0;
+  }
   bool face = people == 1 && faceValid && isfinite(x) && isfinite(y) &&
               x >= 0 && x <= 1 && y >= 0 && y <= 1;
   s_targetPeople = people;
@@ -302,6 +357,33 @@ void hv_face_gimbal_observe(unsigned people, bool faceValid, float x, float y,
     s_targetY = y;
   }
   tick_locked(nowMs);
+  if (s_autoEnabled && s_targetValid && capturedMs > s_acquireCapturedMs) {
+    s_acquireCapturedMs = capturedMs;
+    s_lastAcceptedMs = nowMs;
+    if (s_acquireCount < 3) ++s_acquireCount;
+    bool outside = fabsf(x - 0.5f) > 0.12f || fabsf(y - 0.5f) > 0.12f;
+    if (!s_core.active && s_acquireCount >= 3 &&
+        (!s_centeredHolding || sourceChanged || outside)) {
+      bool ready = true;
+      for (int axis = 0; axis < 2 && ready; ++axis) {
+        if (!s_armed[axis]) {
+          ready = write_pulse_locked(axis);
+          if (ready) s_armed[axis] = true;
+        }
+      }
+      if (ready) {
+        hv_gimbal_begin(&s_core, nowMs);
+        s_centeredHolding = false;
+        s_leaseUntilMs = 0;
+        s_lastStopReason = "none";
+        printf("GIMBAL {\"event\":\"auto_started\",\"source\":\"%s\"}\n",
+               source == HV_GIMBAL_TARGET_HAND ? "hand" : "face");
+      }
+    }
+  } else if (!s_targetValid) {
+    s_acquireCount = 0;
+    s_core.centered = 0;
+  }
   if (!s_core.active) {
     unlock();
     return;
@@ -322,7 +404,7 @@ void hv_face_gimbal_observe(unsigned people, bool faceValid, float x, float y,
       s_lastAcceptedMs = nowMs;
     if (result == HV_GIMBAL_CENTERED) {
       s_centeredHolding = true;
-      s_leaseUntilMs = nowMs + CENTERED_HOLD_LEASE_MS;
+      s_leaseUntilMs = s_autoEnabled ? 0 : nowMs + CENTERED_HOLD_LEASE_MS;
       s_lastStopReason = "centered";
     }
   } else if (face) {
@@ -336,10 +418,11 @@ void hv_face_gimbal_observe(unsigned people, bool faceValid, float x, float y,
                          "lost_target", true);
   float loggedX = isfinite(x) ? x : 0;
   float loggedY = isfinite(y) ? y : 0;
-  printf("GIMBAL {\"event\":\"observation\",\"people\":%u,\"face\":%s,"
+  printf("GIMBAL {\"event\":\"observation\",\"source\":\"%s\",\"people\":%u,\"face\":%s,"
          "\"x\":%.4f,\"y\":%.4f,\"captured_ms\":%llu,\"age_ms\":%llu,"
          "\"result\":%d,\"pan_us\":%d,\"tilt_us\":%d,\"active\":%s,"
-         "\"holding\":%s}\n", people, face ? "true" : "false", (double)loggedX,
+         "\"holding\":%s}\n", source == HV_GIMBAL_TARGET_HAND ? "hand" : "face",
+         people, face ? "true" : "false", (double)loggedX,
          (double)loggedY,
          (unsigned long long)capturedMs,
          (unsigned long long)(capturedMs <= nowMs ? nowMs - capturedMs : 0), result,

@@ -1,0 +1,200 @@
+{
+  "project_name": "Gesture Bridge",
+  "dimensions_mm": [
+    800,
+    1800
+  ],
+  "background_pixels": [
+    800,
+    1800
+  ],
+  "background_sha256": "16190cd03f88170354f5445a1ffa5de102bbabbc4bde3ed143d7d3eeb3f61245",
+  "background_handling": "Unmodified supplied JPEG, embedded",
+  "protected_regions": [
+    [
+      0,
+      0,
+      800,
+      700
+    ],
+    [
+      0,
+      0,
+      350,
+      950
+    ]
+  ],
+  "text_outside_page": [],
+  "text_in_protected_regions": [],
+  "text_bounds": [
+    {
+      "text": "设备示意",
+      "x": 493.0,
+      "right": 537.0,
+      "top": 964.546875,
+      "bottom": 975.546875
+    },
+    {
+      "text": "从手势到语音",
+      "x": 435.0,
+      "right": 615.0,
+      "top": 1113.21875,
+      "bottom": 1143.21875
+    },
+    {
+      "text": "做出手势组合",
+      "x": 474,
+      "right": 606.0,
+      "top": 1189.1357421875,
+      "bottom": 1212.5751953125
+    },
+    {
+      "text": "选择想说的话",
+      "x": 474,
+      "right": 552.0,
+      "top": 1222.44384765625,
+      "bottom": 1236.29443359375
+    },
+    {
+      "text": "呈现候选句",
+      "x": 474,
+      "right": 584.0,
+      "top": 1272.1357421875,
+      "bottom": 1295.5751953125
+    },
+    {
+      "text": "“我想喝水。”",
+      "x": 474,
+      "right": 565.0,
+      "top": 1305.44384765625,
+      "bottom": 1319.29443359375
+    },
+    {
+      "text": "本人再次确认",
+      "x": 474,
+      "right": 606.0,
+      "top": 1355.1357421875,
+      "bottom": 1378.5751953125
+    },
+    {
+      "text": "也可以取消",
+      "x": 474,
+      "right": 539.0,
+      "top": 1388.44384765625,
+      "bottom": 1402.29443359375
+    },
+    {
+      "text": "原句语音播报",
+      "x": 474,
+      "right": 606.0,
+      "top": 1438.1357421875,
+      "bottom": 1461.5751953125
+    },
+    {
+      "text": "表达不被改写",
+      "x": 474,
+      "right": 552.0,
+      "top": 1471.44384765625,
+      "bottom": 1485.29443359375
+    },
+    {
+      "text": "无需精细操作",
+      "x": 188.0,
+      "right": 332.0,
+      "top": 1046.375,
+      "bottom": 1070.375
+    },
+    {
+      "text": "降低表达门槛",
+      "x": 188.0,
+      "right": 332.0,
+      "top": 1085.375,
+      "bottom": 1109.375
+    },
+    {
+      "text": "家人协助",
+      "x": 86.0,
+      "right": 186.0,
+      "top": 1246.515625,
+      "bottom": 1271.515625
+    },
+    {
+      "text": "一起定义手势",
+      "x": 76.0,
+      "right": 196.0,
+      "top": 1303.8125,
+      "bottom": 1323.8125
+    },
+    {
+      "text": "与表达内容",
+      "x": 86.0,
+      "right": 186.0,
+      "top": 1339.8125,
+      "bottom": 1359.8125
+    },
+    {
+      "text": "由使用者确认",
+      "x": 95.5,
+      "right": 176.5,
+      "top": 1398.3984375,
+      "bottom": 1411.8984375
+    },
+    {
+      "text": "让表达被听见",
+      "x": 459.0,
+      "right": 591.0,
+      "top": 1617.1357421875,
+      "bottom": 1640.5751953125
+    }
+  ],
+  "content_regions": {
+    "device": [
+      370,
+      723,
+      648,
+      976
+    ],
+    "orange_flow": [
+      418,
+      1109,
+      610,
+      1487
+    ],
+    "blue": [
+      188,
+      1046,
+      332,
+      1112
+    ],
+    "pale_yellow": [
+      76,
+      1245,
+      196,
+      1414
+    ],
+    "closing_line": [
+      459,
+      1614,
+      591,
+      1641
+    ]
+  },
+  "device_image": "Existing project enclosure concept, vector",
+  "print_note": "Raster template; editable vector foreground",
+  "verification": {
+    "page_count": 1,
+    "dimensions_mm": [
+      800.0,
+      1800.0
+    ],
+    "template_byte_identical": true,
+    "embedded_template_byte_identical": true,
+    "required_content": "passed",
+    "svg_xml": "valid",
+    "embedded_fonts": [
+      "/AAAAAA+KaiTi",
+      "/AAAAAA+MicrosoftYaHei-0",
+      "/AAAAAA+MicrosoftYaHei-Bold-0"
+    ]
+  }
+}

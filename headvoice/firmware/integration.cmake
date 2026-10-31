@@ -3,20 +3,20 @@ set(HEADVOICE_STAGE 3 CACHE STRING "1=camera, 2=pose and voice, 3=expression")
 set(HEADVOICE_ROTATE_CW90 0 CACHE STRING "Rotate mounted camera clockwise")
 set(HEADVOICE_INVERT_TILT 0 CACHE STRING "Swap signed A and B")
 set(HEADVOICE_GIMBAL 0 CACHE STRING "Build the on-demand gimbal controller")
-set(HEADVOICE_VISION coco CACHE STRING "Vision backend: coco, face or hand")
+set(HEADVOICE_VISION coco CACHE STRING "Vision backend: coco, face, hand or face-hand")
 set(HEADVOICE_FACE_SELFTEST 0 CACHE STRING "Run an isolated official face fixture before camera inference")
 set(HEADVOICE_HAND_WEIGHTS_FILE "" CACHE FILEPATH "Explicit trained hand classifier header; empty keeps detection-only")
 set(HEADVOICE_HAND_NATIVE_PARTITION "" CACHE STRING "Existing data partition containing the pinned ESP-DL hand gesture model; empty disables native classifier")
-if(NOT HEADVOICE_VISION MATCHES "^(coco|face|hand)$")
-  message(FATAL_ERROR "HEADVOICE_VISION must be coco, face or hand")
+if(NOT HEADVOICE_VISION MATCHES "^(coco|face|hand|face-hand)$")
+  message(FATAL_ERROR "HEADVOICE_VISION must be coco, face, hand or face-hand")
 endif()
 if(HEADVOICE_GIMBAL AND NOT HEADVOICE_VISION STREQUAL "coco")
   message(FATAL_ERROR "The gimbal requires the COCO body pose backend")
 endif()
-if(HEADVOICE_VISION STREQUAL "hand" AND NOT HEADVOICE_STAGE STREQUAL "2")
+if(HEADVOICE_VISION MATCHES "^(hand|face-hand)$" AND NOT HEADVOICE_STAGE STREQUAL "2")
   message(FATAL_ERROR "Hand recognition currently requires stage 2")
 endif()
-if(NOT HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "" AND (NOT HEADVOICE_VISION STREQUAL "hand" OR HEADVOICE_HAND_WEIGHTS_FILE))
+if(NOT HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "" AND (NOT HEADVOICE_VISION MATCHES "^(hand|face-hand)$" OR HEADVOICE_HAND_WEIGHTS_FILE))
   message(FATAL_ERROR "Native hand classification requires the hand backend without custom CNN weights")
 endif()
 if(HEADVOICE_FACE_SELFTEST AND (NOT HEADVOICE_VISION STREQUAL "face" OR NOT HEADVOICE_STAGE STREQUAL "2"))
@@ -31,11 +31,18 @@ if(HEADVOICE_FACE_SELFTEST)
   target_add_binary_data(${COMPONENT_LIB} "${hv_face_fixture}" BINARY RENAME_TO hv_face_selftest_jpg)
 endif()
 set(hv_face_backend 0)
-if(HEADVOICE_VISION STREQUAL "face")
+if(HEADVOICE_VISION MATCHES "^(face|face-hand)$")
   set(hv_face_backend 1)
   target_sources(${COMPONENT_LIB} PRIVATE
     "${headvoice_root}/core/hv_face_landmarks.c"
     "${headvoice_root}/firmware/hv_face_pose.cpp")
+endif()
+set(hv_centering 0)
+if(HEADVOICE_VISION STREQUAL "face-hand")
+  set(hv_centering 1)
+  target_sources(${COMPONENT_LIB} PRIVATE
+    "${headvoice_root}/core/hv_gimbal_core.c"
+    "${headvoice_root}/firmware/hv_face_gimbal.c")
 endif()
 if(NOT HEADVOICE_STAGE MATCHES "^[123]$")
   message(FATAL_ERROR "HEADVOICE_STAGE must be 1, 2 or 3")
@@ -43,6 +50,7 @@ endif()
 target_compile_definitions(${COMPONENT_LIB} PRIVATE
   HV_STAGE=${HEADVOICE_STAGE}
   HV_FACE_BACKEND=${hv_face_backend}
+  HV_CENTERING=${hv_centering}
   HV_FACE_SELFTEST=${HEADVOICE_FACE_SELFTEST}
   HV_VISION_BACKEND_NAME="${HEADVOICE_VISION}"
   HV_ROTATE_CW90=${HEADVOICE_ROTATE_CW90}
@@ -51,7 +59,7 @@ if(NOT QM_POSE_SUPPORT OR NOT LJYD_PLAYBACK_SUPPORT)
   message(FATAL_ERROR "HeadVoice requires the upstream pose and audio components")
 endif()
 target_sources(${COMPONENT_LIB} PRIVATE "${headvoice_root}/firmware/hv_camera_preview.c")
-if(HEADVOICE_VISION STREQUAL "hand")
+if(HEADVOICE_VISION MATCHES "^(hand|face-hand)$")
   target_sources(${COMPONENT_LIB} PRIVATE
     "${headvoice_root}/firmware/hv_hand_app.c"
     "${headvoice_root}/firmware/hv_hand_detect.cpp"
