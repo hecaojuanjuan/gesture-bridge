@@ -4,7 +4,7 @@
          "${AGORA_SDK}/libs/libagora-cjson.a"
      )
  endif()
-+target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
++target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_panel.c")
 +target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
 --- a/apps/main/CMakeLists.txt
 +++ b/apps/main/CMakeLists.txt
@@ -75,14 +75,122 @@
  #include "iot_control.h"
  #include "pomodoro.h"
  #include "ljyd_course.h"
-@@ -94,6 +95,7 @@
+@@ -91,6 +92,7 @@
+     if (ljyd_course_init(ljyd_cloud_get_handle()) != QM_EOK) {
+         QM_LOGE("main", "ljyd_course_init failed");
+     }
++    hv_provision_cli_init();
      if (ljyd_provision_init() != QM_EOK) {
          QM_LOGE("main", "ljyd_provision_init failed");
      }
-+    hv_provision_cli_init();
-     if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {
-         QM_LOGE("main", "agent_app_init failed");
+--- a/apps/main/cloud/ljyd_provision.c
++++ b/apps/main/cloud/ljyd_provision.c
+@@ -1,4 +1,5 @@
+ #include "ljyd_provision.h"
++#include "hv_panel.h"
+ #include "ljyd_cloud.h"
+ 
+ #include "qm.h"
+@@ -102,6 +103,7 @@
+ 
+ static int provision_start_wifi(void)
+ {
++    hv_panel_network("connecting");
+     int ret = qm_wifi_init();
+     if (ret != QM_EOK) {
+         return ret;
+@@ -120,16 +122,19 @@
+     (void)arg;
+     ret = qm_wifi_init();
+     if (ret != QM_EOK) {
++        hv_panel_network("error");
+         QM_LOGE(LOG_TAG, "wifi init ret=%d", ret);
+         return;
      }
+     ret = qm_wifi_set_mode(QM_WIFI_MODE_STA);
+     if (ret != QM_EOK) {
++        hv_panel_network("error");
+         QM_LOGE(LOG_TAG, "wifi set mode ret=%d", ret);
+         return;
+     }
+     ret = provision_apply_wifi(pending_ssid, pending_password);
+     if (ret != QM_EOK) {
++        hv_panel_network("error");
+         QM_LOGE(LOG_TAG, "save provision wifi failed ret=%d", ret);
+         return;
+     }
+@@ -149,6 +154,7 @@
+     if (recv->env_type_valid) {
+         provision_env_save(recv->env_type);
+     }
++    hv_panel_network("connecting");
+     memset(pending_ssid, 0, sizeof(pending_ssid));
+     memset(pending_password, 0, sizeof(pending_password));
+     strncpy(pending_ssid, recv->ssid, sizeof(pending_ssid) - 1);
+@@ -184,7 +190,9 @@
+             return -QM_ENOMEM;
+         }
+     }
++    hv_panel_network("provisioning");
+     ret = qm_provision_start(provision_handle);
++    if (ret != QM_EOK) hv_panel_network("error");
+     QM_LOGI(LOG_TAG, "ble provision start ret=%d", ret);
+     return ret;
+ }
+@@ -205,10 +213,12 @@
+             break;
+         case QM_WIFI_EVENT_STA_GOT_IP:
+             QM_LOGI(LOG_TAG, "wifi got ip");
++            hv_panel_network("cloud_connecting");
+             ljyd_cloud_on_network_up();
+             break;
+         case QM_WIFI_EVENT_STA_DISCONNECTED:
+             QM_LOGW(LOG_TAG, "wifi disconnected");
++            hv_panel_network("disconnected");
+             ljyd_cloud_on_network_down();
+             (void)qm_wifi_connect();
+             break;
+@@ -225,7 +235,8 @@
+         ret = qm_event_handler_register(QM_EVENT_WIFI, QM_EVENT_ANY_ID,
+                                         provision_wifi_event_handler, NULL);
+         if (ret != QM_EOK) {
+-            QM_LOGE(LOG_TAG, "wifi event register failed ret=%d", ret);
++            hv_panel_network("error");
++        QM_LOGE(LOG_TAG, "wifi event register failed ret=%d", ret);
+             return ret;
+         }
+         wifi_event_registered = 1;
+--- a/apps/main/cloud/ljyd_cloud.c
++++ b/apps/main/cloud/ljyd_cloud.c
+@@ -1,4 +1,5 @@
+ #include "ljyd_cloud.h"
++#include "hv_panel.h"
+ #include "ljyd_method.h"
+ #include "ljyd_provision.h"
+ #include "time_sync.h"
+@@ -308,6 +309,7 @@
+     }
+     switch (event->type) {
+         case QM_IOT_EVENT_CLOUD_CONN:
++            hv_panel_network("online");
+             QM_LOGI(LOG_TAG, "cloud connected");
+ #if defined(CONFIG_APP_CAMERA_TEST) && CONFIG_APP_CAMERA_TEST
+             if (bsp_camera_stream_start() != ESP_OK) {
+@@ -324,12 +326,14 @@
+             }
+             break;
+         case QM_IOT_EVENT_CLOUD_DISCONN:
++            hv_panel_network("disconnected");
+             QM_LOGW(LOG_TAG, "cloud disconnected");
+             if (cloud_event_cb != NULL) {
+                 cloud_event_cb(LJYD_CLOUD_EVENT_DISCONNECTED, iot_handle, cloud_event_userdata);
+             }
+             break;
+         case QM_IOT_EVENT_CONNING_CLOUD:
++            hv_panel_network("cloud_connecting");
+             QM_LOGI(LOG_TAG, "cloud connecting");
+             break;
+         case QM_IOT_EVENT_RESET:
 --- a/apps/main/CMakeLists.txt
 +++ b/apps/main/CMakeLists.txt
 @@ -121,7 +121,7 @@
@@ -176,7 +284,7 @@
 +++ b/apps/main/CMakeLists.txt
 @@ -317,3 +317,5 @@
  endif()
- target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
+ target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_panel.c")
  target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
 +
 +include("C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/integration.cmake")

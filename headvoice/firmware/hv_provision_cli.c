@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "hv_voice_probe.h"
+#include "hv_panel.h"
 #include "ljyd_cloud.h"
 #include "ljyd_provision.h"
 #include "qm_cli.h"
@@ -37,6 +38,7 @@ static const struct qm_cli_command provision_cli = {
 
 void hv_provision_cli_init(void)
 {
+  hv_panel_init();
 #if defined(CONFIG_QM_CLI_SUPPORT) && CONFIG_QM_CLI_SUPPORT
   int result = qm_cli_register_command(&provision_cli);
   qm_cli_printf("HeadVoice provisioning CLI ready ret=%d\r\n", result);

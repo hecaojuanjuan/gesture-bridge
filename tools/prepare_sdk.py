@@ -101,7 +101,8 @@ def prepare(mode):
     edit("CMakeLists.txt", lambda s: s.rstrip() +
          '\ntarget_sources(${COMPONENT_LIB} PRIVATE "' + firmware +
          '/hv_provision_cli.c" "' + firmware +
-         '/hv_voice_probe.c")\ntarget_include_directories('
+         '/hv_voice_probe.c" "' + firmware +
+         '/hv_panel.c")\ntarget_include_directories('
          '${COMPONENT_LIB} PRIVATE "' + firmware + '")\n')
 
     def probe_source(relative, transform):
@@ -140,9 +141,41 @@ def prepare(mode):
         replace(s, '#include "ljyd_provision.h"',
                 '#include "ljyd_provision.h"\n'
                 '#include "hv_provision_cli.h"'),
-        '    if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {',
+        '    if (ljyd_provision_init() != QM_EOK) {',
         '    hv_provision_cli_init();\n'
-        '    if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {'))
+        '    if (ljyd_provision_init() != QM_EOK) {'))
+    edit("cloud/ljyd_provision.c", lambda s: replace(
+        s, '#include "ljyd_provision.h"',
+        '#include "ljyd_provision.h"\n#include "hv_panel.h"').replace(
+        '    int ret = qm_wifi_init();',
+        '    hv_panel_network("connecting");\n    int ret = qm_wifi_init();').replace(
+        '    ret = qm_provision_start(provision_handle);',
+        '    hv_panel_network("provisioning");\n'
+        '    ret = qm_provision_start(provision_handle);\n'
+        '    if (ret != QM_EOK) hv_panel_network("error");').replace(
+        '    memset(pending_ssid, 0, sizeof(pending_ssid));',
+        '    hv_panel_network("connecting");\n'
+        '    memset(pending_ssid, 0, sizeof(pending_ssid));').replace(
+        '            ljyd_cloud_on_network_up();',
+        '            hv_panel_network("cloud_connecting");\n'
+        '            ljyd_cloud_on_network_up();').replace(
+        '            ljyd_cloud_on_network_down();',
+        '            hv_panel_network("disconnected");\n'
+        '            ljyd_cloud_on_network_down();').replace(
+        'QM_LOGE(LOG_TAG,', 'hv_panel_network("error");\n        QM_LOGE(LOG_TAG,'))
+    # Observe cloud events without replacing the voice agent's callback.
+    edit("cloud/ljyd_cloud.c", lambda s: replace(
+        s, '#include "ljyd_cloud.h"',
+        '#include "ljyd_cloud.h"\n#include "hv_panel.h"').replace(
+        '        case QM_IOT_EVENT_CLOUD_CONN:',
+        '        case QM_IOT_EVENT_CLOUD_CONN:\n'
+        '            hv_panel_network("online");').replace(
+        '        case QM_IOT_EVENT_CLOUD_DISCONN:',
+        '        case QM_IOT_EVENT_CLOUD_DISCONN:\n'
+        '            hv_panel_network("disconnected");').replace(
+        '        case QM_IOT_EVENT_CONNING_CLOUD:',
+        '        case QM_IOT_EVENT_CONNING_CLOUD:\n'
+        '            hv_panel_network("cloud_connecting");'))
     (ROOT / "artifacts").mkdir(exist_ok=True)
     if mode == "baseline":
         (ROOT / "artifacts/baseline-integration.patch").write_text(

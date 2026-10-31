@@ -8,7 +8,6 @@
 
 #include "agent_app.h"
 #include "bsp_camera.h"
-#include "bsp_ws2812.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -18,6 +17,7 @@
 #include "freertos/task.h"
 #include "hv_camera_preview.h"
 #include "hv_core.h"
+#include "hv_panel.h"
 #include "hv_settings.h"
 #include "qm_audio.h"
 #include "qm_audio_control.h"
@@ -61,7 +61,6 @@ static portMUX_TYPE s_guard = portMUX_INITIALIZER_UNLOCKED;
 static unsigned s_epoch;
 static atomic_uint s_dropped, s_captured;
 static bool s_audioFault;
-static bool s_ledReady;
 
 #define AUDIO_SYMBOLS(code)                                                       \
   extern const uint8_t hv_##code##_start[] asm("_binary_hv_" #code "_pcm_start"); \
@@ -244,15 +243,14 @@ static void audio_task(void * argument)
 
 static void set_light(HvState state, bool blue)
 {
-  if (!s_ledReady) return;
   uint8_t r = 0, g = 0, b = 0;
   if (blue)
-    b = 32;
+    b = 255;
   else if (state == HV_REVIEW_REARM || state == HV_REVIEW)
-    r = g = 24;
+    r = g = 255;
   else if (state == HV_CALIBRATING)
-    r = g = b = 8;
-  bsp_ws2812_fill(r, g, b);
+    r = g = b = 64;
+  hv_panel_expression(r, g, b, r || g || b);
 }
 
 static void core_task(void * argument)
@@ -381,8 +379,6 @@ esp_err_t headvoice_start(void)
   esp_err_t ret = HV_STAGE >= 2 ? yolo11_pose_init() : ESP_OK;
   if (ret != ESP_OK) return ret;
   esp_log_level_set("yolo11n-pose", ESP_LOG_WARN);
-  s_ledReady = bsp_ws2812_init() == QM_EOK;
-  if (!s_ledReady) ESP_LOGW(TAG, "RGB unavailable");
   ret = bsp_camera_early_init();
   if (ret != ESP_OK) return ret;
   if (hv_camera_preview_init() != ESP_OK) ESP_LOGW(TAG, "Camera preview unavailable");

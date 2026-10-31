@@ -1,0 +1,134 @@
+{
+  "project_name": "Gesture Bridge",
+  "dimensions_mm": [
+    800,
+    1800
+  ],
+  "landmark_count": 21,
+  "finger_chains": [
+    [
+      1,
+      2,
+      3,
+      4
+    ],
+    [
+      5,
+      6,
+      7,
+      8
+    ],
+    [
+      9,
+      10,
+      11,
+      12
+    ],
+    [
+      13,
+      14,
+      15,
+      16
+    ],
+    [
+      17,
+      18,
+      19,
+      20
+    ]
+  ],
+  "connections": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      0,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      7,
+      8
+    ],
+    [
+      5,
+      9
+    ],
+    [
+      9,
+      10
+    ],
+    [
+      10,
+      11
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      9,
+      13
+    ],
+    [
+      13,
+      14
+    ],
+    [
+      14,
+      15
+    ],
+    [
+      15,
+      16
+    ],
+    [
+      13,
+      17
+    ],
+    [
+      17,
+      18
+    ],
+    [
+      18,
+      19
+    ],
+    [
+      19,
+      20
+    ],
+    [
+      0,
+      17
+    ]
+  ],
+  "landmark_reference": "https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker",
+  "artwork_status": "Conceptual; no recognition result is claimed",
+  "text_outside_page": [],
+  "intentional_overlaps": [
+    "The cropped wrist exits the left edge.",
+    "The orange reply field intersects the teal quotation field.",
+    "The opening quotation marks cross the orange field boundary."
+  ]
+}

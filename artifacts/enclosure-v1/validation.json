@@ -1,0 +1,104 @@
+{
+  "unit": "millimeter",
+  "body_external": [
+    160,
+    120,
+    41
+  ],
+  "body_internal_nominal": [
+    154,
+    114,
+    38
+  ],
+  "assembled_case_height": 45,
+  "speaker_opening": [
+    31,
+    28
+  ],
+  "microphone_opening_diameter": 7.6,
+  "gimbal_base_from_user": [
+    36,
+    33
+  ],
+  "gimbal_total_height_from_user": 80,
+  "deck_opening": [
+    108,
+    92
+  ],
+  "gimbal_mounting_plane_z": 3,
+  "parts": [
+    {
+      "name": "enclosure_body",
+      "watertight": true,
+      "connected_bodies": 1,
+      "volume_mm3": 105911.00972130317,
+      "bounds_mm": [
+        160.0,
+        120.0,
+        41.0
+      ],
+      "triangles": 2300
+    },
+    {
+      "name": "gimbal_top_deck",
+      "watertight": true,
+      "connected_bodies": 1,
+      "volume_mm3": 37008.292754918104,
+      "bounds_mm": [
+        160.0,
+        120.0,
+        4.0
+      ],
+      "triangles": 1200
+    },
+    {
+      "name": "board_carrier_A",
+      "watertight": true,
+      "connected_bodies": 1,
+      "volume_mm3": 4755.673411291711,
+      "bounds_mm": [
+        46.0,
+        43.0,
+        4.199999809265137
+      ],
+      "triangles": 328
+    },
+    {
+      "name": "board_carrier_B",
+      "watertight": true,
+      "connected_bodies": 1,
+      "volume_mm3": 4755.673411291711,
+      "bounds_mm": [
+        46.0,
+        43.0,
+        4.199999809265137
+      ],
+      "triangles": 328
+    }
+  ],
+  "fit_verified": false,
+  "hardware_tested": false,
+  "assumptions": [
+    "Boards lie on floor; board footprints and connector heights unknown",
+    "45 mm interpreted as assembled lower enclosure height; body 41 mm plus deck 4 mm",
+    "Speaker thickness and mounting hole locations unknown",
+    "Gimbal sweep not measured; no printed wall above deck",
+    "Four M3x10 thread-forming screws are proposed; actual fit needs testing"
+  ],
+  "independent_3mf_import": {
+    "passed": true,
+    "objects": 4,
+    "build_bounds_mm": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        286.0,
+        211.5,
+        41.0
+      ]
+    ]
+  }
+}
