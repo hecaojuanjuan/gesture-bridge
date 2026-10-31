@@ -1,0 +1,57 @@
+{
+  "binary": "artifacts/headvoice-hand-voice-restored-20261031.bin",
+  "sha256": "b4175a0c09ce6f27517a05cb1f5afffbe724185cd5b7a701b9b9b4dee85faa6f",
+  "bytes": 3595616,
+  "elf_sha256": "87d44b90bbbff6886d5fb8e1752d95a819bf7915fdc40bb3d89279d99d415837",
+  "work": "hand-tick-watch",
+  "stage": 2,
+  "vision": "hand",
+  "servo_control": false,
+  "flash_performed": true,
+  "app_only_flash_verified": true,
+  "runtime_verified": false,
+  "camera_enabled": true,
+  "runtime_mode": "hand_camera_voice",
+  "flash_log": ".local/headvoice-hand-voice-restored-20261031-flash.log",
+  "flashed_at_utc": "2026-10-31T10:34:28.113072+00:00",
+  "on_board": true,
+  "control_task_stack_bytes": 8192,
+  "wdt_rom_implementation": false,
+  "interrupt_watchdog_enabled": true,
+  "diagnostic_watchpoints": true,
+  "voice_user_confirmed_on_same_image": true,
+  "voice_evidence_manifest": "artifacts/headvoice-hand-local-wdt-net-20261031.json",
+  "long_term_stability_verified": false,
+  "post_restore_observation": {
+    "runtime_log": ".local/voice-restored-final-20261031.jsonl",
+    "first_host_utc": "2026-10-31T10:34:30.248858+00:00",
+    "last_host_utc": "2026-10-31T10:35:06.361777+00:00",
+    "camera_reports": 35,
+    "hand_records": 113,
+    "events": [
+      {
+        "host_utc": "2026-10-31T10:34:37.281818+00:00",
+        "event": "cloud connecting"
+      },
+      {
+        "host_utc": "2026-10-31T10:34:39.857232+00:00",
+        "event": "cloud connected"
+      }
+    ],
+    "last_network": {
+      "ap_associated": true,
+      "ap_result": 0,
+      "rssi": -34,
+      "has_ip": true,
+      "ip_result": 0
+    },
+    "last_mic": {
+      "mic_packets": 1681,
+      "mic_bytes": 860672,
+      "mic_nonzero": 327046,
+      "mic_peak": 640,
+      "mic_age_ms": 21
+    },
+    "serial_monitor_stopped": true
+  }
+}

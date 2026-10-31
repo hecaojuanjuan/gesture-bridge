@@ -8,7 +8,7 @@
 
 #include "agent_app.h"
 #include "bsp_camera.h"
-#include "bsp_ws2812.h"
+#include "hv_panel.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -23,6 +23,12 @@
 #include "qm_audio_control.h"
 #include "qm_errno.h"
 #include "yolo11_pose.h"
+#if HV_FACE_BACKEND
+#include "hv_face_pose.h"
+#if HV_STAGE == 2
+#include "hv_face_gimbal.h"
+#endif
+#endif
 
 #define RAW_BYTES (240 * 320 * 2)
 #define RAW_COUNT 2
@@ -38,7 +44,12 @@ typedef struct
 {
   hv_observation_t observation;
   unsigned epoch, people;
-  uint32_t inferenceMs;
+  uint32_t inferenceMs, conversionMs, modelMs;
+  float eyeSpan;
+#if HV_FACE_BACKEND && HV_STAGE == 2
+  bool targetValid;
+  float targetX, targetY;
+#endif
 } hv_result_t;
 typedef struct
 {
@@ -61,7 +72,6 @@ static portMUX_TYPE s_guard = portMUX_INITIALIZER_UNLOCKED;
 static unsigned s_epoch;
 static atomic_uint s_dropped, s_captured;
 static bool s_audioFault;
-static bool s_ledReady;
 
 #define AUDIO_SYMBOLS(code)                                                       \
   extern const uint8_t hv_##code##_start[] asm("_binary_hv_" #code "_pcm_start"); \
@@ -76,7 +86,10 @@ static uint64_t now_ms(void) { return (uint64_t)(esp_timer_get_time() / 1000); }
 static unsigned epoch(bool invalidate)
 {
   portENTER_CRITICAL(&s_guard);
-  if (invalidate) ++s_epoch;
+  if (invalidate) {
+    ++s_epoch;
+    hv_panel_pose_epoch(s_epoch);
+  }
   unsigned value = s_epoch;
   portEXIT_CRITICAL(&s_guard);
   return value;
@@ -121,6 +134,9 @@ static void camera_frame(
 static void inference_task(void * argument)
 {
   (void)argument;
+#if HV_FACE_BACKEND && HV_FACE_SELFTEST
+  hv_face_pose_selftest();
+#endif
   for (;;) {
     hv_frame_t * frame;
     if (xQueueReceive(s_pending, &frame, portMAX_DELAY) != pdTRUE) continue;
@@ -137,13 +153,29 @@ static void inference_task(void * argument)
     ret = yolo11_pose_uyvy_to_rgb888(
 #endif
       frame->data, RAW_BYTES, 240, 320, &rgb, &width, &height);
+    result.conversionMs = (uint32_t)(now_ms() - started);
     /* RGB is a separate resident model buffer, owned only by this task.
      * Raw input is no longer needed once conversion returns. */
     xQueueSend(s_free, &frame, 0);
     yolo11_pose_frame_result_t pose = {0};
+    if (ret == ESP_OK)
+      hv_camera_preview_offer_model_input(rgb, width, height, result.observation.capturedMs);
+    uint64_t modelStarted = now_ms();
     if (ret == ESP_OK) {
+#if HV_FACE_BACKEND
+      hv_face_target_t target = {0};
+      ret = hv_face_pose_analyze_rgb888(rgb, width, height, &pose, &target);
+#if HV_STAGE == 2
+      result.targetValid = target.valid;
+      result.targetX = target.x;
+      result.targetY = target.y;
+#endif
+#else
       ret = yolo11_pose_analyze_rgb888(rgb, width, height, "live", &pose);
+#endif
     }
+    result.modelMs = (uint32_t)(now_ms() - modelStarted);
+    result.eyeSpan = hypotf(pose.eye_x2 - pose.eye_x1, pose.eye_y2 - pose.eye_y1);
     result.people = pose.person_count;
     result.observation.valid =
       ret == ESP_OK && pose.person_count == 1 && pose.head_valid &&
@@ -244,7 +276,6 @@ static void audio_task(void * argument)
 
 static void set_light(HvState state, bool blue)
 {
-  if (!s_ledReady) return;
   uint8_t r = 0, g = 0, b = 0;
   if (blue)
     b = 32;
@@ -252,7 +283,7 @@ static void set_light(HvState state, bool blue)
     r = g = 24;
   else if (state == HV_CALIBRATING)
     r = g = b = 8;
-  bsp_ws2812_fill(r, g, b);
+  hv_panel_status_light(r, g, b);
 }
 
 static void core_task(void * argument)
@@ -266,12 +297,20 @@ static void core_task(void * argument)
   bool blue = false;
   bool oldBlue = false;
   HvState oldState = HV_SPEAKING;
-  ESP_LOGI(TAG, "HV stage=%d; stage 3 calibrates a comfortable neutral posture", HV_STAGE);
+  ESP_LOGI(TAG, "HV stage=%d vision=%s; stage 3 calibrates a comfortable neutral posture",
+           HV_STAGE, HV_VISION_BACKEND_NAME);
+  hv_panel_pose(HV_STAGE, 0, 0, 0, false, false, 0, seenEpoch);
   for (;;) {
     uint64_t now = now_ms();
+#if HV_FACE_BACKEND && HV_STAGE == 2
+    hv_face_gimbal_tick(now);
+#endif
     unsigned currentEpoch = epoch(false);
     if (currentEpoch != seenEpoch) {
       hv_invalidate(&core, now);
+#if HV_FACE_BACKEND && HV_STAGE == 2
+      hv_face_gimbal_clear_target();
+#endif
       seenEpoch = currentEpoch;
       ESP_LOGW(TAG, "HV reset reason=invalid_frame_or_pose epoch=%u", currentEpoch);
     }
@@ -281,19 +320,30 @@ static void core_task(void * argument)
       inferred++;
       inferTotal += result.inferenceMs;
       if (result.inferenceMs > inferMax) inferMax = result.inferenceMs;
-      bool fresh = result.epoch == seenEpoch && result.observation.valid &&
+      bool fresh = result.epoch == seenEpoch && result.epoch == epoch(false) &&
+                   result.observation.valid &&
                    now >= result.observation.capturedMs &&
                    now - result.observation.capturedMs <= core.config.maxAgeMs;
+#if HV_FACE_BACKEND && HV_STAGE == 2
+      hv_face_gimbal_observe(result.people, fresh && result.targetValid,
+                             result.targetX, result.targetY,
+                             result.observation.capturedMs, now);
+#endif
       valid += fresh;
+      hv_panel_pose(HV_STAGE, result.observation.capturedMs, result.people,
+                    result.observation.tiltDegrees, result.observation.valid, fresh,
+                    result.inferenceMs, result.epoch);
       printf(
         "HV {\"event\":\"pose\",\"captured_ms\":%llu,\"age_ms\":%llu,"
-        "\"tilt\":%.2f,\"people\":%u,\"tracking_valid\":%s,\"valid\":%s,\"infer_ms\":%u}\n",
+        "\"tilt\":%.2f,\"people\":%u,\"tracking_valid\":%s,\"valid\":%s,\"infer_ms\":%u,"
+        "\"conversion_ms\":%u,\"model_ms\":%u,\"eye_span_px\":%.2f}\n",
         (unsigned long long)result.observation.capturedMs,
         (unsigned long long)(now >= result.observation.capturedMs
                                ? now - result.observation.capturedMs
                                : 0),
         result.observation.tiltDegrees, result.people, result.observation.valid ? "true" : "false",
-        fresh ? "true" : "false", (unsigned)result.inferenceMs);
+        fresh ? "true" : "false", (unsigned)result.inferenceMs,
+        (unsigned)result.conversionMs, (unsigned)result.modelMs, (double)result.eyeSpan);
       if (fresh && HV_STAGE == 3)
         out = hv_observe(&core, result.observation, now);
       else
@@ -341,7 +391,7 @@ static void core_task(void * argument)
       for (;;) vTaskDelay(pdMS_TO_TICKS(1000));
     }
     if (oldState != core.state || oldBlue != blue) {
-      set_light(core.state, blue);
+      if (HV_STAGE == 3) set_light(core.state, blue);
       oldState = core.state;
       oldBlue = blue;
     }
@@ -378,11 +428,17 @@ esp_err_t headvoice_start(void)
     xQueueSend(s_free, &frame, 0);
   }
   /* Model initialization is deferred until the official voice/cloud startup. */
+#if HV_FACE_BACKEND
+  esp_err_t ret = HV_STAGE >= 2 ? hv_face_pose_init() : ESP_OK;
+#else
   esp_err_t ret = HV_STAGE >= 2 ? yolo11_pose_init() : ESP_OK;
+#endif
   if (ret != ESP_OK) return ret;
+#if HV_FACE_BACKEND && HV_STAGE == 2
+  ret = hv_face_gimbal_init();
+  if (ret != ESP_OK) ESP_LOGE(TAG, "Face gimbal unavailable: %s", esp_err_to_name(ret));
+#endif
   esp_log_level_set("yolo11n-pose", ESP_LOG_WARN);
-  s_ledReady = bsp_ws2812_init() == QM_EOK;
-  if (!s_ledReady) ESP_LOGW(TAG, "RGB unavailable");
   ret = bsp_camera_early_init();
   if (ret != ESP_OK) return ret;
   if (hv_camera_preview_init() != ESP_OK) ESP_LOGW(TAG, "Camera preview unavailable");

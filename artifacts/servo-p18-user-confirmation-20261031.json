@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-31",
+  "gpio": 18,
+  "firmware_axis": "tilt",
+  "user_feedback": "俯仰的也可以转动了 但似乎角度有点小",
+  "physical_motion_user_confirmed": true,
+  "bracket_coupling_separately_verified": false,
+  "angle_calibrated": false,
+  "prior_manual_command_span_us": 25,
+  "suggested_next_span_us": 100,
+  "suggested_next_pulse_bounds_us": [
+    1400,
+    1600
+  ],
+  "larger_span_tested_this_turn": false,
+  "agent_sent_motion_this_turn": false,
+  "firmware": "servo-minimal (last confirmed flash); no new flash this turn",
+  "serial_protocol_verified": true,
+  "recent_manual_logs": [
+    {
+      "log": "artifacts/servo-minimal-20261031-142705-531570.jsonl",
+      "sequence_verified": true,
+      "stopped_verified": true,
+      "lease_delay_ms": 2514
+    },
+    {
+      "log": "artifacts/servo-minimal-20261031-142716-136356.jsonl",
+      "sequence_verified": true,
+      "stopped_verified": true,
+      "lease_delay_ms": 2517
+    }
+  ]
+}

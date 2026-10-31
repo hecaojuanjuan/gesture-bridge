@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-31",
+  "environment": ".tools/hand-training",
+  "python": "3.9.6",
+  "architecture": "arm64",
+  "packages": {
+    "torch": "1.12.0",
+    "numpy": "1.26.4",
+    "Pillow": "11.3.0",
+    "typing-extensions": "4.16.0"
+  },
+  "pip_check_passed": true,
+  "numpy_torch_roundtrip_passed": true,
+  "classifier_host_tests": {
+    "passed": 7,
+    "includes_temporary_synthetic_training_export_test": true
+  },
+  "real_training_performed": false,
+  "real_dataset_manifest_present": false,
+  "device_operations": false
+}

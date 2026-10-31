@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-31",
+  "binary": "artifacts/headvoice-hand-local-wdt-20261031.bin",
+  "sha256": "fdb98a7d583a875d40cc1a2aee1c69978ed41852849cb7d7dcc704d9157722d9",
+  "bytes": 3595280,
+  "elf_sha256": "d4786db3257ed9803310bdaf19636b3a4fdcb255136a5979d45c75144adb9757",
+  "wdt_rom_implementation": false,
+  "interrupt_watchdog_enabled": true,
+  "control_task_stack_bytes": 8192,
+  "watchpoints_enabled": true,
+  "stage": 2,
+  "vision": "hand",
+  "servo_control": false,
+  "build_passed": true,
+  "build_log": ".local/hand-tick-local-wdt-build-20261031.log",
+  "flash_performed": false,
+  "runtime_verified": false
+}

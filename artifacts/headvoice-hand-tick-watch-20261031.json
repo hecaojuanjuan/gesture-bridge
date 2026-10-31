@@ -1,0 +1,19 @@
+{
+  "binary": "artifacts/headvoice-hand-tick-watch-20261031.bin",
+  "sha256": "8d77055fca73e71f9a56dba0cfe1f33e7736ea23f23c1baf0bbca0706f01d6f3",
+  "bytes": 3594000,
+  "elf_sha256": "b62ffd6146cdce537c7e71ffca5fe54740d33b1fb56265db9f334abb1b8bc184",
+  "work": "hand-tick-watch",
+  "stage": 2,
+  "vision": "hand",
+  "servo_control": false,
+  "flash_performed": true,
+  "app_only_flash_verified": true,
+  "runtime_verified": false,
+  "flash_log": ".local/headvoice-hand-tick-watch-20261031-flash.log",
+  "flashed_at_utc": "2026-10-31T10:09:49.680840+00:00",
+  "startup_validation": "failed_diagnostic_printf_assert",
+  "runtime_log": ".local/voice-tick-watch-20261031.jsonl",
+  "failure": "Diagnostic printf in IPC task asserted in xQueueSemaphoreTake; not evidence of original tick-hook failure",
+  "replaced_by": "artifacts/headvoice-hand-tick-watch2-20261031.json"
+}

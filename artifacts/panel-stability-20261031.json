@@ -1,0 +1,124 @@
+{
+  "duration_seconds": 180.1,
+  "firmware_sha256": "27a148bc9ee805d5d2a529ef09aa21cb0850372ec8c1aaed4c868921b2ba8602",
+  "memory_config": "Flash/PSRAM 80 MHz; boot PSRAM test; light heap poisoning",
+  "report_count": 39,
+  "boot_ids": [
+    1666050084,
+    2636002494,
+    3233965775,
+    3240839846,
+    3362076375
+  ],
+  "first_uptime_ms": 3912,
+  "last_uptime_ms": 24783,
+  "faults": [
+    "Guru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled.",
+    "Rebooting...",
+    "Guru Meditation Error: Core  / panic'ed (Cache disabled but cached memory region accessed).",
+    "Rebooting...",
+    "Guru Meditation Error: Core  0 panic'ed (StoreProhibited). Exception was unhandled.",
+    "Rebooting...",
+    "Guru Meditation Error: Core  0 panic'ed (LoadProhibited). Exception was unhandled.",
+    "Rebooting..."
+  ],
+  "memory_log": [
+    "I (38) boot.esp32s3: Boot SPI Speed : 80MHz",
+    "I (667) esp_psram: Speed: 80MHz",
+    "I (1062) esp_psram: SPI SRAM memory test OK",
+    "I (42) boot.esp32s3: Boot SPI Speed : 80MHz",
+    "I (671) esp_psram: Speed: 80MHz",
+    "I (1066) esp_psram: SPI SRAM memory test OK",
+    "I (42) boot.esp32s3: Boot SPI Speed : 80MHz",
+    "I (671) esp_psram: Speed: 80MHz",
+    "I (1066) esp_psram: SPI SRAM memory test OK",
+    "I (42) boot.esp32s3: Boot SPI Speed : 80MHz",
+    "I (671) esp_psram: Speed: 80MHz",
+    "I (1066) esp_psram: SPI SRAM memory test OK",
+    "I (42) boot.esp32s3: Boot SPI Speed : 80MHz",
+    "I (671) esp_psram: Speed: 80MHz",
+    "I (1066) esp_psram: SPI SRAM memory test OK"
+  ],
+  "network_transitions": [
+    "I (2939) wifi:state: init -> auth (0xb0)",
+    "I (2944) wifi:state: auth -> assoc (0x0)",
+    "I (2975) wifi:state: assoc -> run (0x10)",
+    "[012228]<D> mqtt connect success!",
+    "[012228]<D> mqtt connect success",
+    "I (2917) wifi:state: init -> auth (0xb0)",
+    "I (3918) wifi:state: auth -> init (0x200)",
+    "I (6358) wifi:state: init -> auth (0xb0)",
+    "I (6387) wifi:state: auth -> assoc (0x0)",
+    "I (6424) wifi:state: assoc -> run (0x10)",
+    "[013167]<D> mqtt connect success!",
+    "[013167]<D> mqtt connect success",
+    "I (3162) wifi:state: init -> auth (0xb0)",
+    "I (4162) wifi:state: auth -> init (0x200)",
+    "I (6599) wifi:state: init -> auth (0xb0)",
+    "I (6610) wifi:state: auth -> assoc (0x0)",
+    "I (6634) wifi:state: assoc -> run (0x10)",
+    "[013101]<D> mqtt connect success!",
+    "[013101]<D> mqtt connect success",
+    "I (2887) wifi:state: init -> auth (0xb0)",
+    "I (3888) wifi:state: auth -> init (0x200)",
+    "I (6342) wifi:state: init -> auth (0xb0)",
+    "I (6360) wifi:state: auth -> assoc (0x0)",
+    "I (6381) wifi:state: assoc -> run (0x10)",
+    "I (2889) wifi:state: init -> auth (0xb0)",
+    "I (3890) wifi:state: auth -> init (0x200)",
+    "I (6386) wifi:state: init -> auth (0xb0)",
+    "I (6394) wifi:state: auth -> assoc (0x0)",
+    "I (6455) wifi:state: assoc -> run (0x10)",
+    "[013235]<D> mqtt connect success!",
+    "[013235]<D> mqtt connect success"
+  ],
+  "pose": {
+    "samples": 27,
+    "tracked_samples": 5,
+    "fresh_tracked_samples": 0,
+    "tracked_age_ms": {
+      "n": 5,
+      "median": 5476,
+      "p95": 5894,
+      "max": 5894
+    },
+    "capture_gap_ms": {
+      "n": 26,
+      "median": 5381.0,
+      "p95": 6264,
+      "max": 6397
+    },
+    "inference_ms": {
+      "n": 27,
+      "median": 5393,
+      "p95": 6273,
+      "max": 6377
+    },
+    "conversion_ms": {
+      "n": 27,
+      "median": 61,
+      "p95": 82,
+      "max": 96
+    },
+    "model_ms": {
+      "n": 27,
+      "median": 5326,
+      "p95": 6230,
+      "max": 6314
+    },
+    "eye_span_px": {
+      "n": 5,
+      "median": 40.0,
+      "p95": 46.0,
+      "max": 46.0
+    },
+    "timing_gate_passed": false,
+    "reasons": [
+      "Need at least 30 tracked observations over at least 30 seconds",
+      "Tracked result age exceeds 400 ms or no tracked result exists",
+      "Capture interval exceeds 400 ms, is non-monotonic, or is unknown"
+    ],
+    "gesture_accuracy_verified": false,
+    "note": "Timing only. Requires separate neutral stability, occlusion, multiple-person and independent gesture trials."
+  }
+}

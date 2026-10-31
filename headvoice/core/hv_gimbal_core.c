@@ -8,6 +8,10 @@ void hv_gimbal_reset(hv_gimbal_t * core)
   memset(core, 0, sizeof(*core));
   core->pulse[0] = core->pulse[1] = 1500;
   core->direction[0] = core->direction[1] = 1;
+  core->minPulseUs = 1300;
+  core->maxPulseUs = 1700;
+  core->maxStepUs = 35;
+  core->maxAgeMs = 6000;
   core->previousAxis = -1;
 }
 
@@ -35,7 +39,7 @@ HvGimbalResult hv_gimbal_observe(
   if (nowMs >= core->deadlineMs) return stop(core, HV_GIMBAL_TIMEOUT);
   if (
     capturedMs <= core->lastCaptureMs || capturedMs <= core->acceptAfterMs || capturedMs > nowMs ||
-    nowMs - capturedMs > 6000)
+    nowMs - capturedMs > core->maxAgeMs)
     return HV_GIMBAL_STALE;
   core->lastCaptureMs = capturedMs;
   if (people != 1 || !headValid || !isfinite(x) || !isfinite(y) || x < 0 || x > 1 || y < 0 || y > 1)
@@ -60,9 +64,10 @@ HvGimbalResult hv_gimbal_observe(
     return stop(core, HV_GIMBAL_WRONG_DIRECTION);
   int step = (int)(fabsf(error[axis]) * 100);
   if (step < 10) step = 10;
-  if (step > 35) step = 35;
+  if (step > core->maxStepUs) step = core->maxStepUs;
   int target = core->pulse[axis] + (error[axis] > 0 ? step : -step) * core->direction[axis];
-  if (target < 1300 || target > 1700) return stop(core, HV_GIMBAL_LIMIT);
+  if (target < core->minPulseUs || target > core->maxPulseUs)
+    return stop(core, HV_GIMBAL_LIMIT);
   core->pulse[axis] = target;
   core->previousAxis = axis;
   core->previousError = fabsf(error[axis]);

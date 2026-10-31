@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--seconds", type=float)
     parser.add_argument("words", nargs="+")
     args = parser.parse_args()
-    arity = {"status": 1, "pwm": 1, "probe": 1, "arm": 2, "jog": 3,
+    arity = {"status": 1, "target": 1, "pwm": 1, "probe": 1, "arm": 2, "jog": 3,
              "dir": 3, "start": 1, "stop": 1}
     action = args.words[0]
     if (action not in arity or len(args.words) != arity[action] or
@@ -55,6 +55,9 @@ def main():
                     raise RuntimeError(
                         "Device rejected, stopped, or restarted")
                 if event:
+                    if action == "target" and event["event"] == "target":
+                        completed = True
+                        break
                     if action == "probe" and event["event"] == "observation":
                         completed = True
                         break

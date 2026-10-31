@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-31",
+  "port": "/dev/cu.usbmodem5CE41521721",
+  "baud": 115200,
+  "gimbal_status_received": true,
+  "events": [
+    "GIMBAL {\"event\":\"status\",\"active\":false,\"pan_us\":1500,\"tilt_us\":1500,\"pan_armed\":false,\"tilt_armed\":false,\"pan_dir\":1,\"tilt_dir\":1,\"directions_ready\":false,\"steps\":0}",
+    "HVCAM WAIT",
+    "HVCAM BEGIN 120 160 38400 151440 1",
+    "HVCAM END 3315f2e2"
+  ],
+  "snapshot": {
+    "path": "/Users/emt/Workspace/hackathon/gesture-bridge/.local/camera-preview-mac-20261031.png",
+    "source_width": 120,
+    "source_height": 160,
+    "rotate_cw90": true,
+    "captured_ms": 151440,
+    "checksum_verified": true
+  },
+  "motion_commands_sent": false,
+  "latest_passive_log": [
+    "I (220726) bsp_camera: got 6090 frames good=6090 empty=0 last_bytes=153600 dt=1000 ms",
+    "I (221725) bsp_camera: got 6120 frames good=6120 empty=0 last_bytes=153600 dt=999 ms",
+    "I (222725) bsp_camera: got 6150 frames good=6150 empty=0 last_bytes=153600 dt=1000 ms",
+    "I (223725) bsp_camera: got 6180 frames good=6180 empty=0 last_bytes=153600 dt=1000 ms",
+    "I (224724) bsp_camera: got 6210 frames good=6210 empty=0 last_bytes=153600 dt=999 ms",
+    "I (225724) bsp_camera: got 6240 frames good=6240 empty=0 last_bytes=153600 dt=1000 ms",
+    "I (226723) bsp_camera: got 6270 frames good=6270 empty=0 last_bytes=153600 dt=999 ms",
+    "I (227723) bsp_camera: got 6300 frames good=6300 empty=0 last_bytes=153600 dt=1000 ms"
+  ],
+  "network_followup_log": [
+    "#",
+    "# help",
+    "====Build-in Commands====",
+    "====Support six cmds once, seperate by ; ====",
+    "help:",
+    "sysver:",
+    "reboot: reboot system",
+    "time: system time",
+    "====User Commands====",
+    "hv_provision: status|restart: inspect product or clear Wi-Fi and restart BLE provisioning",
+    "hv_voice: stats|debug: inspect microphone and actual RTC send counters",
+    "alarm: alarm list|next|state|add <+N|HH:MM>|del <id>|on <id>|off <id>|close|snooze|cancel|clear|test",
+    "hv_camera: snapshot: export one RGB565 camera preview over serial",
+    "hv_gimbal: status|pwm|probe|arm <axis>|jog <axis> <us>|dir <pan> <tilt>|start|stop",
+    "#",
+    "[590811]<I> send MQTT ping...",
+    "[596870]<I> send MQTT ping...",
+    "[602377]<I> receive ping response!",
+    "I (612338) wifi:bcn_timeout,ap_probe_send_start"
+  ],
+  "user_scope": "Check connection and camera; defer servo debugging.",
+  "network_assessment": "Initial disconnections; later MQTT ping response received, followed by beacon timeout warning. Sustained stability unverified."
+}

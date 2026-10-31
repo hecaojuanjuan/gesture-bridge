@@ -1,0 +1,197 @@
+{
+  "binary": "artifacts/headvoice-hand-tick-watch2-20261031.bin",
+  "sha256": "07806aec06275394e2e572675a674599a75fd4dfc1f5a05cfbde4dd831c995fb",
+  "bytes": 3594000,
+  "elf_sha256": "686add502edef371c50e4b846c161dec8dbb3f81b31d95449f966295b033d410",
+  "work": "hand-tick-watch",
+  "stage": 2,
+  "vision": "hand",
+  "servo_control": false,
+  "flash_performed": true,
+  "app_only_flash_verified": true,
+  "runtime_verified": false,
+  "flash_log": ".local/headvoice-hand-tick-watch2-20261031-flash.log",
+  "flashed_at_utc": "2026-10-31T10:14:23.852539+00:00",
+  "startup_validation": "failed_rom_wdt_panics_without_watchpoint_trigger",
+  "runtime_log": ".local/voice-tick-watch2-20261031.jsonl",
+  "events": [
+    {
+      "host_utc": "2026-10-31T10:14:47.433006+00:00",
+      "line": "Guru Meditation Error: Core  0 panic'ed (LoadProhibited). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:14:48.775493+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:48.775711+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:48.775904+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:48.776051+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:52.695051+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:52.695207+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:52.695361+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:52.695443+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:55.729921+00:00",
+      "line": "# Guru Meditation Error: Core  0 panic'ed (StoreProhibited). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:14:57.072432+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:57.072617+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:57.072867+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:14:57.073170+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:00.139419+00:00",
+      "line": "Guru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:15:01.481780+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:01.481907+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:01.481979+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:01.482032+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:13.627826+00:00",
+      "line": "Guru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:15:14.969988+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:14.970144+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:14.970248+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:14.970329+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:16.666822+00:00",
+      "line": "Guru Meditation Error: Core  0 panic'ed (StoreProhibited). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:15:18.008983+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:18.009093+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:18.009166+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:18.009274+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:22.291073+00:00",
+      "line": "Guru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:15:23.633310+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:23.633411+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:23.633473+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:23.633530+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:30.748271+00:00",
+      "line": "Guru Meditation Error: Core  0 panic'ed (StoreProhibited). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:15:32.090477+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:32.090563+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:32.090614+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:32.090680+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:43.218768+00:00",
+      "line": "Guru Meditation Error: Core  0 panic'ed (Coprocessor exception). "
+    },
+    {
+      "host_utc": "2026-10-31T10:15:44.565350+00:00",
+      "line": "HVWDT armed core=0 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:44.565425+00:00",
+      "line": "HVTICK armed core=0 addr=0x3fcaea00 size=64 first=0x4037ac90"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:44.565476+00:00",
+      "line": "HVWDT armed core=1 addr=0x3fcae9b0 size=8"
+    },
+    {
+      "host_utc": "2026-10-31T10:15:44.565521+00:00",
+      "line": "HVTICK armed core=1 addr=0x3fcaea00 size=64 first=0x403798dc"
+    }
+  ],
+  "watchpoint_scope": "both CPUs: tick callback array and WDT HAL context; no observed debug exception",
+  "wdt_rom_implementation": true
+}

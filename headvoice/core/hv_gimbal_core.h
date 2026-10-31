@@ -17,6 +17,8 @@ typedef enum {
 typedef struct
 {
   int pulse[2], direction[2];
+  int minPulseUs, maxPulseUs, maxStepUs;
+  uint32_t maxAgeMs;
   bool active;
   unsigned centered, steps, worsening;
   int previousAxis;

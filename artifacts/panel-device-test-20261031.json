@@ -1,0 +1,273 @@
+{
+  "host_utc": "2026-10-31T04:00:40.319015+00:00",
+  "serial_protocol_verified": true,
+  "driver_receipts_verified": true,
+  "optical_led_output_verified": false,
+  "cloud_round_trip_verified": false,
+  "events": [
+    {
+      "command": "get",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 896059640,
+        "ok": true,
+        "uptime_ms": 1223,
+        "mode": 0,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          0,
+          0,
+          0
+        ],
+        "test_ms": 0,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 2188
+    },
+    {
+      "command": "set 1 20 80 190 255",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 682233989,
+        "ok": true,
+        "uptime_ms": 1284,
+        "mode": 1,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          3,
+          7,
+          9
+        ],
+        "test_ms": 0,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 64
+    },
+    {
+      "command": "test",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 281305513,
+        "ok": true,
+        "uptime_ms": 1347,
+        "mode": 1,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          32,
+          0,
+          0
+        ],
+        "test_ms": 5000,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 60
+    },
+    {
+      "command": "get",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 165382738,
+        "ok": true,
+        "uptime_ms": 2609,
+        "mode": 1,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          0,
+          32,
+          0
+        ],
+        "test_ms": 3738,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 61
+    },
+    {
+      "command": "test",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 281305513,
+        "ok": true,
+        "uptime_ms": 2671,
+        "mode": 1,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          0,
+          32,
+          0
+        ],
+        "test_ms": 3676,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 63
+    },
+    {
+      "command": "get",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 245149931,
+        "ok": true,
+        "uptime_ms": 6684,
+        "mode": 1,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          3,
+          7,
+          9
+        ],
+        "test_ms": 0,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 30
+    },
+    {
+      "command": "set 2 20 80 190 255",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 669447221,
+        "ok": true,
+        "uptime_ms": 6745,
+        "mode": 2,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          0,
+          0,
+          0
+        ],
+        "test_ms": 0,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 62
+    },
+    {
+      "command": "set 0 20 80 190 255",
+      "report": {
+        "v": 1,
+        "boot": 4211190483,
+        "id": 553676852,
+        "ok": true,
+        "uptime_ms": 6806,
+        "mode": 0,
+        "brightness": 20,
+        "rgb": [
+          80,
+          190,
+          255
+        ],
+        "output": [
+          0,
+          0,
+          0
+        ],
+        "test_ms": 0,
+        "stage": 0,
+        "pose": {
+          "age_ms": 4294967295,
+          "people": 0,
+          "tilt": 0.0,
+          "tracking": false,
+          "valid": false,
+          "infer_ms": 0
+        }
+      },
+      "round_trip_ms": 73
+    }
+  ]
+}

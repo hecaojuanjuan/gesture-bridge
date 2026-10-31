@@ -1,0 +1,13 @@
+{
+  "artifact": "headvoice-panel.zip",
+  "bytes": 23289,
+  "sha256": "9c5c9fbbeea0b76beda8fbcf37fb5936e236f24164b0974da4f7fbbc1ebfa489",
+  "protocol": {
+    "version": 1,
+    "siid": 12,
+    "commandPiid": 1,
+    "reportPiid": 2,
+    "status": "platform-approved-version-2"
+  },
+  "hardware_verified": false
+}

@@ -163,8 +163,11 @@ hv_effect_t hv_observe(hv_core_t * core, hv_observation_t obs, uint64_t nowMs)
         obs.capturedMs - core->windowStart >= core->config.holdMs &&
         core->samples >= core->config.minSamples)
         core->held = true;
-    } else if (core->held && fabsf(delta) <= core->config.releaseDegrees) {
-      core->phase = 2;
+    } else if (core->held && sign == 0) {
+      /* A completed hold survives a gradual return through the hysteresis
+       * band. Opposite actions still invalidate; the original timeout and
+       * fresh-sample checks remain in force. */
+      if (fabsf(delta) <= core->config.releaseDegrees) core->phase = 2;
     } else {
       return hv_invalidate(core, nowMs);
     }

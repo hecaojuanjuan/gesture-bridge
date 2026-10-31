@@ -1,0 +1,391 @@
+{
+  "date": "2026-10-31",
+  "manual_default_wake_word": "你好，小灵",
+  "device_reported_wake_word": "你好小鹰",
+  "user_feedback": {
+    "before_hotspot": "Both phrases had no response; boot sound audible",
+    "hotspot": "Original hotspot had been off; user enabled it",
+    "after_hotspot": "Wake prompt audible, no answer"
+  },
+  "observations": [
+    {
+      "raw_log": ".local/voice-wake-observe-20261031.jsonl",
+      "raw_log_sha256": "db90acce8de5cbb004466105ea1d5f4b6dfd2f61f074538de89b2cd0601fcc1f",
+      "start_utc": "2026-10-31T09:22:38.366254+00:00",
+      "end_utc": "2026-10-31T09:25:37.920829+00:00",
+      "stats_samples": 17,
+      "invalid_stats_lines": 0,
+      "mic_bytes_per_second_median": 31999,
+      "mic_peak_max": 4558,
+      "tx_packets_max": 0,
+      "boots": [
+        4017074024
+      ],
+      "camera_reports": 174,
+      "camera_first": [
+        11,
+        11,
+        0
+      ],
+      "camera_last": [
+        2829,
+        2829,
+        0
+      ],
+      "camera_empty_max": 0,
+      "events": [
+        {
+          "host_utc": "2026-10-31T09:22:38.366254+00:00",
+          "kind": "rom_start",
+          "values": []
+        },
+        {
+          "host_utc": "2026-10-31T09:22:41.911052+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "1",
+            "3000",
+            "1"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:22:47.457058+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "2",
+            "6000",
+            "1"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:22:56.022887+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "3",
+            "12000",
+            "1"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:23:10.149016+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "4",
+            "24000",
+            "1"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:23:36.889111+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "5",
+            "30000",
+            "1"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:24:09.182048+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "6",
+            "30000",
+            "1"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:24:41.452368+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "7",
+            "30000",
+            "1"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:24:41.958315+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "8",
+            "30000",
+            "6"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:25:14.734388+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "9",
+            "30000",
+            "1"
+          ]
+        }
+      ]
+    },
+    {
+      "raw_log": ".local/voice-hotspot-recovery-20261031.jsonl",
+      "raw_log_sha256": "899bdfffcea7ed3d224bc994e1cf20adca9f27d7c6528a620055c84a389e108a",
+      "start_utc": "2026-10-31T09:26:41.258953+00:00",
+      "end_utc": "2026-10-31T09:31:26.720978+00:00",
+      "stats_samples": 26,
+      "invalid_stats_lines": 2,
+      "mic_bytes_per_second_median": 32010,
+      "mic_peak_max": 32768,
+      "tx_packets_max": 0,
+      "boots": [
+        1809020884,
+        4017074024
+      ],
+      "camera_reports": 275,
+      "camera_first": [
+        3852,
+        3852,
+        0
+      ],
+      "camera_last": [
+        2452,
+        2452,
+        0
+      ],
+      "camera_empty_max": 0,
+      "events": [
+        {
+          "host_utc": "2026-10-31T09:26:50.801955+00:00",
+          "kind": "mqtt_ping_response",
+          "values": []
+        },
+        {
+          "host_utc": "2026-10-31T09:27:51.108553+00:00",
+          "kind": "mqtt_ping_response",
+          "values": []
+        },
+        {
+          "host_utc": "2026-10-31T09:28:35.180346+00:00",
+          "kind": "wake",
+          "values": [
+            "你好小鹰"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:28:35.180813+00:00",
+          "kind": "agent_start",
+          "values": [
+            "0",
+            "starting"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:28:35.795538+00:00",
+          "kind": "stack_overflow",
+          "values": [
+            "qm_agent_ctl"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:28:35.826087+00:00",
+          "kind": "rom_start",
+          "values": []
+        },
+        {
+          "host_utc": "2026-10-31T09:28:37.713688+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "1",
+            "3000",
+            "2"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:28:43.116479+00:00",
+          "kind": "wifi_retry",
+          "values": [
+            "2",
+            "6000",
+            "2"
+          ]
+        },
+        {
+          "host_utc": "2026-10-31T09:28:58.627487+00:00",
+          "kind": "cloud_connected",
+          "values": []
+        },
+        {
+          "host_utc": "2026-10-31T09:29:58.260403+00:00",
+          "kind": "mqtt_ping_response",
+          "values": []
+        },
+        {
+          "host_utc": "2026-10-31T09:30:58.564306+00:00",
+          "kind": "mqtt_ping_response",
+          "values": []
+        }
+      ]
+    }
+  ],
+  "finding": "qm_agent_ctl stack overflow after wake during Agora startup; existing default 3072 bytes",
+  "candidate": {
+    "control_stack_bytes": 8192,
+    "build_status": "passed",
+    "flashed": true,
+    "manifest": "artifacts/headvoice-hand-voice-stack-20261031.json",
+    "flash_status": "complete_hash_verified",
+    "runtime_status": "failed_repeated_panics"
+  },
+  "limitations": [
+    "No matching archived ELF was found for the old image; stack-overflow task name is taken directly from the crash log.",
+    "No ASR/TTS or audible answer in the pre-fix test.",
+    "Camera/voice concurrency remains unverified until candidate device tests."
+  ],
+  "flash_transport": {
+    "initial_460800_partition_read": "invalid_packet_before_any_write",
+    "115200_application_write": "lost_connection_at_58_percent_then_retry_failed_at_16_percent",
+    "application_complete": true,
+    "user_connection": "USB hub; user reported no movement",
+    "recovery_next": "Prefer direct USB connection, then write and verify complete application only",
+    "recovery_result": "Same USB hub, 115200: complete write and hash verified after user closed another test window",
+    "user_reported_possible_conflict": true,
+    "conflict_causality_proven": false,
+    "recovery_log": ".local/hand-voice-stack-recovery-20261031.log"
+  },
+  "postflash": {
+    "raw_log": ".local/voice-stack-postflash-20261031.jsonl",
+    "raw_log_sha256": "ed09ca684d027000d909eaadb471c2a0cc58b493232cfd17b4925321d5c8e63a",
+    "observation_seconds": 45,
+    "panic_count": 3,
+    "events": [
+      {
+        "host_utc": "2026-10-31T09:50:06.911065+00:00",
+        "kind": "panic",
+        "values": [
+          "LoadProhibited"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:06.911621+00:00",
+        "kind": "exception_address",
+        "values": [
+          "0x02000005"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:06.911707+00:00",
+        "kind": "backtrace",
+        "values": [
+          "0x400477fc:0x3fcac2c0 0x40000dd4:0x3fcac2e0 0x40379dc5:0x3fcac300 0x403896d3:0x3fcac320 0x4038975c:0x3fcac340 0x4037fb51:0x3fcac360 0x403852c3:0x3fcbb620 0x420045bd:0x3fcbb640 0x4038a2ef:0x3fcbb660"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:06.911852+00:00",
+        "kind": "elf",
+        "values": [
+          "4afe60346"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:08.164871+00:00",
+        "kind": "elf",
+        "values": [
+          "4afe60346"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:12.381917+00:00",
+        "kind": "panic",
+        "values": [
+          "LoadProhibited"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:12.383106+00:00",
+        "kind": "exception_address",
+        "values": [
+          "0x80379e2c"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:12.383373+00:00",
+        "kind": "backtrace",
+        "values": [
+          "0x40000de3:0x3fcac2e0 0x40379dc5:0x3fcac300 0x403896d3:0x3fcac320 0x4038975c:0x3fcac340 0x4037fb51:0x3fcac360 0x40056f63:0x3c3763b0 0x421563d9:0x3c3763c0 0x42152064:0x3c379330 0x4214dc87:0x3c379690 0x4214fe45:0x3c379a80 0x42150041:0x3c379b80 0x4203fc5d:0x3c379bc0 0x4203ce42:0x3c379be0"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:12.384084+00:00",
+        "kind": "elf",
+        "values": [
+          "4afe60346"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:13.635040+00:00",
+        "kind": "elf",
+        "values": [
+          "4afe60346"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:23.590657+00:00",
+        "kind": "cloud_connected",
+        "values": []
+      },
+      {
+        "host_utc": "2026-10-31T09:50:29.806205+00:00",
+        "kind": "panic",
+        "values": [
+          "StoreProhibited"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:29.806975+00:00",
+        "kind": "exception_address",
+        "values": [
+          "0x03ca8204"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:29.807078+00:00",
+        "kind": "backtrace",
+        "values": [
+          "0x40000de6:0x3fcbb4e0 0x00000045:0x3fcbb500 "
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:29.807238+00:00",
+        "kind": "elf",
+        "values": [
+          "4afe60346"
+        ]
+      },
+      {
+        "host_utc": "2026-10-31T09:50:31.059477+00:00",
+        "kind": "elf",
+        "values": [
+          "4afe60346"
+        ]
+      }
+    ],
+    "boots": [
+      {
+        "boot": 431392784,
+        "reset_reason": 4
+      },
+      {
+        "boot": 315119345,
+        "reset_reason": 4
+      },
+      {
+        "boot": 3145983748,
+        "reset_reason": 4
+      }
+    ],
+    "camera_reports": 35,
+    "hand_records": 121,
+    "camera_empty_max": 0,
+    "startup_validation": "failed_repeated_panics",
+    "audible_dialog_verified": false,
+    "stack_margin_verified": false,
+    "decoded_with_matching_elf": true,
+    "elf_sha256": "4afe60346bb483c94e67c651fc959bcbbaf275d43e34dc9c34b64c5d2055c4de",
+    "trace_scope": "ESP-IDF tick hook / ROM watchdog functions; a second trace interrupted Opus encoding. Root cause unproven."
+  }
+}

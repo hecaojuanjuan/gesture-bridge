@@ -1,0 +1,420 @@
+{
+  "date": "2026-10-31",
+  "trial": "User near-distance closed-fist framing retest; not a classifier-accuracy trial.",
+  "source_log": ".local/hand-tests/fist-close-20261031-184842.jsonl",
+  "source_log_sha256": "d3016612e7f87376c6b9c4834c13251fad574f1bf49cfe77cacc3afd8cfe40e5",
+  "summary": {
+    "recording_status": "observations_received",
+    "observations": 40,
+    "hand_counts": {
+      "0": 7,
+      "1": 27,
+      "2": 6
+    },
+    "valid_single_hand": 13,
+    "classifier_ready_values": [
+      false
+    ],
+    "gesture_events": 0,
+    "gestures": {},
+    "raw_classes": {
+      "untrained": 40
+    },
+    "inference_ms": {
+      "n": 40,
+      "median": 275.0,
+      "p95": 302,
+      "max": 309
+    },
+    "result_age_ms": {
+      "n": 40,
+      "median": 295.5,
+      "p95": 351,
+      "max": 353
+    },
+    "startup_or_fault_lines": 2,
+    "ready_events": 1,
+    "latest_metrics": {
+      "v": 1,
+      "event": "metrics",
+      "captured": 157,
+      "dropped": 124,
+      "internal_free": 51895,
+      "internal_largest": 38900,
+      "psram_free": 2822296
+    },
+    "gesture_accuracy_verified": false,
+    "note": "Counts and timing only. Requires independently labelled palm, fist, other and no-hand trials. Detection-only firmware has no trained gesture classifier."
+  },
+  "runtime_fingerprint": {
+    "project_name": "vb701n",
+    "app_version": "89020f5e04bf-headvoice",
+    "compile_time": "Oct 31 2026 18:16:20",
+    "elf_sha256_prefix": "87d44b90b",
+    "ready_events": [
+      {
+        "v": 1,
+        "event": "ready",
+        "backend": "hand",
+        "classifier_ready": false,
+        "model_sha256": "untrained",
+        "servo_control": false
+      }
+    ],
+    "boot_markers": [
+      "ESP-ROM:esp32s3-20210327",
+      "rst:0x1 (POWERON)"
+    ],
+    "fault_markers": [],
+    "matching_manifest": "artifacts/headvoice-hand-voice-restored-20261031.json",
+    "matching_elf_sha256": "87d44b90bbbff6886d5fb8e1752d95a819bf7915fdc40bb3d89279d99d415837",
+    "matching_binary_sha256": "b4175a0c09ce6f27517a05cb1f5afffbe724185cd5b7a701b9b9b4dee85faa6f",
+    "match_scope": "Logged ELF prefix and compile time identify a matching local artifact; this log analysis did not read back or verify the full on-board binary."
+  },
+  "detection_analysis": {
+    "valid_single_hand_count_fraction": 0.325,
+    "fraction_is_gesture_accuracy": false,
+    "observation_seq_range": [
+      1,
+      40
+    ],
+    "observation_capture_range_ms": [
+      1491,
+      13538
+    ],
+    "logged_epochs": [
+      0
+    ],
+    "valid_observations": [
+      {
+        "seq": 2,
+        "captured_ms": 1681,
+        "age_ms": 241,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          92,
+          1,
+          235,
+          191
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 3,
+        "captured_ms": 1934,
+        "age_ms": 228,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          100,
+          2,
+          232,
+          191
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 4,
+        "captured_ms": 2188,
+        "age_ms": 308,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          98,
+          10,
+          231,
+          198
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 7,
+        "captured_ms": 3202,
+        "age_ms": 291,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          90,
+          2,
+          228,
+          192
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 10,
+        "captured_ms": 4153,
+        "age_ms": 313,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          90,
+          2,
+          228,
+          204
+        ],
+        "detect_score": 0.62246
+      },
+      {
+        "seq": 12,
+        "captured_ms": 4788,
+        "age_ms": 301,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          87,
+          2,
+          232,
+          184
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 13,
+        "captured_ms": 5104,
+        "age_ms": 284,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          50,
+          1,
+          230,
+          197
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 22,
+        "captured_ms": 7832,
+        "age_ms": 272,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          85,
+          1,
+          230,
+          198
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 23,
+        "captured_ms": 8085,
+        "age_ms": 353,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          85,
+          1,
+          230,
+          194
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 24,
+        "captured_ms": 8465,
+        "age_ms": 294,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          90,
+          2,
+          227,
+          192
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 25,
+        "captured_ms": 8782,
+        "age_ms": 297,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          91,
+          1,
+          230,
+          187
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 31,
+        "captured_ms": 10748,
+        "age_ms": 287,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          85,
+          2,
+          227,
+          191
+        ],
+        "detect_score": 0.5
+      },
+      {
+        "seq": 33,
+        "captured_ms": 11382,
+        "age_ms": 343,
+        "epoch": 0,
+        "width": 320,
+        "height": 240,
+        "box": [
+          85,
+          2,
+          228,
+          192
+        ],
+        "detect_score": 0.5
+      }
+    ],
+    "valid_score_counts": {
+      "0.5": 12,
+      "0.62246": 1
+    },
+    "valid_box_coordinate_ranges_xyxy": [
+      [
+        50,
+        100
+      ],
+      [
+        1,
+        10
+      ],
+      [
+        227,
+        235
+      ],
+      [
+        184,
+        204
+      ]
+    ],
+    "valid_top_margin_le_2_px": 12,
+    "valid_top_margin_le_10_px": 13,
+    "all_valid_boxes_within_image_bounds": true,
+    "continuous_valid_runs": [
+      {
+        "samples": 3,
+        "first_seq": 2,
+        "last_seq": 4,
+        "first_captured_ms": 1681,
+        "last_captured_ms": 2188,
+        "capture_span_ms": 507
+      },
+      {
+        "samples": 1,
+        "first_seq": 7,
+        "last_seq": 7,
+        "first_captured_ms": 3202,
+        "last_captured_ms": 3202,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 1,
+        "first_seq": 10,
+        "last_seq": 10,
+        "first_captured_ms": 4153,
+        "last_captured_ms": 4153,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 2,
+        "first_seq": 12,
+        "last_seq": 13,
+        "first_captured_ms": 4788,
+        "last_captured_ms": 5104,
+        "capture_span_ms": 316
+      },
+      {
+        "samples": 4,
+        "first_seq": 22,
+        "last_seq": 25,
+        "first_captured_ms": 7832,
+        "last_captured_ms": 8782,
+        "capture_span_ms": 950
+      },
+      {
+        "samples": 1,
+        "first_seq": 31,
+        "last_seq": 31,
+        "first_captured_ms": 10748,
+        "last_captured_ms": 10748,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 1,
+        "first_seq": 33,
+        "last_seq": 33,
+        "first_captured_ms": 11382,
+        "last_captured_ms": 11382,
+        "capture_span_ms": 0
+      }
+    ],
+    "longest_continuous_valid_run": {
+      "samples": 4,
+      "first_seq": 22,
+      "last_seq": 25,
+      "first_captured_ms": 7832,
+      "last_captured_ms": 8782,
+      "capture_span_ms": 950
+    },
+    "run_definition": "Adjacent observation sequence numbers, unchanged logged epoch, strictly increasing capture time, and each hands=1/valid=true. Duration is last minus first capture time; it is not classification hold duration.",
+    "invalid_single_candidate_count": 14,
+    "invalid_single_candidate_zeroed_box_and_score": true,
+    "invalid_single_candidate_reason": "Original detector score/category/box is not retained when rejected. The fourteen specific rejection reasons cannot be recovered from these zeroed fields."
+  },
+  "preview_review": [
+    {
+      "path": ".local/hand-tests/fist-close-view-20261031-184746.jpg",
+      "sha256": "5f459e623e812df62afba83901993fae7b776dfb35089607eee536b676288483",
+      "assessment_source": "Root agent visual inspection supplied in task; this analysis did not independently reinterpret the images.",
+      "assessment": "主要为前臂，拳头在画面上方出画。",
+      "same_frame_with_detection_log": false
+    },
+    {
+      "path": ".local/hand-tests/fist-close-view-20261031-184801.jpg",
+      "sha256": "ad0079e9c43ce8eb9fbcc9fb79a26125c805efa3e778105ef93e212677e848b5",
+      "assessment_source": "Root agent visual inspection supplied in task; this analysis did not independently reinterpret the images.",
+      "assessment": "主要为前臂，拳头在画面上方出画。",
+      "same_frame_with_detection_log": false
+    },
+    {
+      "path": ".local/hand-tests/fist-close-view-20261031-184821.jpg",
+      "sha256": "6020068012ba8ff381f78ff9dd3f0b4803103c9cbe0a555d90395fd0bb4773ef",
+      "assessment_source": "Root agent visual inspection supplied in task; this analysis did not independently reinterpret the images.",
+      "assessment": "拳头贴近顶部，手腕贴近底部，取景缺少余量。",
+      "same_frame_with_detection_log": false
+    }
+  ],
+  "conclusions": [
+    "13/40 (32.5%) measures valid single-hand detection coverage only; all classes remain untrained and no classifier was ready.",
+    "Twelve of thirteen valid boxes start within two pixels of the top edge; this is consistent with a framing concern but does not prove the full fist was visible or cropped in every frame.",
+    "The longest valid run is four observations spanning 950 ms. This is intermittent detection, not a successful stable fist gesture.",
+    "The three preview images were taken separately from the 15-second detection log. Their framing cannot be attributed to every observation or used as per-frame ground truth.",
+    "There is one normal power-on boot sequence and no matched panic/brownout/app-image fault marker in this capture. The earlier no-application boot loop is not present in this log.",
+    "Do not lower thresholds or admit these previews as clean fist samples solely to raise the count. First obtain complete fist and wrist framing with margin, then retest on fresh paired evidence."
+  ],
+  "scope": {
+    "hardware_access_performed": false,
+    "training_performed": false,
+    "firmware_changed": false,
+    "files_written": [
+      "artifacts/hand-fist-framing-retest-20261031.json"
+    ]
+  }
+}

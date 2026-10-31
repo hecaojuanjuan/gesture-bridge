@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-31",
+  "incident": "Fist trial had no HG observations and serial read failure; bootloader found no bootable application.",
+  "user_context": "User confirmed another window or chat performed flashing/upgrading between successful palm trial and failed fist trial. Exact interrupted write was not observed.",
+  "before_recovery": {
+    "boot_sequences_in_12s": 40,
+    "hg_ready_events": 0,
+    "bootloader_errors": [
+      "invalid segment length 0xffffffff",
+      "OTA app partition slot 0 is not bootable",
+      "No bootable app partitions in the partition table"
+    ],
+    "verify_flash_original": "digest mismatch",
+    "readback_all_ff_range": {
+      "start": "0x104000",
+      "bytes": 4096
+    },
+    "original_log": ".local/hand-tests/serial-diagnostic-20261031-174016.jsonl",
+    "original_log_sha256": "52156ae97de813e397810dd52e9e44190a7d2fefb87798b3d2bf5990933f4468",
+    "header_backup": ".local/hand-tests/failed-app-header-20261031.bin",
+    "segment_backup": ".local/hand-tests/failed-app-segment-20261031.bin"
+  },
+  "recovery": {
+    "binary": "artifacts/headvoice-hand-detect-capture-20261031.bin",
+    "sha256": "56d3b8c21ba84a560a3a3e3af8c71960829befa0e76fc3e3cf010399984bf61f",
+    "offset": "0x20000",
+    "flash_exit": 0,
+    "write_hash_verified": true,
+    "independent_verify_flash": "digest matched",
+    "logs": [
+      ".local/hand-tests/recovery-flash-20261031.log",
+      ".local/hand-tests/recovery-verify-restored-20261031.log"
+    ]
+  },
+  "after_recovery": {
+    "log": ".local/hand-tests/recovery-runtime-20261031-174443.jsonl",
+    "error": null,
+    "summary": {
+      "recording_status": "observations_received",
+      "observations": 91,
+      "hand_counts": {
+        "0": 89,
+        "1": 2
+      },
+      "valid_single_hand": 0,
+      "classifier_ready_values": [
+        false
+      ],
+      "gesture_events": 0,
+      "gestures": {},
+      "raw_classes": {
+        "untrained": 91
+      },
+      "inference_ms": {
+        "n": 91,
+        "median": 276,
+        "p95": 339,
+        "max": 823
+      },
+      "result_age_ms": {
+        "n": 91,
+        "median": 302,
+        "p95": 364,
+        "max": 832
+      },
+      "startup_or_fault_lines": 2,
+      "ready_events": 1,
+      "latest_metrics": {
+        "v": 1,
+        "event": "metrics",
+        "captured": 426,
+        "dropped": 341,
+        "internal_free": 49839,
+        "internal_largest": 19444,
+        "psram_free": 2729704
+      },
+      "gesture_accuracy_verified": false,
+      "note": "Counts and timing only. Requires independently labelled palm, fist, other and no-hand trials. Detection-only firmware has no trained gesture classifier."
+    },
+    "fault_lines": [
+      "ESP-ROM:esp32s3-20210327",
+      "rst:0x1"
+    ],
+    "camera_summaries": [
+      "bsp_camera: got 16 frames good=16 empty=0 last_bytes=153600 dt=1014 ms",
+      "bsp_camera: got 35 frames good=35 empty=0 last_bytes=153600 dt=1035 ms",
+      "bsp_camera: got 54 frames good=54 empty=0 last_bytes=153600 dt=1034 ms",
+      "bsp_camera: got 73 frames good=73 empty=0 last_bytes=153600 dt=1031 ms",
+      "bsp_camera: got 92 frames good=92 empty=0 last_bytes=153600 dt=1035 ms",
+      "bsp_camera: got 111 frames good=111 empty=0 last_bytes=153600 dt=1034 ms",
+      "bsp_camera: got 130 frames good=130 empty=0 last_bytes=153600 dt=1032 ms",
+      "bsp_camera: got 149 frames good=149 empty=0 last_bytes=153600 dt=1033 ms",
+      "bsp_camera: got 167 frames good=167 empty=0 last_bytes=153600 dt=1053 ms",
+      "bsp_camera: got 183 frames good=183 empty=0 last_bytes=153600 dt=1013 ms",
+      "bsp_camera: got 199 frames good=199 empty=0 last_bytes=153600 dt=1015 ms",
+      "bsp_camera: got 215 frames good=215 empty=0 last_bytes=153600 dt=1016 ms",
+      "bsp_camera: got 231 frames good=231 empty=0 last_bytes=153600 dt=1012 ms",
+      "bsp_camera: got 247 frames good=247 empty=0 last_bytes=153600 dt=1014 ms",
+      "bsp_camera: got 263 frames good=263 empty=0 last_bytes=153600 dt=1015 ms",
+      "bsp_camera: got 279 frames good=279 empty=0 last_bytes=153600 dt=1015 ms",
+      "bsp_camera: got 295 frames good=295 empty=0 last_bytes=153600 dt=1016 ms",
+      "bsp_camera: got 311 frames good=311 empty=0 last_bytes=153600 dt=1014 ms",
+      "bsp_camera: got 327 frames good=327 empty=0 last_bytes=153600 dt=1013 ms",
+      "bsp_camera: got 343 frames good=343 empty=0 last_bytes=153600 dt=1016 ms",
+      "bsp_camera: got 359 frames good=359 empty=0 last_bytes=153600 dt=1013 ms",
+      "bsp_camera: got 375 frames good=375 empty=0 last_bytes=153600 dt=1014 ms",
+      "bsp_camera: got 391 frames good=391 empty=0 last_bytes=153600 dt=1015 ms",
+      "bsp_camera: got 407 frames good=407 empty=0 last_bytes=153600 dt=1016 ms",
+      "bsp_camera: got 423 frames good=423 empty=0 last_bytes=153600 dt=1013 ms",
+      "bsp_camera: got 439 frames good=439 empty=0 last_bytes=153600 dt=1015 ms",
+      "bsp_camera: got 455 frames good=455 empty=0 last_bytes=153600 dt=1016 ms"
+    ]
+  },
+  "limitations": [
+    "Recovery observation was not a labelled gesture trial.",
+    "Only a 30-second runtime window was checked; no long-term stability claim.",
+    "No trained palm/fist classifier is present.",
+    "Interrupted fist trials are invalid and must be repeated under exclusive serial access."
+  ],
+  "tool_fixes": [
+    "Never overwrite an existing capture file; reject before opening serial.",
+    "Retain fragments and report failure for serial errors or zero complete lines.",
+    "Explicit no_observations status and unsuccessful CLI exit when no HG detection records exist."
+  ],
+  "host_tests": {
+    "capture_serial": 12,
+    "hand_readiness": 4,
+    "passed": true
+  }
+}

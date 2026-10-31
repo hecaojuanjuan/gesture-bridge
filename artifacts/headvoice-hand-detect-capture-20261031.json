@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-31",
+  "stage": 2,
+  "vision": "hand",
+  "purpose": "On-board hand detection and same-frame JPEG collection; no trained gesture classifier yet",
+  "binary": "artifacts/headvoice-hand-detect-capture-20261031.bin",
+  "sha256": "56d3b8c21ba84a560a3a3e3af8c71960829befa0e76fc3e3cf010399984bf61f",
+  "bytes": 3591104,
+  "app_partition_bytes": 4128768,
+  "flash_offset": "0x20000",
+  "partition_sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9",
+  "rotated_cw90": true,
+  "classifier_ready": false,
+  "servo_control": false,
+  "flash_performed": true,
+  "hardware_verified": false,
+  "hand_detector": {
+    "component": "espressif/hand_detect",
+    "version": "0.1.0",
+    "license": "MIT",
+    "source": "https://github.com/espressif/esp-dl/tree/c39b5bb08e957dc675efa29f86a642ba79cb82d7/models/hand_detect",
+    "upstream_commit": "c39b5bb08e957dc675efa29f86a642ba79cb82d7",
+    "targets_included": [
+      "esp32s3"
+    ],
+    "model_bytes": 497136,
+    "files": {
+      "CMakeLists.txt": "751fdd9ad2e61695008776fc0e840560c739de6e69d41e8b2e926c2a6005a3e8",
+      "Kconfig": "133c9689fcf8716553286cfcb0103fce05adb611568b463364042a63eee9b3e8",
+      "LICENSE": "3513f1605ebcc227f7364956f6c30a303412597e232648cb3090e76697ca5aa3",
+      "README.md": "cb9c0da042c73f766d0efd62c9e7498230bbd46a45431760b16979f188592b87",
+      "hand_detect.cpp": "84584b6e6d741baf6382eeb77de4649f355446922d91f2091fc5ba063985913f",
+      "hand_detect.hpp": "26d249fb56822ed32dcc5d408d74fe1412dabee52cd47b922b90a318487ef16e",
+      "idf_component.yml": "b1c9c3fb2007a166b326d8290aaf4ebdb3bc80f2da7aecfec7ffa56d4051caca",
+      "models/s3/espdet_pico_224_224_hand.espdl": "2eac18086ad72aa8624d20f6a3fd4a8adaf2035aadf9384eaa7ca28807ffc07e"
+    },
+    "git_blobs": {
+      "CMakeLists.txt": "13980e604c36992f023a947285e1c7ec4316eebf",
+      "Kconfig": "b8d4a23b5545c3e7d0643bef62e981b70a7b0ceb",
+      "LICENSE": "dc2be013b5edf43108b6081057b13b6ff276ffe5",
+      "README.md": "c60e3a6fb2d48233ff31db92a4a12f25b71d9f18",
+      "hand_detect.cpp": "de9d3a6d3c0d217c0ba8300b240892ea84717d17",
+      "hand_detect.hpp": "e8e5f10817fd4d9ce4425eedb1cb2a5dc69697f4",
+      "idf_component.yml": "53870412914e463b6816453153e098a6d5566a5e",
+      "models/s3/espdet_pico_224_224_hand.espdl": "e7d82c5000a687eb446f0907e34150ca14ec14ee"
+    }
+  },
+  "build_log": ".local/hand-detect-incremental-20261031.log",
+  "source_sha256": {
+    "headvoice/firmware/hv_hand_app.c": "9a59395c6f662a16513e818b3a754962209de4c0c0594ee4c0788f1c725ff93c",
+    "headvoice/firmware/hv_hand_detect.cpp": "7e8f4d85ea58890df2c321649e658d947ea3c4280449c2549e67b026c6198542",
+    "headvoice/firmware/hv_camera_preview.c": "7013da0aa1ee909b4897c235517a702784e3a8cdea4d7aa60bbbb9e29eeffbcf"
+  },
+  "app_only_flash_verified": true,
+  "flash_log": ".local/hand-detect-flash-20261031.log",
+  "on_board": true,
+  "runtime_scope": "15-second detector startup observed; three full-resolution model JPEGs verified. Human hand framing incomplete, no labelled training samples collected, no palm/fist recognition verified.",
+  "runtime_summary": "artifacts/hand-detect-startup-20261031.json",
+  "training_samples_collected": 0,
+  "jpeg_exports": [
+    {
+      "path": ".local/hand-open-preview-20261031.jpg",
+      "source": "model",
+      "width": 320,
+      "height": 240,
+      "checksum_verified": true,
+      "bytes": 8336,
+      "complete_hand_in_frame": false
+    },
+    {
+      "path": ".local/hand-open-preview-02-20261031.jpg",
+      "source": "model",
+      "width": 320,
+      "height": 240,
+      "checksum_verified": true,
+      "bytes": 7720,
+      "complete_hand_in_frame": false
+    },
+    {
+      "path": ".local/hand-open-preview-03-20261031.jpg",
+      "source": "model",
+      "width": 320,
+      "height": 240,
+      "checksum_verified": true,
+      "bytes": 7590,
+      "complete_hand_in_frame": false
+    }
+  ]
+}

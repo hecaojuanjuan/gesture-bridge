@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-31",
+  "artifact": "artifacts/headvoice-face-target-epoch-candidate-20261031.bin",
+  "sha256": "7e2d405a19d30e7bbe54e3d32521eac6a951ed8c70a52d51fea2bb180752469e",
+  "bytes": 3265760,
+  "stage": 2,
+  "vision": "face",
+  "rotate_cw90": true,
+  "integrated_face_gimbal": true,
+  "change": "Clear cached face target on observation epoch change without closing manually armed PWM; firmware start requires a fresh valid single-face target within 400 ms and after the settling gate.",
+  "build_status": "passed",
+  "build_log": ".local/face-target-epoch-build.log",
+  "build_work_name": "face-target-epoch-check",
+  "host_checks": [
+    "tests/test_face_gimbal_firmware.py"
+  ],
+  "flash_performed": false,
+  "runtime_verified": false,
+  "on_board_at_manifest_creation": false,
+  "board_image_at_manifest_creation": "artifacts/headvoice-face-autocenter-stage2-20261031.bin",
+  "board_image_sha256_at_manifest_creation": "d9db1f7c6c9a163106d98b0e385908708eedeb73bb221374adebdf371c91af9c",
+  "partition_table_sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9",
+  "source_sha256": {
+    "headvoice/firmware/hv_face_gimbal.c": "ef7b2aaf30e05d40ec018fd594cd8e88d780f643ad82ef39cb167ab1a481b287",
+    "headvoice/firmware/hv_face_gimbal.h": "2117bcd832df339ba7edb4b819e98cb15bbc1e78feaea40c835a16246efddc9d",
+    "headvoice/firmware/headvoice_app.c": "588910581ba3e50a28d6d203e4d870f6d28d40b8f1ff6ec9e3995a41c6d51880"
+  }
+}

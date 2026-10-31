@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-31",
+  "scope": "Offline browser QA with virtual navigator.serial only",
+  "status": "blocked_by_browser_control",
+  "fixture": "panel/tests/browser-preview.html",
+  "fixture_fallback": {
+    "checksum": "27e41548",
+    "parser_verified": true,
+    "decoded_rgba": [
+      255,
+      0,
+      0,
+      255,
+      0,
+      255,
+      0,
+      255
+    ]
+  },
+  "server": {
+    "url": "http://127.0.0.1:4174/tests/browser-preview.html",
+    "started": true,
+    "stopped": true,
+    "exit_code": 130,
+    "existing_4173_server_untouched": true
+  },
+  "browser_attempts": [
+    {
+      "surface": "iab",
+      "result": "Unavailable; inventory browsers=[] and createBrowserTab returned Browser is not available: iab."
+    },
+    {
+      "surface": "native Google Chrome through CUA",
+      "result": "Read-only AX state worked. New-tab keyboard and button actions were rejected as user changed the application, including after refreshed AX state. Test page was not opened."
+    }
+  ],
+  "real_browser_decode_verified": false,
+  "ui_lifecycle_verified": false,
+  "hardware_accessed": false,
+  "firmware_flashed": false,
+  "screenshots_saved": [],
+  "limitations": [
+    "Node protocol and mocked decoder tests do not establish browser decoding or on-device performance.",
+    "No screenshot of the new test UI could be captured because navigation was blocked.",
+    "UI checks for untrained/candidate/expiry/restart/disconnect remain pending."
+  ]
+}

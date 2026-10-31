@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-31",
+  "binary": "artifacts/headvoice-face-stage2-cw90-20261031.bin",
+  "sha256": "223a9e1993713006f540d05aedf1303239286b5786df67c1b27211f8376c8419",
+  "app_only_flash_verified": true,
+  "flash_log": ".local/camera-retest-20261031/face-stage2-flash.log",
+  "stage": 2,
+  "vision": "face",
+  "rotate_cw90": true,
+  "gimbal_enabled": false,
+  "browser_usb_connected": true,
+  "browser_snapshot_verified": true,
+  "browser_snapshot_dimensions": [
+    160,
+    120
+  ],
+  "browser_snapshot_time_s": 8.9,
+  "private_screenshot": ".local/camera-retest-20261031/panel-face-preview.png",
+  "pose_timing_gate_verified": false,
+  "gesture_accuracy_verified": false,
+  "next": "Inspect model/input integration and validate against a known official face fixture; browser preview restored after capture",
+  "neutral_01": {
+    "raw_log": ".local/camera-retest-20261031/face-neutral-01.jsonl",
+    "host_first_utc": "2026-10-31T07:00:52.825561+00:00",
+    "host_last_utc": "2026-10-31T07:01:52.773387+00:00",
+    "requested_capture_seconds": 60,
+    "countdown_seconds": 10,
+    "pose_samples": 425,
+    "visible_face_count_distribution": {
+      "0": 425
+    },
+    "tracked_samples": 0,
+    "accepted_samples": 0,
+    "inference_ms": {
+      "n": 425,
+      "median": 134,
+      "p95": 167,
+      "max": 194
+    },
+    "conversion_ms": {
+      "n": 425,
+      "median": 61,
+      "p95": 79,
+      "max": 96
+    },
+    "model_ms": {
+      "n": 425,
+      "median": 72,
+      "p95": 98,
+      "max": 111
+    },
+    "all_observations_age_ms": {
+      "n": 425,
+      "median": 163,
+      "p95": 202,
+      "max": 232
+    },
+    "boot_markers": 1,
+    "fault_markers": 0,
+    "camera_first": [
+      25,
+      25,
+      0,
+      153600,
+      1001
+    ],
+    "camera_last": [
+      1736,
+      1736,
+      0,
+      153600,
+      1001
+    ],
+    "timing_gate_passed": false,
+    "gesture_accuracy_verified": false,
+    "conditions": "User confirmed alignment and instructed neutral frontal hold; preceding preview showed a visible face near lower edge, glasses, strong backlight and pink cast",
+    "meaning": "Detector returned zero faces; downstream eye-line geometry was never reached. These timing values do not establish single-face workload latency or usable pose input."
+  }
+}

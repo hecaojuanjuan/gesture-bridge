@@ -1,0 +1,240 @@
+{
+  "date": "2026-10-31",
+  "trial": "User V-sign (two) detection trial; no gesture classifier accuracy assessment.",
+  "source_log": ".local/hand-tests/v-detection-20261031-185645.jsonl",
+  "source_log_sha256": "2f58f5188922f7eebc4eb3ee9b609444f5a0382c7ccca7e0c86779e5fc587573",
+  "summary": {
+    "recording_status": "observations_received",
+    "observations": 42,
+    "hand_counts": {
+      "1": 39,
+      "0": 3
+    },
+    "valid_single_hand": 26,
+    "classifier_ready_values": [
+      false
+    ],
+    "gesture_events": 0,
+    "gestures": {},
+    "raw_classes": {
+      "untrained": 42
+    },
+    "inference_ms": {
+      "n": 42,
+      "median": 272.5,
+      "p95": 310,
+      "max": 315
+    },
+    "result_age_ms": {
+      "n": 42,
+      "median": 295.0,
+      "p95": 353,
+      "max": 355
+    },
+    "startup_or_fault_lines": 2,
+    "ready_events": 1,
+    "latest_metrics": {
+      "v": 1,
+      "event": "metrics",
+      "captured": 160,
+      "dropped": 126,
+      "internal_free": 51895,
+      "internal_largest": 38900,
+      "psram_free": 2822280
+    },
+    "gesture_accuracy_verified": false,
+    "note": "Counts and timing only. Requires independently labelled palm, fist, other and no-hand trials. Detection-only firmware has no trained gesture classifier."
+  },
+  "runtime_fingerprint": {
+    "project_name": "vb701n",
+    "app_version": "89020f5e04bf-headvoice",
+    "compile_time": "Oct 31 2026 18:16:20",
+    "elf_sha256_prefix": "87d44b90b",
+    "ready": [
+      {
+        "v": 1,
+        "event": "ready",
+        "backend": "hand",
+        "classifier_ready": false,
+        "model_sha256": "untrained",
+        "servo_control": false
+      }
+    ],
+    "matching_manifest": "artifacts/headvoice-hand-voice-restored-20261031.json",
+    "matching_elf_sha256": "87d44b90bbbff6886d5fb8e1752d95a819bf7915fdc40bb3d89279d99d415837",
+    "matching_binary_sha256": "b4175a0c09ce6f27517a05cb1f5afffbe724185cd5b7a701b9b9b4dee85faa6f",
+    "match_scope": "Runtime ELF prefix and compile time only; no full flash readback performed by this audit."
+  },
+  "startup_and_fault_review": {
+    "actual_startup_lines": [
+      "ESP-ROM:esp32s3-20210327",
+      "rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)"
+    ],
+    "fault_markers": [],
+    "interpretation": "One normal POWERON startup and one HG ready, with no matched panic, brownout, heap/assert, or unbootable-image marker in this captured window."
+  },
+  "detection_analysis": {
+    "valid_single_hand_fraction": 0.6190476190476191,
+    "fraction_is_gesture_accuracy": false,
+    "valid_score_counts": {
+      "0.5": 13,
+      "0.73106": 3,
+      "0.62246": 9,
+      "0.81757": 1
+    },
+    "invalid_single_candidate_count": 13,
+    "invalid_single_candidate_fields_zeroed": true,
+    "invalid_reason_limit": "Rejected original scores/category/boxes were not retained; do not attribute all 13 invalid single candidates to confidence alone.",
+    "logged_epochs": [
+      0
+    ],
+    "box_boundary_review": {
+      "frame_width": 320,
+      "frame_height": 240,
+      "xyxy_coordinate_ranges": [
+        [
+          75,
+          88
+        ],
+        [
+          92,
+          114
+        ],
+        [
+          182,
+          195
+        ],
+        [
+          220,
+          239
+        ]
+      ],
+      "all_valid_boxes_pass_reported_bounds": true,
+      "bottom_y2_equals_239": 4,
+      "bottom_distance_to_height_le_2_px": 7,
+      "bottom_distance_to_height_le_10_px": 20,
+      "left_x1_le_2_px": 0,
+      "top_y1_le_2_px": 0,
+      "right_distance_to_width_le_2_px": 0,
+      "note": "Reported y2 reaches 239 on a 240-row image. Values are described numerically; near-edge boxes do not establish that fingers or wrist were complete in every frame."
+    },
+    "continuous_valid_runs": [
+      {
+        "samples": 4,
+        "first_seq": 2,
+        "last_seq": 5,
+        "first_captured_ms": 1227,
+        "last_captured_ms": 1924,
+        "capture_span_ms": 697
+      },
+      {
+        "samples": 3,
+        "first_seq": 7,
+        "last_seq": 9,
+        "first_captured_ms": 2432,
+        "last_captured_ms": 3129,
+        "capture_span_ms": 697
+      },
+      {
+        "samples": 7,
+        "first_seq": 11,
+        "last_seq": 17,
+        "first_captured_ms": 3763,
+        "last_captured_ms": 5665,
+        "capture_span_ms": 1902
+      },
+      {
+        "samples": 1,
+        "first_seq": 19,
+        "last_seq": 19,
+        "first_captured_ms": 6300,
+        "last_captured_ms": 6300,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 4,
+        "first_seq": 21,
+        "last_seq": 24,
+        "first_captured_ms": 6870,
+        "last_captured_ms": 7822,
+        "capture_span_ms": 952
+      },
+      {
+        "samples": 1,
+        "first_seq": 28,
+        "last_seq": 28,
+        "first_captured_ms": 9090,
+        "last_captured_ms": 9090,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 1,
+        "first_seq": 31,
+        "last_seq": 31,
+        "first_captured_ms": 10040,
+        "last_captured_ms": 10040,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 1,
+        "first_seq": 33,
+        "last_seq": 33,
+        "first_captured_ms": 10674,
+        "last_captured_ms": 10674,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 2,
+        "first_seq": 35,
+        "last_seq": 36,
+        "first_captured_ms": 11372,
+        "last_captured_ms": 11752,
+        "capture_span_ms": 380
+      },
+      {
+        "samples": 1,
+        "first_seq": 40,
+        "last_seq": 40,
+        "first_captured_ms": 12958,
+        "last_captured_ms": 12958,
+        "capture_span_ms": 0
+      },
+      {
+        "samples": 1,
+        "first_seq": 42,
+        "last_seq": 42,
+        "first_captured_ms": 13528,
+        "last_captured_ms": 13528,
+        "capture_span_ms": 0
+      }
+    ],
+    "longest_continuous_valid_run": {
+      "samples": 7,
+      "first_seq": 11,
+      "last_seq": 17,
+      "first_captured_ms": 3763,
+      "last_captured_ms": 5665,
+      "capture_span_ms": 1902
+    },
+    "run_definition": "Consecutive seq values, unchanged logged epoch, increasing captured_ms, hands=1 and valid=true throughout. Span is last minus first capture timestamp; not a classified gesture hold duration."
+  },
+  "image_evidence": {
+    "images_copied": false,
+    "visual_review_performed_by_this_audit": false,
+    "note": "Root is reviewing separate v-view images. This log audit does not use them as same-frame ground truth."
+  },
+  "conclusions": [
+    "26/42 (61.9%) is valid single-hand detection coverage. All 42 raw classes remain untrained; no completed V-sign recognition has been demonstrated.",
+    "Longest continuous valid run: seven observations (seq 11-17), 1902 ms between first and last capture.",
+    "Valid boxes are low in the frame: 4 reach y2=239, 7 are within 2 px of height, and 20 within 10 px. Complete framing remains a separate visual check.",
+    "This run has no two-candidate observations, but 13 single candidates are invalid and 3 observations have no candidate. Do not infer a controlled gesture-to-gesture improvement from different framing trials."
+  ],
+  "scope": {
+    "serial_access": false,
+    "firmware_changed": false,
+    "training_performed": false,
+    "files_written": [
+      "artifacts/hand-v-detection-20261031.json"
+    ]
+  }
+}

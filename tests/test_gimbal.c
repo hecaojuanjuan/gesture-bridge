@@ -64,6 +64,29 @@ int main(void)
     time += 4000;
   }
   assert(c.centered == 3 && c.steps <= 20);
+  hv_gimbal_reset(&c);
+  c.minPulseUs = 1475;
+  c.maxPulseUs = 1525;
+  c.maxStepUs = 25;
+  c.maxAgeMs = 400;
+  hv_gimbal_begin(&c, 0);
+  assert(hv_gimbal_observe(&c, 1, true, 0.9f, 0.5f, 1000, 1401) == HV_GIMBAL_STALE);
+  assert(c.pulse[0] == 1500);
+  assert(hv_gimbal_observe(&c, 1, true, 0.9f, 0.5f, 1500, 1700) == HV_GIMBAL_MOVE);
+  assert(c.pulse[0] == 1525 && c.steps == 1);
+  assert(hv_gimbal_observe(&c, 1, true, 0.9f, 0.5f, 2000, 2200) == HV_GIMBAL_STALE);
+  assert(c.pulse[0] == 1525);
+  assert(hv_gimbal_observe(&c, 1, true, 0.9f, 0.5f, 2300, 2500) == HV_GIMBAL_LIMIT);
+  assert(!c.active && c.pulse[0] == 1525);
+  hv_gimbal_reset(&c);
+  c.minPulseUs = 1475;
+  c.maxPulseUs = 1525;
+  c.maxStepUs = 25;
+  c.maxAgeMs = 400;
+  hv_gimbal_begin(&c, 0);
+  assert(hv_gimbal_observe(&c, 1, true, 0.5f, 0.5f, 1000, 1200) == HV_GIMBAL_WAIT);
+  assert(hv_gimbal_observe(&c, 1, true, 0.5f, 0.5f, 1100, 1300) == HV_GIMBAL_WAIT);
+  assert(hv_gimbal_observe(&c, 1, true, 0.5f, 0.5f, 1200, 1400) == HV_GIMBAL_CENTERED);
   puts("Gimbal core: limits, stale data, target loss, direction, and convergence passed");
   return 0;
 }

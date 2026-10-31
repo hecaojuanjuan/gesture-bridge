@@ -1,0 +1,54 @@
+{
+  "recorded_at_utc": "2026-10-31T04:39:27.549417+00:00",
+  "product_pid": 11785,
+  "transport": "Chrome Web Serial, localhost:4173",
+  "firmware_stage_observed": 1,
+  "serial_evidence": [
+    "panel-wired-device-test-20261031.json",
+    "panel-wired-retest-20261031.json"
+  ],
+  "serial_protocol_verified": true,
+  "desktop_ui_verified": [
+    "connect and correlated get",
+    "manual lake blue 20%",
+    "manual mint 30%",
+    "5 second test and fresh restoration receipt",
+    "off",
+    "disconnect disables execution",
+    "reload and reconnect reads off/30%",
+    "preview label shows synced only on matching state"
+  ],
+  "physical_observation": {
+    "source": "User confirmations in 2026-10-31 conversation",
+    "blue_constant_and_color_sequence": "蓝色常亮，刚才变色也正常",
+    "mint_restore_off": "这三步都正常",
+    "optical_output_confirmed_by_user": true
+  },
+  "screenshots": [
+    "panel-usb-wired-20261031.png",
+    "panel-usb-reconnected-20261031.png"
+  ],
+  "frontend_regression": {
+    "tests_passed": 20,
+    "production_build": "passed"
+  },
+  "local_ui_fix": "Preview synchronization label now follows correlated fresh receipts.",
+  "cloud_h5_republished_this_test": false,
+  "flash_performed_this_test": false,
+  "gimbal_motion_commands_sent": false,
+  "end_state": {
+    "mode": "off",
+    "stored_brightness": 30,
+    "usb_panel": "connected"
+  },
+  "not_verified": [
+    "phone cloud set/test",
+    "long-term stability",
+    "camera pose accuracy and real-time performance"
+  ],
+  "limitations": [
+    "Serial script alone cannot verify optical output; user observations are recorded separately.",
+    "Stage 1 does not run pose inference.",
+    "Prior stage 2 panics remain unresolved."
+  ]
+}

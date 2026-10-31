@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-31",
+  "artifact": "artifacts/headvoice-face-selftest-eligibility-20261031.bin",
+  "sha256": "df8b63d652bd500d610444db6749ed4431bae716618ee2eddde356096f50bf3b",
+  "app_only_address": "0x20000",
+  "flash_log": ".local/face-selftest-eligibility-flash.log",
+  "app_only_flash_verified": true,
+  "nvs_or_partition_erased": false,
+  "runtime_log": ".local/face-selftest-runtime-20261031.jsonl",
+  "runtime_log_sha256": "18db9b0f9a861ab070d719183d6f7610658f990463a7415bb883a8cf5503072f",
+  "sample_seconds": 45,
+  "fixed_fixture_selftest_passed": true,
+  "fixture_result": {
+    "event": "result",
+    "faces": 1,
+    "expected_faces": 1,
+    "decode_ms": 29,
+    "model_ms": 54,
+    "width": 320,
+    "height": 240
+  },
+  "fixture_face": {
+    "event": "face",
+    "index": 0,
+    "score": 0.899121,
+    "box": [
+      100,
+      65,
+      194,
+      189
+    ],
+    "keypoints": [
+      117,
+      113,
+      122,
+      160,
+      132,
+      144,
+      156,
+      113,
+      152,
+      159
+    ],
+    "head_valid": true
+  },
+  "unique_get_queries_verified": 6,
+  "matched_reports_including_periodic": 11,
+  "single_boot": true,
+  "readonly_gimbal_status_count": 6,
+  "pwm_off_verified": true,
+  "motion_commands_sent": false,
+  "light_write_commands_sent": false,
+  "camera_last": {
+    "frames": 430,
+    "good": 0,
+    "empty": 430,
+    "last_bytes": 0
+  },
+  "live_pose_samples": 0,
+  "boot_markers": 1,
+  "panic_or_brownout_markers": [],
+  "camera_verified": false,
+  "pose_accuracy_verified": false,
+  "live_epoch_recovery_verified": false,
+  "pre_flash_evidence": {
+    "log": ".local/pre-selftest-readonly-20261031.jsonl",
+    "camera_error": "Failed to detect camera sensor with address=6e; open /dev/video3 failed before the new diagnostic image was written."
+  },
+  "next": "User has aligned a frontal face and authorized a 60-second neutral trial, currently collecting; no servo motion.",
+  "after_user_power_cycle_and_connection_check": {
+    "log": ".local/face-selftest-runtime-reconnected-20261031.jsonl",
+    "seconds": 45,
+    "camera_last": {
+      "frames": 935,
+      "good": 935,
+      "empty": 0,
+      "last_bytes": 153600
+    },
+    "live_pose_samples": 354,
+    "people_counts": {
+      "0": 348,
+      "1": 6
+    },
+    "accepted_poses": 2,
+    "unique_get_queries": 6,
+    "pwm_off_verified": true,
+    "model_preview": ".local/face-selftest-reconnected-model-20261031.png",
+    "model_preview_log": ".local/face-selftest-reconnected-model-20261031.log",
+    "model_preview_checksum_verified": true,
+    "preview_observation": "No face in the captured model input; overhead panel/light structure visible.",
+    "cause_of_prior_empty_frames_confirmed": false,
+    "pose_accuracy_verified": false
+  }
+}

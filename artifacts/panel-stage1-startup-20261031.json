@@ -1,0 +1,238 @@
+{
+  "duration_seconds": 45,
+  "faults": [],
+  "reports": [
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 5036,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    },
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 10055,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    },
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 15083,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    },
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 20125,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    },
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 25163,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    },
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 30172,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    },
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 35176,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    },
+    {
+      "v": 1,
+      "boot": 695009584,
+      "id": 0,
+      "ok": true,
+      "uptime_ms": 40194,
+      "mode": 0,
+      "brightness": 20,
+      "rgb": [
+        80,
+        190,
+        255
+      ],
+      "output": [
+        0,
+        0,
+        0
+      ],
+      "test_ms": 0,
+      "stage": 1,
+      "pose": {
+        "age_ms": 4294967295,
+        "people": 0,
+        "tilt": 0.0,
+        "tracking": false,
+        "valid": false,
+        "infer_ms": 0
+      }
+    }
+  ]
+}

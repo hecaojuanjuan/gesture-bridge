@@ -1,0 +1,46 @@
+{
+  "tested_at": "2026-10-31T14:04:05.266647+08:00",
+  "wiring_reported": {
+    "signal": "P17",
+    "power": "5V",
+    "ground": "GND"
+  },
+  "physical_axis": "user requested pitch; actual movement observation pending",
+  "firmware_axis": "pan",
+  "gpio": 17,
+  "pulse_sequence_us": [
+    1500,
+    1525,
+    1500,
+    1475,
+    1500
+  ],
+  "protocol_passed": true,
+  "lease_expired_uptime_ms": 6669,
+  "last_set_uptime_ms": 4169,
+  "automatic_stop_delay_ms": 2500,
+  "stopped_status_confirmed": true,
+  "physical_motion_verified": false,
+  "observation": "User selected: 完全没动或有异响 (no visible movement or abnormal noise); these two cases were not disambiguated",
+  "restored_stage1": false,
+  "diagnostic_sha256": "3edafafa12d4c5ac39581e412f5bea336f02260a5f07f982a1fc6ebde37e8b4a",
+  "restore_sha256": "aa1769ed6f5ef8995ce157d6b15667805fcd81fb382f6ff1414b51d598382053",
+  "log": "artifacts/servo-minimal-20261031-140330-323963.jsonl",
+  "first_observation": "User did not see first trial; requested advance reminder or manual command",
+  "advance_reminder_retest": {
+    "countdown_seconds": 10,
+    "trials": 2,
+    "log": "artifacts/servo-p17-observed-repeat-20261031-140428-351549.jsonl",
+    "protocol_passed": true,
+    "lease_expirations": 2,
+    "stopped_status_confirmed": true,
+    "physical_observation_pending": false
+  },
+  "physical_acceptance": "not_passed",
+  "root_cause": "undetermined; receipt does not prove waveform at servo, adequate supply, or mechanical motion",
+  "latest_user_request": "Give me the command to start the test",
+  "final_firmware_state": "servo-minimal; startup and status-only report axis=-1/pulse_us=0; waiting for user command",
+  "final_state_log": "artifacts/servo-minimal-20261031-140825-288873.jsonl",
+  "stage1_restore_write_verified": true,
+  "host_tests_passed": 7
+}

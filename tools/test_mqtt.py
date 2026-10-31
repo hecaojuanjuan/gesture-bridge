@@ -1,5 +1,6 @@
 """Run the real MQTT topic validator with an outer tokenizer in progress."""
 import os
+import shutil
 import subprocess
 import sys
 
@@ -48,8 +49,10 @@ path.write_text(header + source[start:end] + test, encoding='utf-8')
 env = os.environ.copy()
 env['ZIG_GLOBAL_CACHE_DIR'] = str(output / 'zig-cache')
 env['ZIG_LOCAL_CACHE_DIR'] = str(output / 'zig-local')
-binary = output / 'test_mqtt.exe'
-subprocess.run([str(ROOT / '.tools/host/ziglang/zig.exe'), 'cc', '-std=c11',
+binary = output / ('test_mqtt.exe' if os.name == 'nt' else 'test_mqtt')
+zig = ROOT / '.tools/host/ziglang/zig.exe'
+compiler = [str(zig), 'cc'] if zig.exists() else [shutil.which('cc') or 'clang']
+subprocess.run(compiler + ['-std=c11',
                 '-Wall', '-Wextra', '-Werror', str(path), '-o', str(binary)],
                check=True, env=env, cwd=output)
 sys.exit(subprocess.call([str(binary)]))

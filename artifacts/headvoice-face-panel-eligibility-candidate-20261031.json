@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-31",
+  "artifact": "artifacts/headvoice-face-panel-eligibility-candidate-20261031.bin",
+  "sha256": "efd4c0bb88854093e857b0be88aa9a44308d43927acfb9fe4646132ca78e0ca5",
+  "bytes": 3265888,
+  "files": {
+    "bin": {
+      "path": "artifacts/headvoice-face-panel-eligibility-candidate-20261031.bin",
+      "bytes": 3265888,
+      "sha256": "efd4c0bb88854093e857b0be88aa9a44308d43927acfb9fe4646132ca78e0ca5"
+    },
+    "elf": {
+      "path": "artifacts/headvoice-face-panel-eligibility-candidate-20261031.elf",
+      "bytes": 46598680,
+      "sha256": "6a60162bc6cecbc83cc3e58eec722ce0bd7d5c2508c88c888fdbd57000e76d6d"
+    },
+    "map": {
+      "path": "artifacts/headvoice-face-panel-eligibility-candidate-20261031.map",
+      "bytes": 23266796,
+      "sha256": "f31477c2664c8be386b47f986dfb55d486e4268beb5c4e78c3c3c54de038cc68"
+    }
+  },
+  "stage": 2,
+  "vision": "face",
+  "rotate_cw90": true,
+  "model_storage": "application rodata",
+  "integrated_face_gimbal": true,
+  "app_only_address": "0x20000",
+  "partition_table_sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9",
+  "changes": [
+    "HP pose.valid requires core eligibility, matching result epoch and age <=400ms; tracking remains independent eye-point quality.",
+    "Epoch invalidation is serialized with a fixed app-to-panel lock order; no I/O under either nested guard. Late old frames cannot revive a snapshot.",
+    "Core freshness rechecks the current epoch after receiving a result.",
+    "Includes previous unflashed face target-cache invalidation and fresh-target start gate."
+  ],
+  "build_status": "passed",
+  "build_log": ".local/face-panel-eligibility-build.log",
+  "build_work_name": "face-target-epoch-check",
+  "checks": {
+    "firmware_panel_reports": "16 HP/cloud reporting scenarios passed, including actual epoch producer/fresh expression/call extracted from headvoice_app.c",
+    "existing_regressions": "RGB/light and production core passed",
+    "lock_order_review": "app guard -> panel guard only; no reverse acquisition or I/O in guard",
+    "esp_idf_build": "passed",
+    "image_info": "Checksum and validation hash valid; partition table unchanged."
+  },
+  "flash_performed": false,
+  "runtime_verified": false,
+  "board_image_at_manifest_creation": "artifacts/headvoice-face-autocenter-stage2-20261031.bin",
+  "board_image_sha256_at_manifest_creation": "d9db1f7c6c9a163106d98b0e385908708eedeb73bb221374adebdf371c91af9c",
+  "source_sha256": {
+    "headvoice/firmware/headvoice_app.c": "77c405b3f8e296c317127eb79ba63e4fe939b70ac45cccddd6a2366297ef79c9",
+    "headvoice/firmware/hv_panel.c": "19a2cab314e93ed134552cb7142a2ad37985d5176aa6bcf1f55f1768a5e4c061",
+    "headvoice/firmware/hv_panel.h": "ff7a84884f7932ffd25cff8746903debede15dac27c7673238629e876361f6cd",
+    "headvoice/firmware/hv_face_gimbal.c": "ef7b2aaf30e05d40ec018fd594cd8e88d780f643ad82ef39cb167ab1a481b287",
+    "headvoice/firmware/hv_face_gimbal.h": "2117bcd832df339ba7edb4b819e98cb15bbc1e78feaea40c835a16246efddc9d",
+    "tests/test_panel_firmware.py": "a46e868366ed9e34c16577729488339da2c004e76828f90c241dbb76202de966"
+  },
+  "limits": [
+    "Does not fix zero-face detections or establish gesture accuracy.",
+    "Does not calibrate servo home or enable automatic centering.",
+    "HP remains a device-side diagnostic snapshot; transport delay is not included in device age."
+  ],
+  "supersedes_unflashed_candidate": "artifacts/headvoice-face-target-epoch-candidate-20261031.json"
+}

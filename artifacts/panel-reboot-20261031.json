@@ -1,0 +1,23 @@
+{
+  "firmware_sha256": "a3c91ea762904a2f05830f113182fff00dd662eeabf32faa5dff34754f28b965",
+  "observed": "Repeated resets after Wi-Fi reaches run state",
+  "faults": [
+    "Guru Meditation Error: Core  0 panic'ed (InstrFetchProhibited). Exception was unhandled.",
+    "Guru Meditation Error: Core  0 panic'ed (Coprocessor exception). "
+  ],
+  "backtraces": [
+    "Backtrace: 0x00000006:0x3fcac220 0x40379de9:0x3fcac240 0x40389893:0x3fcac260 0x4038991c:0x3fcac280 0x4037fb71:0x3fcac2a0 0x40384f93:0x3fcbb460 0x42004641:0x3fcbb480 0x4038a4af:0x3fcbb4a0",
+    "Backtrace: 0x40000dd8:0x3fcac160 0x40379de9:0x3fcac240 0x40389893:0x3fcac260 0x4038991c:0x3fcac280 0x4037fb71:0x3fcac2a0 0x40384f93:0x3fcbb460 0x42004641:0x3fcbb480 0x4038a4af:0x3fcbb4a0"
+  ],
+  "decoded_path": [
+    "esp_vApplicationTickHook",
+    "tick_hook in esp_system/int_wdt.c:121-122",
+    "ROM wdt_hal_config_stage"
+  ],
+  "root_cause_confirmed": false,
+  "baseline_memory": "Flash/PSRAM configured for 120 MHz; octal 8 MB PSRAM; no temperature compensation or boot memory test",
+  "diagnostic_change": "Flash/PSRAM 80 MHz, boot PSRAM test, light heap poisoning",
+  "recovery_backup": ".local/panel-restore/gimbal-app-before.bin",
+  "nvs_erased": false,
+  "motion_commands_sent": false
+}

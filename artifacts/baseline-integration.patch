@@ -4,8 +4,59 @@
          "${AGORA_SDK}/libs/libagora-cjson.a"
      )
  endif()
-+target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
-+target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
++target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
++target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware")
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -317,3 +317,6 @@
+ endif()
+ target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_voice_probe.c")
+ target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware")
++
++target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_panel.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core/hv_light.c")
++target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core")
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -320,3 +320,5 @@
+ 
+ target_sources(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/firmware/hv_panel.c" "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core/hv_light.c")
+ target_include_directories(${COMPONENT_LIB} PRIVATE "/Users/emt/Workspace/hackathon/gesture-bridge/headvoice/core")
++
++target_compile_definitions(${COMPONENT_LIB} PRIVATE HV_PANEL_SIID=12)
+--- a/apps/main/lj_components/iot_control/iot_control.c
++++ b/apps/main/lj_components/iot_control/iot_control.c
+@@ -1,4 +1,5 @@
+ #include "iot_control.h"
++#include "hv_panel.h"
+ 
+ #include "iot_control_volume.h"
+ #include "ljyd_cloud.h"
+@@ -40,6 +41,7 @@
+     if (property == NULL) {
+         return;
+     }
++    if (hv_panel_on_property(property)) return;
+     for (i = 0; i < QM_ARRAY_SIZE(s_table); i++) {
+         if (s_table[i].siid != property->siid ||
+             s_table[i].piid != property->piid) {
+--- a/apps/main/main.c
++++ b/apps/main/main.c
+@@ -10,6 +10,7 @@
+ #include "ljyd_cloud.h"
+ #include "ljyd_provision.h"
+ #include "iot_control.h"
++#include "hv_panel.h"
+ #include "pomodoro.h"
+ #include "ljyd_course.h"
+ #if defined(CONFIG_QM_POSE_SUPPORT) && CONFIG_QM_POSE_SUPPORT
+@@ -85,6 +86,7 @@
+         QM_LOGE("main", "ljyd_cloud_init failed");
+         return;
+     }
++    if (hv_panel_init() != QM_EOK) QM_LOGE("main", "Panel unavailable");
+     if (iot_control_init(ljyd_cloud_get_handle()) != QM_EOK) {
+         QM_LOGE("main", "iot_control_init failed");
+     }
 --- a/apps/main/CMakeLists.txt
 +++ b/apps/main/CMakeLists.txt
 @@ -84,7 +84,7 @@
@@ -13,7 +64,7 @@
  
      "${QDEV}/drivers/VB701N/src/vb701n.c"
 -    "${QDEV}/platform/mcu/esp32s3/qm_audio/qm_audio_device_vb701n.c"
-+    "C:/Users/jiawa/Desktop/gesture-bridge/.work/baseline/apps/main/hv_diagnostics/qm_audio_device_vb701n.c"
++    "/Users/emt/Workspace/hackathon/gesture-bridge/.work/baseline/apps/main/hv_diagnostics/qm_audio_device_vb701n.c"
      "${QDEV}/components/qm_audio/src/audio/qm_audio.c"
      "${QDEV}/components/qm_audio/src/capture/qm_audio_capture.c"
      "${QDEV}/components/qm_audio/src/control/qm_audio_control.c"
@@ -40,7 +91,7 @@
  list(APPEND COMPONENT_SRCS
      "./agent/private/opus.c"
 -    "${QDEV}/components/qm_agent/src/transport/qm_agent_transport_agora.c"
-+    "C:/Users/jiawa/Desktop/gesture-bridge/.work/baseline/apps/main/hv_diagnostics/qm_agent_transport_agora.c"
++    "/Users/emt/Workspace/hackathon/gesture-bridge/.work/baseline/apps/main/hv_diagnostics/qm_agent_transport_agora.c"
      "${QDEV}/components/qm_agent/src/transport/qm_agent_agora_stream.c"
  )
  
@@ -73,9 +124,9 @@
  #include "ljyd_provision.h"
 +#include "hv_provision_cli.h"
  #include "iot_control.h"
+ #include "hv_panel.h"
  #include "pomodoro.h"
- #include "ljyd_course.h"
-@@ -94,6 +95,7 @@
+@@ -96,6 +97,7 @@
      if (ljyd_provision_init() != QM_EOK) {
          QM_LOGE("main", "ljyd_provision_init failed");
      }
@@ -83,3 +134,53 @@
      if (agent_app_init(ljyd_cloud_get_handle()) != QM_EOK) {
          QM_LOGE("main", "agent_app_init failed");
      }
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -121,7 +121,7 @@
+     "${QDEV}/components/qm_http_client/src/qm_http_client_transport.c"
+     "${QDEV}/components/http/util_httpc.c"
+     "${QDEV}/components/network/util_net.c"
+-    "${QDEV}/components/mqtt/iot_mqtt_client.c"
++    "/Users/emt/Workspace/hackathon/gesture-bridge/.work/baseline/apps/main/hv_diagnostics/iot_mqtt_client.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTConnectClient.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTDeserializePublish.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTPacket.c"
+--- a/qumios-dev/components/mqtt/iot_mqtt_client.c
++++ b/apps/main/hv_diagnostics/iot_mqtt_client.c
+@@ -69,6 +69,7 @@
+ {
+     int mask = 0;
+     char *delim = "/";
++    char *context = NULL;
+     char *iterm = NULL;
+     char topicString[IOT_MC_TOPIC_NAME_MAX_LEN];
+     if (NULL == topicName) {
+@@ -83,7 +84,7 @@
+     memset(topicString, 0x0, IOT_MC_TOPIC_NAME_MAX_LEN);
+     strncpy(topicString, topicName, IOT_MC_TOPIC_NAME_MAX_LEN - 1);
+ 
+-    iterm = strtok(topicString, delim);
++    iterm = strtok_r(topicString, delim, &context);
+ 
+     if (SUCCESS_RETURN != iot_mc_check_rule(iterm, type)) {
+         mqtt_log_err("run iot_check_rule error");
+@@ -91,7 +92,7 @@
+     }
+ 
+     for (;;) {
+-        iterm = strtok(NULL, delim);
++        iterm = strtok_r(NULL, delim, &context);
+ 
+         if (iterm == NULL) {
+             break;
+--- a/apps/sdkconfig
++++ b/apps/sdkconfig
+@@ -1950,7 +1950,7 @@
+ # CONFIG_NEWLIB_STDIN_LINE_ENDING_CRLF is not set
+ # CONFIG_NEWLIB_STDIN_LINE_ENDING_LF is not set
+ CONFIG_NEWLIB_STDIN_LINE_ENDING_CR=y
+-CONFIG_NEWLIB_NANO_FORMAT=y
++# CONFIG_NEWLIB_NANO_FORMAT is not set
+ CONFIG_NEWLIB_TIME_SYSCALL_USE_RTC_HRT=y
+ # CONFIG_NEWLIB_TIME_SYSCALL_USE_RTC is not set
+ # CONFIG_NEWLIB_TIME_SYSCALL_USE_HRT is not set

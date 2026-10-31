@@ -1,7 +1,9 @@
 """Build or flash an isolated SDK app with project-local ESP-IDF tools."""
 import argparse
 import os
+import re
 import subprocess
+from pathlib import Path
 
 from prepare_sdk import ROOT, SDK, prepare
 
@@ -13,15 +15,18 @@ def environment():
         # environments omit the architecture variables used by Python/IDF.
         env.setdefault("PROCESSOR_ARCHITECTURE", "AMD64")
     tools = ROOT / ".tools/espressif"
-    pythons = list((tools / "python_env").glob("*/Scripts/python.exe"))
+    python_pattern = "*/Scripts/python.exe" if os.name == "nt" else "*/bin/python"
+    pythons = list((tools / "python_env").glob(python_pattern))
     if len(pythons) != 1:
         raise RuntimeError("Install the ESP-IDF Python environment first")
     python = pythons[0]
     bins = [str(python.parent)]
-    executables = {"cmake.exe", "ninja.exe", "xtensa-esp32s3-elf-gcc.exe",
-                   "xtensa-esp-elf-gcc.exe", "ccache.exe"}
-    bins.extend(str(p.parent) for p in (tools / "tools").rglob("*.exe")
-                if p.name in executables)
+    suffix = ".exe" if os.name == "nt" else ""
+    executables = {name + suffix for name in
+                   ("cmake", "ninja", "xtensa-esp32s3-elf-gcc",
+                    "xtensa-esp-elf-gcc", "ccache")}
+    bins.extend(sorted({str(p.parent) for p in (tools / "tools").rglob("*")
+                        if p.name in executables and p.is_file()}))
     env.update(IDF_PATH=(SDK / "esp-idf").as_posix(), ADF_PATH=SDK.as_posix(),
                IDF_TOOLS_PATH=str(tools),
                IDF_PYTHON_ENV_PATH=str(python.parent.parent),
@@ -38,15 +43,59 @@ if __name__ == "__main__":
     parser.add_argument("action", choices=["build", "flash", "monitor"],
                         default="build", nargs="?")
     parser.add_argument("--port")
+    parser.add_argument("--baud", type=int, choices=[115200, 230400, 460800, 921600],
+                        help="Flash baud rate; reduce it if the USB link has packet errors")
     parser.add_argument("--stage", choices=[1, 2, 3], type=int, default=3)
     parser.add_argument("--rotate-cw90", action="store_true")
     parser.add_argument("--invert-tilt", action="store_true")
     parser.add_argument("--gimbal", action="store_true")
+    parser.add_argument("--vision", choices=["coco", "face", "hand"],
+                        help="Build backend (default: coco); for flash/monitor, require a matching cached build")
+    parser.add_argument("--work-name",
+                        help="Separate build workspace under .work (e.g. face-candidate)")
+    parser.add_argument("--face-selftest", action="store_true",
+                        help="Diagnostic face stage 2 only: run the pinned official JPEG once before camera inference")
+    parser.add_argument("--hand-weights", type=Path,
+                        help="Generated hv_hand_weights.h for hand builds; omitted means detection-only, never fake classifications")
+    parser.add_argument("--hand-native-partition",
+                        help="Build the pinned 11-class ESP-DL classifier; read its model from an existing data partition (build only, no model write)")
     args = parser.parse_args()
+    vision = args.vision or "coco"
+    if vision in ("face", "hand") and (args.mode != "headvoice" or args.gimbal):
+        parser.error("--vision face/hand requires headvoice without --gimbal")
+    if vision == "hand" and args.action == "build" and args.stage != 2:
+        parser.error("--vision hand currently requires --stage 2")
+    if args.hand_weights and (args.action != "build" or vision != "hand" or not args.hand_weights.is_file()):
+        parser.error("--hand-weights requires a hand build and an existing generated model header")
+    if args.hand_native_partition and (
+            args.action != "build" or args.mode != "headvoice" or vision != "hand" or
+            args.hand_weights or not args.work_name or args.work_name == "headvoice" or
+            not re.fullmatch(r"[a-zA-Z0-9_][a-zA-Z0-9_-]{0,14}", args.hand_native_partition)):
+        parser.error("--hand-native-partition requires an isolated hand build, a valid partition label, and no --hand-weights")
+    if args.face_selftest and (args.action != "build" or args.mode != "headvoice" or
+                              vision != "face" or args.stage != 2 or
+                              not args.work_name or args.work_name == "headvoice"):
+        parser.error("--face-selftest requires a face stage 2 build and an isolated --work-name")
+    if args.work_name is not None and not re.fullmatch(r"[a-z0-9][a-z0-9_-]*", args.work_name):
+        parser.error("--work-name must use lowercase letters, digits, _ or -")
     if args.action != "build" and not args.port:
         parser.error("--port is required; never guess the board port")
-    app = prepare(args.mode) if args.action == "build" else ROOT / \
-        ".work" / args.mode / "apps"
+    if args.baud and args.action != "flash":
+        parser.error("--baud is only supported for flash")
+    app = prepare(args.mode, vision, args.work_name, args.face_selftest) if args.action == "build" else ROOT / \
+        ".work" / (args.work_name or args.mode) / "apps"
+    if args.action != "build" and args.mode == "headvoice" and args.vision:
+        cache = app / "build/CMakeCache.txt"
+        match = re.search(r"^HEADVOICE_VISION:STRING=(coco|face|hand)$",
+                          cache.read_text(encoding="utf-8") if cache.exists() else "",
+                          re.MULTILINE)
+        if not match or match[1] != args.vision:
+            parser.error("--vision does not match this workspace; build the requested backend first")
+    if args.action == "flash":
+        cache = app / "build/CMakeCache.txt"
+        cached = cache.read_text(encoding="utf-8") if cache.exists() else ""
+        if re.search(r"^HEADVOICE_HAND_NATIVE_PARTITION:STRING=.+$", cached, re.MULTILINE):
+            parser.error("Native hand firmware needs an explicit application/model deployment after backing up the selected model partition; full SDK flash would overwrite model assets")
     python, env = environment()
     command = [str(python), str(SDK / "esp-idf/tools/idf.py")]
     if args.action == "build":
@@ -55,8 +104,14 @@ if __name__ == "__main__":
         command += [f"-DHEADVOICE_STAGE={args.stage}",
                     f"-DHEADVOICE_ROTATE_CW90={int(args.rotate_cw90)}",
                     f"-DHEADVOICE_INVERT_TILT={int(args.invert_tilt)}",
-                    f"-DHEADVOICE_GIMBAL={int(args.gimbal)}"]
+                    f"-DHEADVOICE_GIMBAL={int(args.gimbal)}",
+                    f"-DHEADVOICE_VISION={vision}",
+                    f"-DHEADVOICE_HAND_WEIGHTS_FILE={args.hand_weights.resolve() if args.hand_weights else ''}",
+                    f"-DHEADVOICE_HAND_NATIVE_PARTITION={args.hand_native_partition or ''}",
+                    f"-DHEADVOICE_FACE_SELFTEST={int(args.face_selftest)}"]
     if args.port:
         command += ["-p", args.port]
+    if args.baud:
+        command += ["-b", str(args.baud)]
     command += [args.action]
     raise SystemExit(subprocess.call(command, cwd=app, env=env))

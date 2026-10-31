@@ -90,6 +90,35 @@ int main(void)
   frames(3, 5);
   assert(actions == 1);
   puts("PASS sustained tilt is consumed once only after return");
+  for (int direction = -1; direction <= 1; direction += 2) {
+    setup();
+    frames(3 + direction * 20, 8);
+    frames(3 + direction * 12, 4);
+    frames(3 + direction * 10, 3);
+    frames(3 + direction * 8, 3);
+    assert(actions == 0);
+    frames(3, 5);
+    assert(actions == 1 && core.first == (direction < 0));
+    frames(3, 10);
+    assert(actions == 1);
+    setup();
+    frames(3 + direction * 20, 3); /* An incomplete hold cannot be rescued. */
+    frames(3 + direction * 12, 4);
+    frames(3, 5);
+    assert(actions == 0);
+    setup();
+    frames(3 + direction * 20, 8);
+    frames(3 + direction * 12, 51); /* The return must still finish in time. */
+    frames(3, 5);
+    assert(actions == 0);
+    setup();
+    frames(3 + direction * 20, 8);
+    frames(3 + direction * 12, 3);
+    sample(3, false);
+    frames(3, 6);
+    assert(actions == 0);
+  }
+  puts("PASS gradual return, incomplete hold, return timeout and tracking loss");
   setup();
   candidate('A', 'A');
   frames(3, 5);

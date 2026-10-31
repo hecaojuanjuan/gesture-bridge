@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-31",
+  "builds": [
+    {
+      "variant": "detection_only",
+      "exit_code": 0,
+      "log": ".local/hand-build-check/detection_only.log",
+      "flashed": false,
+      "bytes": 3593152,
+      "sha256": "33c4c0ee50d9455b69a2ab57c332d9a593273dda03e9bf470a2bf854d028a05c",
+      "free_bytes": 535616
+    },
+    {
+      "variant": "synthetic_build_only",
+      "exit_code": 0,
+      "log": ".local/hand-build-check/synthetic_build_only.log",
+      "flashed": false,
+      "bytes": 3811184,
+      "sha256": "88f38924c1b699bfb656f61630787b71356ed4626b7a83bba7780352c760c294",
+      "free_bytes": 317584
+    },
+    {
+      "variant": "restored_detection_only",
+      "exit_code": 0,
+      "flashed": false
+    }
+  ],
+  "real_training_performed": false,
+  "synthetic_weights_used_only_for_link_check": true,
+  "on_board_binary": "artifacts/headvoice-hand-detect-capture-20261031.bin",
+  "host_checks": {
+    "hand_tests": 14,
+    "camera_tests": 21,
+    "collection_tests": 6,
+    "face_selftest_cli_regression": 4,
+    "hand_test_log": ".local/hand-host-tests-20261031.log"
+  },
+  "synthetic_header_removed": true
+}

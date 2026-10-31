@@ -1,0 +1,97 @@
+{
+  "builds": [
+    {
+      "date": "2026-10-31",
+      "pid": 11785,
+      "stage": 2,
+      "rotate_cw90": true,
+      "artifact": "headvoice-panel-stage2.bin",
+      "bytes": 3076512,
+      "sha256": "a3c91ea762904a2f05830f113182fff00dd662eeabf32faa5dff34754f28b965",
+      "flashed": true,
+      "hardware_verified": false,
+      "runtime_result": "Repeated panic/reset; superseded by 80 MHz diagnostic candidate",
+      "reboot_evidence": "panel-reboot-20261031.json"
+    },
+    {
+      "date": "2026-10-31",
+      "pid": 11785,
+      "stage": 0,
+      "rotate_cw90": false,
+      "artifact": "baseline-panel.bin",
+      "bytes": 3203088,
+      "sha256": "04189ff9c6de9554e79cab9a5011507a547770b660dfc68333e30af5a7fb7f65",
+      "flashed": false,
+      "hardware_verified": false
+    },
+    {
+      "date": "2026-10-31",
+      "pid": 11785,
+      "stage": 3,
+      "rotate_cw90": true,
+      "artifact": "headvoice-panel-stage3.bin",
+      "bytes": 3347456,
+      "sha256": "475aba4d64454e1990476ffc11cfc740feafd4cbc45267e8f925af6541faf1f1",
+      "flashed": false,
+      "hardware_verified": false
+    },
+    {
+      "date": "2026-10-31",
+      "pid": 11785,
+      "stage": 2,
+      "rotate_cw90": true,
+      "artifact": "headvoice-panel-stage2-stability.bin",
+      "bytes": 3074816,
+      "sha256": "27a148bc9ee805d5d2a529ef09aa21cb0850372ec8c1aaed4c868921b2ba8602",
+      "memory_mhz": 80,
+      "boot_psram_test": true,
+      "heap_poisoning": "light",
+      "flashed": true,
+      "hardware_verified": false,
+      "runtime_result": "Failed: four panics in 180 seconds; 80 MHz does not resolve reset loop",
+      "runtime_evidence": "panel-stability-20261031.json"
+    },
+    {
+      "date": "2026-10-31",
+      "pid": 11785,
+      "stage": 1,
+      "rotate_cw90": true,
+      "artifact": "headvoice-panel-stage1-isolation.bin",
+      "bytes": 1971696,
+      "sha256": "aa1769ed6f5ef8995ce157d6b15667805fcd81fb382f6ff1414b51d598382053",
+      "memory_mhz": 80,
+      "flashed": false,
+      "hardware_verified": false,
+      "purpose": "Camera capture + RGB + Wi-Fi, no pose inference; isolate repeat reset",
+      "flash_attempt": "Interrupted when user unplugged USB; not verified; reflash application before next test"
+    }
+  ],
+  "platform": {
+    "pid": 11785,
+    "service": "headvoicePanel",
+    "siid": 12,
+    "command_piid": 1,
+    "report_piid": 2,
+    "function_version": 2,
+    "service_status": "审核通过",
+    "panel_version": 1,
+    "panel_status": "发布",
+    "uploaded_local_time": "2026-10-31 10:39:00",
+    "cloud_round_trip_verified": true,
+    "cloud_round_trip_scope": "Phone user confirmed device responded; serial log correlates SIID 12 PIID 1 get with HP reply. Set/test not verified."
+  },
+  "verification": {
+    "production_core": "pass",
+    "rgb_policy": "pass",
+    "mqtt": "pass",
+    "python_tests": 11,
+    "panel_tests": 6,
+    "panel_build": "pass",
+    "responsive_widths": [
+      390,
+      1280
+    ],
+    "hardware_flashing_this_session": true
+  },
+  "hardware_state": "USB disconnected by user; hardware tests deferred; software development continues"
+}

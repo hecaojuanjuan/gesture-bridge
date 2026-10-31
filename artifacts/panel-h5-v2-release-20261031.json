@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-31",
+  "product": "奶龙",
+  "pid": 11785,
+  "platform_product_page": "https://platform.ljyd.cn/#/productDevDetail/1531",
+  "h5_version": 2,
+  "release_note": "USB诊断与重启状态修复",
+  "artifact": "artifacts/headvoice-panel.zip",
+  "sha256": "9c5c9fbbeea0b76beda8fbcf37fb5936e236f24164b0974da4f7fbbc1ebfa489",
+  "bytes": 23289,
+  "frontend_tests_passed": 47,
+  "production_build_passed": true,
+  "zip_crc_passed": true,
+  "platform_upload_time": "2026-10-31 16:05:54",
+  "platform_ui_status": "发布",
+  "platform_publish_success_observed": true,
+  "evidence_screenshot": ".local/panel-v2-published-20261031.png",
+  "phone_v2_load_verified": false,
+  "phone_set_test_verified": false,
+  "live_device_restart_fix_verified": false,
+  "source_sha256": {
+    "panel/src/main.js": "d005ede41a59767da9331567bd863bf733c298f5c9cf6ab4a9edec5761939112",
+    "panel/src/protocol.mjs": "f1ec8f4ca2af4b2e9318f40f8c318da947b036729b824a53cd7fd0ab07b3bf80",
+    "panel/src/serial.js": "8ecc75a9cd74df53bfaf3855abc45e8be48a3845ed0b8da01cb6c92e65f2e466"
+  }
+}

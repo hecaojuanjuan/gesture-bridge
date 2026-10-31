@@ -1,0 +1,62 @@
+{
+  "recorded_at_utc": "2026-10-31T04:56:31.421727+00:00",
+  "product_pid": 11785,
+  "transport": "Chrome Web Serial, localhost:4173",
+  "firmware_stage_observed": 1,
+  "source_format": "120x160 RGB565LE, clockwise 90 degrees",
+  "display_dimensions": [
+    160,
+    120
+  ],
+  "observed_capture_seconds": [
+    7.4,
+    7.5
+  ],
+  "browser_verified": [
+    "manual capture with verified frame displayed",
+    "automatic refresh completed subsequent frames",
+    "stop leaves last image and increasing reception age",
+    "no new frame observed through reception age 346 seconds after stop",
+    "disconnect clears canvas and disables execution",
+    "status query and light controls restored after image transfer"
+  ],
+  "automated_checks": {
+    "frontend_tests_passed": 39,
+    "frontend_production_build": "passed",
+    "python_camera_tests_passed": 8
+  },
+  "integrity": "BEGIN/order/offset/size/HEX/FNV1a/END; WAIT also required; 25s deadline",
+  "camera_timeout_behavior": "Reject frame, stop auto refresh, require reconnect before next image",
+  "auto_refresh_gap_after_completion_ms": 3000,
+  "image_storage": "Only in page memory. Local QA screenshot ignored by Git; no image bytes in this artifact.",
+  "private_screenshot": ".local/panel-camera-20261031.png",
+  "local_package": {
+    "artifact": "headvoice-panel.zip",
+    "bytes": 22119,
+    "sha256": "a150311176a45645981545065d69677637ce8e567457d2b6ba1efc1519ffcf06",
+    "protocol": {
+      "version": 1,
+      "siid": 12,
+      "commandPiid": 1,
+      "reportPiid": 2,
+      "status": "platform-approved-version-2"
+    },
+    "hardware_verified": false
+  },
+  "cloud_h5_republished": false,
+  "published_cloud_v1_sha256": "76caa53d8c9e96829386bf0b974875a82b9eb9eb3023629abf8d3f0c7e0d2b5f",
+  "firmware_flash_performed": false,
+  "gimbal_motion_commands_sent": false,
+  "preliminary_cli_failures": [
+    "USB read interrupted, port subsequently re-enumerated",
+    "odd-length hex error after BEGIN with old readline-based tool"
+  ],
+  "cli_fix": "Accumulate byte fragments until real newline; never parse timeout fragments as full lines. Unit tests passed; updated Python tool not re-run on hardware in this task.",
+  "limits": [
+    "Low-frame-rate USB preview, not real-time video",
+    "No implemented cloud video transport",
+    "No pose accuracy or stage2 stability acceptance",
+    "Color accuracy not evaluated"
+  ],
+  "final_note": "Latest local build loaded after disconnect; preview is opt-in and does not auto-capture on connect."
+}

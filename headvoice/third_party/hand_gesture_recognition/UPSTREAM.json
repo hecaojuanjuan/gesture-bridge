@@ -1,0 +1,32 @@
+{
+  "component": "espressif/hand_gesture_recognition",
+  "version": "0.1.0",
+  "license": "MIT",
+  "source": "https://github.com/espressif/esp-dl/tree/c39b5bb08e957dc675efa29f86a642ba79cb82d7/models/hand_gesture_recognition",
+  "upstream_commit": "c39b5bb08e957dc675efa29f86a642ba79cb82d7",
+  "targets_included": [
+    "esp32s3"
+  ],
+  "model_bytes": 788608,
+  "model_sha256": "52e18ceb0845121b4c0fa63aa06d69d17068c8c8135f43a7943a11812ac595d0",
+  "files": {
+    "CMakeLists.txt": "8028e5e124e4155d1b62b83f921be872eae9e393f3f0836e715a9ffe5ba17df6",
+    "Kconfig": "5903b21f9d655f0350520961019568688ec9b59d2a92b7c67bee94b35384834c",
+    "LICENSE": "3513f1605ebcc227f7364956f6c30a303412597e232648cb3090e76697ca5aa3",
+    "README.md": "cde17a15bb9dee33d91dae0d5afadde4c3a549340f888dbf2dc262e3ac92fcac",
+    "hand_gesture_recognition.hpp": "54914997d89a78e3bce6d58ce2551baddf3dd75795d1e0be80e47822fb1504a2",
+    "hand_gesture_recognition.cpp": "dd9eaa0dac67c1b3fb8e48f2b2911a55d3a3a4ba94dbcd9a987e5c09b13dc9a1",
+    "idf_component.yml": "8d291a937f262c3b09f46b95aed2e018f3598c11c417c0ed1b24f117f34a48d5",
+    "models/s3/mobilenetv2_0_5_128_128_gesture.espdl": "52e18ceb0845121b4c0fa63aa06d69d17068c8c8135f43a7943a11812ac595d0"
+  },
+  "git_blobs": {
+    "CMakeLists.txt": "cfcf0f5da2b5751d3736c6a8cb37b4d83c6b747e",
+    "Kconfig": "e14d85b55c51e10afdd857a0481649b80127d91b",
+    "LICENSE": "dc2be013b5edf43108b6081057b13b6ff276ffe5",
+    "README.md": "e2cf676f95b7d0feb39695f2ed36c636a4599324",
+    "hand_gesture_recognition.hpp": "856c3033fab24e9cb5c429f3e2270cdc61eb0698",
+    "hand_gesture_recognition.cpp": "8b763077f9b7e98a7a66b62d4ca3305d0b25846e",
+    "idf_component.yml": "84afa83336fedd8dbd870132f1e31d7fec9bd6ec",
+    "models/s3/mobilenetv2_0_5_128_128_gesture.espdl": "9412ea051175c406c7a05807d500f1f78d4344e6"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-31",
+  "artifact": "artifacts/headvoice-face-autocenter-stage2-20261031.bin",
+  "sha256": "d9db1f7c6c9a163106d98b0e385908708eedeb73bb221374adebdf371c91af9c",
+  "bytes": 3265568,
+  "elf": "artifacts/headvoice-face-autocenter-stage2-20261031.elf",
+  "elf_sha256": "aa8d4ca8f872b3c293f78cf95bfde2ac3011583f52a4d467f059f89237a9e111",
+  "map": "artifacts/headvoice-face-autocenter-stage2-20261031.map",
+  "stage": 2,
+  "vision": "face",
+  "rotate_cw90": true,
+  "separate_gimbal_mode": false,
+  "integrated_face_gimbal": true,
+  "default_pwm_off": true,
+  "pan_gpio": 17,
+  "tilt_gpio": 18,
+  "initial_pulse_limits_us": [
+    1475,
+    1525
+  ],
+  "max_step_us": 25,
+  "face_age_limit_ms": 400,
+  "lost_target_stop_ms": 1000,
+  "idle_arm_lease_ms": 10000,
+  "centered_hold_lease_ms": 60000,
+  "partition_table_sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9",
+  "partition_matches_previous_board": true,
+  "model_storage": "application rodata",
+  "build_log": ".local/face-autocenter-build.log",
+  "host_checks": [
+    "tests/test_face_gimbal_firmware.py",
+    "tools/test_gimbal.py",
+    "tools/test_face_landmarks.py"
+  ],
+  "app_flash_verified": true,
+  "runtime_verified": true,
+  "runtime_verification_scope": "Flash hash verified; face stage 2 app, camera capture, and gimbal CLI/PWM state receipts observed after boot. This does not establish face tracking or automatic centering acceptance.",
+  "runtime_evidence": [
+    ".local/face-autocenter-flash.log",
+    ".local/face-autocenter-startup.jsonl",
+    ".local/face-gimbal-tilt-trial.jsonl",
+    ".local/face-gimbal-pan-trial.jsonl",
+    ".local/face-gimbal-session-20261031-154848.jsonl",
+    ".local/face-gimbal-direction-calibration-2.jsonl",
+    ".local/face-gimbal-tilt-return-1500.jsonl",
+    ".local/face-gimbal-tilt-arm-stop-isolation.jsonl",
+    ".local/face-gimbal-target-readiness-2.jsonl"
+  ],
+  "physical_motion_verified": {
+    "pan_gpio17": true,
+    "tilt_gpio18": true
+  },
+  "pan_motion_scope": "User visually confirmed base servo and camera bracket move horizontally during manual 1500->1525->1500->1475->1500us sequence; final status both PWM channels off.",
+  "tilt_motion_scope": "User visually confirmed upper servo and camera bracket move together during manual 1500->1525->1500us sequence; final status both PWM channels off.",
+  "face_target_during_pan_trial": "people=0; no valid face target for image-direction calibration",
+  "automatic_centering_verified": false,
+  "direction_calibrated": false,
+  "source_sha256": {
+    "headvoice/core/hv_face_landmarks.c": "4b1dd2ec2435c1882dae942aa762ca83d14a456ce81b088df24c060b0ff1aee4",
+    "headvoice/core/hv_face_landmarks.h": "24d9ee5f60be0647902be26c2225da5a10ada42234856a03dd77929132003685",
+    "headvoice/core/hv_gimbal_core.c": "b0254bef3286fcaa99c4d7cecb9f338188c2e5c09f6839022084a88f64842248",
+    "headvoice/core/hv_gimbal_core.h": "b4c0ea7736a8af444e4eeef6b2b097833d1a627d5df84c7fb7535ec236dc997a",
+    "headvoice/firmware/hv_face_pose.cpp": "3564811f48c3179dd37d3902c98d0012ddf5488fcb077d759496b1543f94c9fc",
+    "headvoice/firmware/hv_face_pose.h": "2c30c0370c7926096a14130795297e85f4b7141ac0474b892df52a9cd1865858",
+    "headvoice/firmware/hv_face_gimbal.c": "967ba3ea96a3c8c4555333745dd28852b1dd3dfee21acfb426576a20637cc3cd",
+    "headvoice/firmware/hv_face_gimbal.h": "9ac9999fd072a5ea9ddb14948a49a06d70ace9bae2ffb219923ed95179decb69",
+    "headvoice/firmware/headvoice_app.c": "5b465abba5db11d66c611098d67b2e596d1361c1069940c376eaeca7348e7583",
+    "headvoice/firmware/integration.cmake": "2c9927ef55fdf5e10bdc91244dbef28276227ee42b68c2225a9d6333d9c5ed83",
+    "tools/gimbal_control.py": "6a9eb3e53971bdb66b25ca6d70c51f7ca4426f9e531b5d0f5f5cbd57b58dafa6"
+  },
+  "servo_power_source": {
+    "user_confirmed": "Two servo 5V leads soldered together and connected to main-board 5V/VBUS; no independent servo supply.",
+    "servo_rail_voltage_measured": false
+  },
+  "motion_test_status": "User isolated the downward movement to arm tilt; both trials end at the same low position and stabilize. Routine motion and automatic centering remain paused pending startup-position calibration.",
+  "tilt_incident": {
+    "reported": true,
+    "cause_confirmed": false,
+    "observed_at": "User confirmed movement occurs immediately after arm tilt, which commands fixed 1500us.",
+    "off_power_observation": "User reports no obvious gravity sag and slack cable while supporting bracket after unplugging USB.",
+    "power_up_observation": "User reports no movement on reconnecting USB before any servo command.",
+    "latest_agent_test": "Earlier agent trial: arm tilt 1500us, hold about 5 seconds, stop; final status both PWM channels off. Superseded for event timing by later user-operated trials.",
+    "logs": [
+      ".local/face-gimbal-direction-calibration-2.jsonl",
+      ".local/face-gimbal-tilt-return-1500.jsonl",
+      ".local/face-gimbal-tilt-arm-stop-isolation.jsonl",
+      ".local/face-gimbal-session-20261031-160558.jsonl",
+      ".local/face-gimbal-session-20261031-160633.jsonl"
+    ],
+    "repeatability_user_confirmed": "Both trials reach the same low position and then remain stable.",
+    "working_hypothesis": "Fixed 1500us startup position does not match desired camera direction; physical mounting/calibration not yet checked. Servo rail voltage is unmeasured; power fault not excluded.",
+    "latest_manual_session_stop_verified": false
+  },
+  "target_readiness_after_reframing": {
+    "log": ".local/face-gimbal-target-readiness-2.jsonl",
+    "queries": 37,
+    "valid": 33,
+    "meaning": "Short read-only target window; does not establish 30-second continuous pose input or calibrated servo directions."
+  }
+}

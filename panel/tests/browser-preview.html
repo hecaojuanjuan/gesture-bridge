@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>离线回放 · 手部诊断与 JPEG 验证</title>
+<aside style="padding:16px;background:#fff1bf;border-bottom:2px solid #b88b19">
+  <strong>离线协议回放：仅虚拟串口，不连接开发板。</strong>
+  <p>先运行 JPEG 解码检查，再点击下方面板的“连接 USB 设备”。回放数据不代表实机识别结果。</p>
+  <button id="qa-decode">检查真实 JPEG 解码</button>
+  <button id="qa-pause">暂停诊断流</button>
+  <button id="qa-candidate">回放已训练原始候选</button>
+  <button id="qa-restart">回放设备重启</button>
+  <output id="qa-result" style="display:block;margin-top:12px">尚未检查</output>
+  <output id="qa-wire" style="display:block;margin-top:6px">尚无串口指令</output>
+</aside>
+<div id="app"></div>
+<script type="module">
+import {jpegWire} from './jpeg-fixture.mjs';
+import {JpegSnapshotParser,decodeJpegFrame} from '../src/jpeg.mjs';
+
+let input=null, timer=null, paused=false, trained=false, seq=0, boot=1, origin=performance.now();
+const $=id=>document.getElementById(id);
+const uptime=()=>1000+Math.floor(performance.now()-origin);
+const emit=wire=>input?.enqueue(new TextEncoder().encode(wire));
+function observation() {
+  if(paused || !input) return;
+  const h={v:1,event:'observation',seq:++seq,captured_ms:uptime()-120,age_ms:120,
+    epoch:0,width:320,height:240,hands:1,box:[90,40,220,210],detect_score:.82,
+    valid:true,classifier_ready:trained,gesture:trained?'open_palm':'untrained',
+    infer_ms:100,conversion_ms:20,detect_ms:80,classifier_ms:0,
+    scores:trained?[.86,.1,.04]:[0,0,0],classification_valid:trained,classifier_status:trained?0:1,
+    confirmed:false,gate_visible:'unknown',gate_latched:'unknown',candidate_samples:0,
+    palm_count:0,fist_count:0};
+  emit('HG '+JSON.stringify(h)+'\n');
+}
+function makePort() {
+  let closed=false;
+  return {
+    async open() {origin=performance.now();seq=0;timer=setInterval(observation,200);},
+    readable:new ReadableStream({start(controller){input=controller;},cancel(){input=null;}}),
+    writable:new WritableStream({write(bytes){
+      const wire=new TextDecoder().decode(bytes).trim();
+      $('qa-wire').textContent='最近虚拟串口指令：'+wire;
+      const get=/^hv_panel (\d+) get$/.exec(wire);
+      if(get) {
+        emit('HP '+JSON.stringify({v:1,boot,id:Number(get[1]),ok:true,reset_reason:1,
+          uptime_ms:uptime(),mode:1,brightness:20,rgb:[80,190,255],output:[3,7,9],
+          test_ms:0,stage:2,pose:{age_ms:4294967295,people:0,tilt:0,tracking:false,valid:false,infer_ms:0}})+'\n');
+      } else if(wire==='hv_camera inputjpeg') {
+        emit(jpegWire({captured:uptime()}));
+      } else if(wire==='hv_camera snapshot') {
+        emit('HVCAM WAIT\nHVCAM BEGIN 2 1 4 '+uptime()+' 0\nHVCAM DATA 0 00f8e007\nHVCAM END 27e41548\n');
+      } else throw Error('离线回放不执行灯光或其他写操作');
+    }}),
+    async close(){if(!closed){closed=true;clearInterval(timer);input=null;}}
+  };
+}
+Object.defineProperty(navigator,'serial',{configurable:true,value:{requestPort:async()=>makePort()}});
+$('qa-decode').onclick=async()=>{
+  try {
+    const parser=new JpegSnapshotParser();let encoded;
+    for(const line of jpegWire().trim().split('\n')) encoded=parser.feed(line)||encoded;
+    const frame=await decodeJpegFrame(encoded), p=Array.from(frame.rgba);
+    if(frame.width!==2 || frame.height!==1 || p.length!==8 || p[0]<240 || p[1]>15 || p[4]>15 || p[5]<240)
+      throw Error('解码像素不符合红／绿测试图');
+    $('qa-result').textContent='JPEG 解码通过：2 × 1，RGBA '+p.join(', ');
+  } catch(error) {$('qa-result').textContent='JPEG 解码失败：'+error.message;}
+};
+$('qa-pause').onclick=()=>{paused=!paused;$('qa-pause').textContent=paused?'恢复诊断流':'暂停诊断流';};
+$('qa-candidate').onclick=()=>{trained=!trained;$('qa-candidate').textContent=trained?'回放未训练状态':'回放已训练原始候选';};
+$('qa-restart').onclick=()=>{boot++;seq=0;origin=performance.now();emit('ESP-ROM:esp32s3-20210327\nrst:0x1\n');};
+await import('../src/main.js');
+</script>
+</html>

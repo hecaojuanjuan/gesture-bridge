@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-31",
+  "manifest": "artifacts/headvoice-hand-tick-watch2-20261031.json",
+  "log": ".local/voice-coldboot-20261031.jsonl",
+  "first_host_utc": "2026-10-31T10:17:59.663864+00:00",
+  "last_host_utc": "2026-10-31T10:22:07.275698+00:00",
+  "user_report": "USB replugged and hotspot on; later reported not connected to hotspot",
+  "wake_event_count": 7,
+  "wake_ignored_cloud_offline_count": 7,
+  "panic_count": 4,
+  "observed_boot_ids": 5,
+  "mic_bytes_per_second_median": 32009.1,
+  "invalid_mic_age_samples": 5,
+  "camera_report_count": 232,
+  "events": [
+    {
+      "host_utc": "2026-10-31T10:18:00.642945+00:00",
+      "event": "cloud connected"
+    },
+    {
+      "host_utc": "2026-10-31T10:18:49.819581+00:00",
+      "event": "poll_write timeout fd=52 timeout_ms=100"
+    },
+    {
+      "host_utc": "2026-10-31T10:18:49.819896+00:00",
+      "event": "MQTTPublish is error, rc = -14"
+    },
+    {
+      "host_utc": "2026-10-31T10:18:49.871910+00:00",
+      "event": "cloud disconnected"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:07.918989+00:00",
+      "event": "wakeup: 你好小鹰"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:07.936943+00:00",
+      "event": "wakeup ignored, cloud=0"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:10.685686+00:00",
+      "event": "wakeup: 你好小鹰"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:10.696468+00:00",
+      "event": "wakeup ignored, cloud=0"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:13.912114+00:00",
+      "event": "wakeup: 你好小鹰"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:13.912338+00:00",
+      "event": "wakeup ignored, cloud=0"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:29.051620+00:00",
+      "event": "wakeup: 你好小鹰"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:29.062473+00:00",
+      "event": "wakeup ignored, cloud=0"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:31.536216+00:00",
+      "event": "wakeup: 你好小鹰"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:31.536578+00:00",
+      "event": "wakeup ignored, cloud=0"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:33.839252+00:00",
+      "event": "wakeup: 你好小鹰"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:33.839617+00:00",
+      "event": "wakeup ignored, cloud=0"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:36.716618+00:00",
+      "event": "wakeup: 你好小鹰"
+    },
+    {
+      "host_utc": "2026-10-31T10:19:36.716703+00:00",
+      "event": "wakeup ignored, cloud=0"
+    },
+    {
+      "host_utc": "2026-10-31T10:20:20.533001+00:00",
+      "event": "Guru Meditation Error: Core  0 panic'ed (Coprocessor exception). "
+    },
+    {
+      "host_utc": "2026-10-31T10:20:25.164406+00:00",
+      "event": "cloud connecting"
+    },
+    {
+      "host_utc": "2026-10-31T10:20:27.747374+00:00",
+      "event": "cloud connected"
+    },
+    {
+      "host_utc": "2026-10-31T10:20:29.418814+00:00",
+      "event": "Guru Meditation Error: Core  0 panic'ed (Coprocessor exception). "
+    },
+    {
+      "host_utc": "2026-10-31T10:20:32.260738+00:00",
+      "event": "schedule reconnect count=1 delay=3000 reason=2"
+    },
+    {
+      "host_utc": "2026-10-31T10:20:37.690089+00:00",
+      "event": "schedule reconnect count=2 delay=6000 reason=2"
+    },
+    {
+      "host_utc": "2026-10-31T10:20:46.161564+00:00",
+      "event": "cloud connecting"
+    },
+    {
+      "host_utc": "2026-10-31T10:20:48.341368+00:00",
+      "event": "cloud connected"
+    },
+    {
+      "host_utc": "2026-10-31T10:20:52.291345+00:00",
+      "event": "Guru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:20:55.229813+00:00",
+      "event": "schedule reconnect count=1 delay=3000 reason=2"
+    },
+    {
+      "host_utc": "2026-10-31T10:21:00.632920+00:00",
+      "event": "schedule reconnect count=2 delay=6000 reason=1"
+    },
+    {
+      "host_utc": "2026-10-31T10:21:09.046062+00:00",
+      "event": "schedule reconnect count=3 delay=12000 reason=1"
+    },
+    {
+      "host_utc": "2026-10-31T10:21:24.714003+00:00",
+      "event": "cloud connecting"
+    },
+    {
+      "host_utc": "2026-10-31T10:21:26.841118+00:00",
+      "event": "cloud connected"
+    },
+    {
+      "host_utc": "2026-10-31T10:21:36.716990+00:00",
+      "event": "Guru Meditation Error: Core  0 panic'ed (StoreProhibited). Exception was unhandled."
+    },
+    {
+      "host_utc": "2026-10-31T10:21:40.822478+00:00",
+      "event": "schedule reconnect count=1 delay=3000 reason=2"
+    },
+    {
+      "host_utc": "2026-10-31T10:21:46.219693+00:00",
+      "event": "schedule reconnect count=2 delay=6000 reason=2"
+    },
+    {
+      "host_utc": "2026-10-31T10:21:58.427838+00:00",
+      "event": "cloud connecting"
+    },
+    {
+      "host_utc": "2026-10-31T10:22:00.626383+00:00",
+      "event": "cloud connected"
+    }
+  ],
+  "voice_dialog_verified": false,
+  "limit": "Wake events prove chip recognition only. Offline gate prevented agent start. Runtime still panicked after cold replug; this does not establish cause of ROM-path crashes."
+}

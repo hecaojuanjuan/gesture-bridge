@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-31",
+  "stage": 2,
+  "vision": "hand",
+  "rotated_cw90": true,
+  "classifier_ready": false,
+  "servo_control": false,
+  "binary": "artifacts/headvoice-hand-voice-stack-20261031.bin",
+  "sha256": "f1b20466369ee57a2c699ba8be7849feae99a7f877d27319450817fbf3839847",
+  "bytes": 3593632,
+  "elf": "artifacts/headvoice-hand-voice-stack-20261031.elf",
+  "elf_sha256": "4afe60346bb483c94e67c651fc959bcbbaf275d43e34dc9c34b64c5d2055c4de",
+  "map": "artifacts/headvoice-hand-voice-stack-20261031.map",
+  "flash_offset": "0x20000",
+  "app_partition_bytes": 4128768,
+  "partition_offset": "0x10000",
+  "partition_sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9",
+  "control_task_stack_bytes": 8192,
+  "change": "Increase qm_agent_ctl stack from 3072 to 8192 bytes; expose stack watermark and internal heap in hv_voice stats",
+  "build_passed": true,
+  "host_checks": {
+    "hand_app_firmware_tests": 2,
+    "camera_preview_firmware_tests": 1
+  },
+  "build_log": ".local/hand-voice-stack-build-20261031.log",
+  "source_sha256": {
+    "tools/prepare_sdk.py": "a132a6c33e2faba268193ef29892b3075076b0bab1580a4e9b9fda5058fdac9e",
+    "headvoice/firmware/hv_voice_probe.c": "06d0066a2e81945afa71499bfd0eb314b1e9e24d9dc0e0ac262a70391757fe73",
+    "headvoice/firmware/hv_hand_app.c": "b66992ba1db26dc594a625c5d8b47bbf01d924f2bd26ce340d7c187399bdf3bb",
+    "headvoice/firmware/hv_hand_detect.cpp": "7e8f4d85ea58890df2c321649e658d947ea3c4280449c2549e67b026c6198542",
+    "headvoice/firmware/hv_camera_preview.c": "7013da0aa1ee909b4897c235517a702784e3a8cdea4d7aa60bbbb9e29eeffbcf"
+  },
+  "rollback_binary": "artifacts/headvoice-hand-detect-capture-20261031.bin",
+  "rollback_sha256": "56d3b8c21ba84a560a3a3e3af8c71960829befa0e76fc3e3cf010399984bf61f",
+  "flash_performed": true,
+  "runtime_verified": false,
+  "limits": [
+    "Current hand app source differs from the earlier onboard manifest; candidate uses current repository source and the hand app regression passed.",
+    "Build and host checks do not establish real voice or camera concurrency."
+  ],
+  "app_only_flash_verified": true,
+  "on_board": false,
+  "application_integrity": "verified_complete",
+  "flash_attempt_log": ".local/hand-voice-stack-flash-115200-20261031.log",
+  "flash_log": ".local/hand-voice-stack-recovery-20261031.log",
+  "flash_baud": 115200,
+  "device_partition_verified": true,
+  "flashed_at_utc": "2026-10-31T09:49:26.332063+00:00",
+  "startup_validation": "failed_repeated_panics",
+  "postflash_evidence": "artifacts/voice-wake-diagnosis-20261031.json",
+  "runtime_log": ".local/voice-stack-postflash-20261031.jsonl",
+  "replaced_by": "artifacts/headvoice-hand-tick-watch2-20261031.json"
+}

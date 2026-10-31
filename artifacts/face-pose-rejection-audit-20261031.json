@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-31",
+  "source_log": ".local/camera-retest-20261031/face-neutral-02.jsonl",
+  "source_log_sha256": "2d57d0981ca6033a8841e932bdfced0158e027d9d53c03585eb3569baa04ddf5",
+  "source_board_image": "artifacts/headvoice-face-stage2-cw90-20261031.bin",
+  "scope": "Offline reanalysis of the earlier neutral_02 recorded trial; no new device sampling or human gesture accuracy test.",
+  "counts": {
+    "observed_poses": 399,
+    "no_visible_face": 208,
+    "tracked_and_accepted": 167,
+    "tracked_but_rejected": 24
+  },
+  "rejected_age_ms": {
+    "min": 129,
+    "max": 231,
+    "all_within_400ms": true
+  },
+  "inference_median_ms": 140,
+  "interpretation": {
+    "observed": "Most rejected observations contain no detected face. A further 24 have valid tracking and acceptable frame age but are rejected by the production freshness predicate.",
+    "inference": "The 24 rejected tracked observations are consistent with an epoch mismatch; per-result epoch identifiers were not logged, so this is not independently proven for each frame.",
+    "confirmed_source_defect": "Before the panel freshness fix, HP pose.valid was tracking && age<=400 and omitted the production epoch/fresh eligibility. This could label a rejected observation valid in a phone snapshot.",
+    "not_fixed_by_panel_patch": "The 208 zero-face detector outputs, continuous pose eligibility, gesture accuracy and servo home calibration remain unverified."
+  }
+}

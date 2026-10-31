@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-31",
+  "label": "closed_fist",
+  "condition": "User-run closer-to-camera trial following provided countdown command.",
+  "log": ".local/hand-tests/fist-close-20261031-184234.jsonl",
+  "log_sha256": "3ff2a6b4ed33404bc5b7094fa9ddf6333b5c0728addafa6f657fcb1b0a2c4a9d",
+  "runtime_fingerprint_lines": [
+    "I (1171) app_init: Compile time:     Oct 31 2026 18:16:20",
+    "I (1176) app_init: ELF file SHA256:  87d44b90b..."
+  ],
+  "summary": {
+    "recording_status": "observations_received",
+    "observations": 39,
+    "hand_counts": {
+      "1": 19,
+      "2": 20
+    },
+    "valid_single_hand": 18,
+    "classifier_ready_values": [
+      false
+    ],
+    "gesture_events": 0,
+    "gestures": {},
+    "raw_classes": {
+      "untrained": 39
+    },
+    "inference_ms": {
+      "n": 39,
+      "median": 284,
+      "p95": 310,
+      "max": 312
+    },
+    "result_age_ms": {
+      "n": 39,
+      "median": 296,
+      "p95": 360,
+      "max": 361
+    },
+    "startup_or_fault_lines": 2,
+    "ready_events": 1,
+    "latest_metrics": {
+      "v": 1,
+      "event": "metrics",
+      "captured": 187,
+      "dropped": 154,
+      "internal_free": 51895,
+      "internal_largest": 38900,
+      "psram_free": 2822180
+    },
+    "gesture_accuracy_verified": false,
+    "note": "Counts and timing only. Requires independently labelled palm, fist, other and no-hand trials. Detection-only firmware has no trained gesture classifier."
+  },
+  "box_review": {
+    "valid_boxes": 18,
+    "bottom_within_one_pixel": 18,
+    "x1_range": [
+      102,
+      125
+    ],
+    "y1_range": [
+      152,
+      164
+    ],
+    "longest_consecutive_valid": 4
+  },
+  "limitations": [
+    "No JPEG paired with this trial; clipping, duplicate boxes and background false positives cannot be distinguished from summary.",
+    "Untrained classifier; valid single-hand fraction is not gesture accuracy."
+  ],
+  "next": "Inspect one JPEG at the closer fist position before another detection trial."
+}

@@ -232,3 +232,7 @@ __marimo__/
 /artifacts/*.bin
 /artifacts/*.elf
 /artifacts/*.map
+
+# H5 panel dependencies and packaged build
+node_modules/
+/artifacts/headvoice-panel.zip

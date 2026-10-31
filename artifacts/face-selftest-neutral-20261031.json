@@ -1,0 +1,212 @@
+{
+  "date": "2026-10-31",
+  "trial": "user-labelled neutral frontal posture; passive capture after 10-second notice",
+  "firmware": {
+    "artifact": "artifacts/headvoice-face-selftest-eligibility-20261031.bin",
+    "sha256": "df8b63d652bd500d610444db6749ed4431bae716618ee2eddde356096f50bf3b",
+    "stage": 2,
+    "vision": "face",
+    "selftest_enabled": true
+  },
+  "source": {
+    "raw_log": ".local/face-selftest-neutral-20261031.jsonl",
+    "raw_log_sha256": "099740ba3332c7464e8b3592a4ee357172186b2d26eece589da8d77ddc255d05",
+    "timing_report": ".local/face-selftest-neutral-timing-20261031.json",
+    "timing_report_sha256": "3943b7f4c94c0520b194237412bf823fd94ee9083f445a721c5826ef7aa45ba7",
+    "analyzer": "tools/pose_readiness.py",
+    "analyzer_sha256": "1bc75f9c054730400843a0f4a1b68116813a1c98ca731230a0ac7df3337e4d28"
+  },
+  "acquisition": {
+    "requested_seconds": 60,
+    "advance_notice_seconds": 10,
+    "observed_host_seconds": 59.498453,
+    "host_first_utc": "2026-10-31T08:29:08.068497+00:00",
+    "host_last_utc": "2026-10-31T08:30:07.566950+00:00",
+    "rows": 1232,
+    "serial_commands_observed": [],
+    "partial_lines_ignored": 0,
+    "diagnostic_json_parse_errors": [],
+    "mode": "passive serial; no motion or light-write commands sent by this capture"
+  },
+  "condition": {
+    "user_label": "neutral / frontal face aligned",
+    "user_label_confirmed": true,
+    "independent_neutral_posture_accuracy_verified": false,
+    "follow_up_model_preview": {
+      "image": ".local/face-selftest-neutral-model-20261031.png",
+      "protocol_log": ".local/face-selftest-neutral-model-20261031.log",
+      "source_model_and_checksum_verified_by_task_owner": true,
+      "timing": "After the log, while the user was instructed to keep the same position",
+      "observation": "Only forehead and part of glasses at the bottom; nose, mouth and chin outside the frame",
+      "complete_frontal_face_in_preview": false,
+      "image_included_in_public_artifact": false
+    },
+    "frontal_face_accuracy_trial_qualified": false,
+    "interpretation": "Follow-up framing was inadequate. User intent/label does not establish that every logged frame contained a complete frontal face; zero detections cannot establish algorithm failure on correctly framed frontal faces."
+  },
+  "live_camera_pose": {
+    "samples": 473,
+    "people_counts": {
+      "0": 473
+    },
+    "tracking_samples": 0,
+    "accepted_samples": 0,
+    "capture_span_ms": 57542,
+    "all_result_age_ms": {
+      "n": 473,
+      "min": 87,
+      "median": 156,
+      "p95": 187,
+      "max": 209
+    },
+    "inference_ms": {
+      "n": 473,
+      "min": 76,
+      "median": 121,
+      "p95": 136,
+      "max": 159
+    },
+    "conversion_ms": {
+      "n": 473,
+      "min": 29,
+      "median": 53,
+      "p95": 66,
+      "max": 84
+    },
+    "model_ms": {
+      "n": 473,
+      "min": 46,
+      "median": 67,
+      "p95": 84,
+      "max": 94
+    },
+    "tracked_tilt_degrees": null,
+    "accepted_tilt_degrees": null,
+    "tracked_eye_span_px": null,
+    "accepted_eye_span_px": null,
+    "untracked_placeholder_values": {
+      "tilt_zero_count": 473,
+      "eye_span_zero_count": 473,
+      "meaning": "Rejected/untracked zero placeholders are not physical neutral-angle or eye-distance measurements."
+    }
+  },
+  "timing": {
+    "gate_passed": false,
+    "any_segment_passed": false,
+    "segment_count": 471,
+    "longest_observed_segment_span_ms": 137,
+    "longest_accepted_sequence_span_ms": 0,
+    "tracked_age_ms": null,
+    "capture_gap_ms_within_segments": {
+      "n": 2,
+      "median": 114.0,
+      "p95": 137,
+      "max": 137
+    },
+    "previous_capture_to_result_ms_within_segments": {
+      "n": 2,
+      "median": 264.0,
+      "p95": 280,
+      "max": 280
+    },
+    "reasons": [
+      "Need at least 30 tracked observations over at least 30 seconds",
+      "Tracked result age exceeds 400 ms or no tracked result exists",
+      "Untracked or rejected observations interrupt the production input window",
+      "Log contains discontinuities; assess segments separately, never pool their duration"
+    ],
+    "criterion": "At least 30 tracked accepted observations over 30 seconds in one continuous segment; age <=400 ms and capture gap + next result age <=400 ms; no pooling across invalidations/reboots."
+  },
+  "camera": {
+    "counter_reports": 56,
+    "first": {
+      "row": 189,
+      "frames": 13,
+      "good": 13,
+      "empty": 0,
+      "last_bytes": 153600,
+      "dt_ms": 1010
+    },
+    "last": {
+      "row": 1232,
+      "frames": 1272,
+      "good": 1272,
+      "empty": 0,
+      "last_bytes": 153600,
+      "dt_ms": 1043
+    },
+    "all_empty_counters_zero": true,
+    "all_payload_sizes_153600": true,
+    "counters_monotonic": true,
+    "metrics_windows": 11,
+    "first_metrics": {
+      "event": "metrics",
+      "window_ms": 5004,
+      "valid_hz": 0.0,
+      "inferred": 40,
+      "infer_mean_ms": 111,
+      "infer_max_ms": 139,
+      "captured": 100,
+      "dropped": 58,
+      "internal_free": 52987,
+      "internal_largest": 38900,
+      "psram_free": 3231260
+    },
+    "last_metrics": {
+      "event": "metrics",
+      "window_ms": 5015,
+      "valid_hz": 0.0,
+      "inferred": 41,
+      "infer_mean_ms": 120,
+      "infer_max_ms": 135,
+      "captured": 1205,
+      "dropped": 755,
+      "internal_free": 52887,
+      "internal_largest": 38900,
+      "psram_free": 3230840
+    }
+  },
+  "fixed_fixture": {
+    "events": [
+      "begin",
+      "result",
+      "face",
+      "end"
+    ],
+    "complete_once": true,
+    "result": {
+      "event": "result",
+      "faces": 1,
+      "expected_faces": 1,
+      "decode_ms": 29,
+      "model_ms": 54,
+      "width": 320,
+      "height": 240
+    },
+    "head_valid": true,
+    "included_in_live_pose_statistics": false
+  },
+  "status": {
+    "boot_markers": 1,
+    "additional_boot_markers": 0,
+    "panic_watchdog_or_gimbal_error_markers": [],
+    "explicit_input_invalidations": 473,
+    "last_invalidation_epoch": 473,
+    "passive_hp_reports": 11,
+    "unique_hp_boots": [
+      1712693331
+    ],
+    "hp_report_ids": [
+      0
+    ],
+    "hp_all_ok": true,
+    "hp_valid_count": 0,
+    "gimbal_status_queries_in_this_passive_log": 0,
+    "pwm_state_independently_verified_in_this_log": false
+  },
+  "gesture_accuracy_verified": false,
+  "neutral_angle_stability_verified": false,
+  "stage3_actions_verified": false,
+  "conclusion": "Camera acquisition is working in this window, but all 473 live samples contain zero detected faces. Timing eligibility fails. Follow-up model-input preview lacks a complete face, so this is not a qualified frontal-face accuracy trial.",
+  "next": "Confirm a complete face in a fresh model-input preview before collecting another neutral sample; do not infer head pose from placeholder zeros or expand servo motion."
+}

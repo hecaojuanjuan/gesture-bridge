@@ -1,0 +1,19 @@
+{
+  "binary": "artifacts/headvoice-voice-only-20261031.bin",
+  "sha256": "33ab28c5d4a4664df6244db2f1c9f420b9c7832fe54d7668177b28067c43aab3",
+  "bytes": 1896144,
+  "elf_sha256": "e9a0ef494f8333b2995e57a9931566404962b9c4167cdf702e7fabcb7acc589b",
+  "work": "hand-voice-stack",
+  "stage": 2,
+  "vision": "hand",
+  "servo_control": false,
+  "flash_performed": true,
+  "app_only_flash_verified": true,
+  "runtime_verified": false,
+  "camera_enabled": false,
+  "runtime_mode": "voice_network_only",
+  "flash_log": ".local/headvoice-voice-only-20261031-flash.log",
+  "flashed_at_utc": "2026-10-31T10:30:21.055492+00:00",
+  "on_board": false,
+  "replaced_by": "artifacts/headvoice-hand-voice-restored-20261031.json"
+}

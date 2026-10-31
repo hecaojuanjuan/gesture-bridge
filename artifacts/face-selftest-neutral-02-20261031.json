@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-31",
+  "firmware": "artifacts/headvoice-face-selftest-eligibility-20261031.bin",
+  "raw_log": ".local/face-selftest-neutral-02-20261031.jsonl",
+  "raw_sha256": "bd98a0d000f6f21825c2a74723ece34e42e3806a5d8ae3a7dcecd81af9383ae2",
+  "timing_report": ".local/face-selftest-neutral-02-timing-20261031.json",
+  "requested_seconds": 60,
+  "condition": "User instructed to hold a comfortable frontal neutral pose; full face visually verified in a fresh Chrome preview before and model-input export after sampling. No video covers the entire interval.",
+  "model_preview_before": ".local/face-framing-02-chrome-20261031.png",
+  "model_preview_after": ".local/face-selftest-neutral-02-model-20261031.png",
+  "preview_after_source_verified": true,
+  "observed_image_quality": "Bright facial/glasses regions lose visible detail; lighting impact is a hypothesis, not established cause.",
+  "pose_samples": 479,
+  "single_face": 50,
+  "tracked": 50,
+  "accepted": 44,
+  "zero_face": 429,
+  "timing_gate_passed": false,
+  "any_segment_passed": false,
+  "longest_segment_ms": 3494,
+  "inference_ms": {
+    "n": 479,
+    "median": 121,
+    "p95": 138,
+    "max": 161
+  },
+  "tracked_tilt_degrees": {
+    "min": -15.02,
+    "max": -4.18,
+    "median": -9.004999999999999
+  },
+  "camera_last": {
+    "frames": 1280,
+    "good": 1280,
+    "empty": 0,
+    "last_bytes": 153600
+  },
+  "motion_commands_sent": false,
+  "gesture_accuracy_verified": false,
+  "conclusion": "Full-face trial did not meet continuous input eligibility. Do not loosen freshness or gesture gates to claim success. Inspect image quality and use a controlled lighting comparison before changing detector thresholds."
+}
