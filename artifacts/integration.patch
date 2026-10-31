@@ -307,6 +307,68 @@
 +        endif()
      endif()
  endif()
+--- a/apps/main/pose/private/human_face_detect/idf_component.yml
++++ b/apps/main/pose/private/human_face_detect/idf_component.yml
+@@ -1,6 +1,7 @@
+ dependencies:
+   espressif/esp-dl:
+     version: ~3.2.0
++    override_path: ../esp-dl
+ description: human face detect model.
+ license: MIT
+ repository: git://github.com/espressif/esp-dl.git
+--- a/apps/main/idf_component.yml
++++ b/apps/main/idf_component.yml
+@@ -6,6 +6,8 @@
+   esp-idf-lib/i2cdev: "2.1.2"
+   esp-idf-lib/esp_idf_lib_helpers: "1.4.0"
+   espressif/led_strip: "3.0.3"
++  human_face_detect:
++    path: pose/private/human_face_detect
+   coco_pose:
+     path: pose/private/coco_pose
+   espressif/esp_video: "2.2.0"
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -288,7 +288,7 @@
+ )
+ 
+ if(QM_POSE_SUPPORT)
+-    list(APPEND COMPONENT_REQUIRES coco_pose esp-dl)
++    list(APPEND COMPONENT_REQUIRES coco_pose esp-dl human_face_detect)
+ endif()
+ 
+ if(APP_CAMERA_TEST)
+--- a/apps/main/pose/private/hand_detect/idf_component.yml
++++ b/apps/main/pose/private/hand_detect/idf_component.yml
+@@ -5,4 +5,4 @@
+ dependencies: 
+   espressif/esp-dl:
+     version: "~3.2.0"
+-    override_path: "../../esp-dl"
++    override_path: "../esp-dl"
+--- a/apps/main/idf_component.yml
++++ b/apps/main/idf_component.yml
+@@ -8,6 +8,8 @@
+   espressif/led_strip: "3.0.3"
+   human_face_detect:
+     path: pose/private/human_face_detect
++  hand_detect:
++    path: pose/private/hand_detect
+   coco_pose:
+     path: pose/private/coco_pose
+   espressif/esp_video: "2.2.0"
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -288,7 +288,7 @@
+ )
+ 
+ if(QM_POSE_SUPPORT)
+-    list(APPEND COMPONENT_REQUIRES coco_pose esp-dl human_face_detect)
++    list(APPEND COMPONENT_REQUIRES coco_pose esp-dl hand_detect human_face_detect)
+ endif()
+ 
+ if(APP_CAMERA_TEST)
 --- a/apps/main/peripheral/bsp_camera.h
 +++ b/apps/main/peripheral/bsp_camera.h
 @@ -7,6 +7,10 @@
