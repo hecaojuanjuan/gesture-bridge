@@ -50,7 +50,7 @@ PALM = [
     (82, 739), (61, 675), (30, 606), (24, 557), (38, 533),
     (60, 519), (98, 500), (151, 493), (196, 513), (215, 546),
     (223, 585), (208, 639), (192, 688), (187, 739),
-    (144, 874), (-50, 874),
+    (-70, 1012), (-200, 890),
 ]
 OFFSET = (30, 80)
 
@@ -191,8 +191,8 @@ def draw_hand(poster):
         tapered_segment(poster, a, b, ra, rb, HAND_GRAY)
 
     # A deterministic print screen follows the actual silhouette, not a box.
-    for y in range(280, 874, 5):
-        for x in range(-48, 332, 5):
+    for y in range(280, 1020, 5):
+        for x in range(-205, 332, 5):
             if inside_polygon(x, y, PALM) or any(
                     inside_segment(x, y, *segment) for segment in segments):
                 poster.circle(*move((x, y)), .35, fill=MID_GRAY)
@@ -235,8 +235,10 @@ def glyph_points():
 def connect_points(poster):
     targets = glyph_points()
     sources = [move(point) for point in LANDMARKS]
-    source_order = sorted(range(21), key=lambda i: (sources[i][1], sources[i][0]))
-    target_order = sorted(range(21), key=lambda i: (targets[i][1], targets[i][0]))
+    source_order = sorted(range(21), key=lambda i: (
+        sources[i][1], sources[i][0]))
+    target_order = sorted(range(21), key=lambda i: (
+        targets[i][1], targets[i][0]))
     mapping = dict(zip(source_order, target_order))
 
     # The typographic morph is a visual metaphor, not a classifier diagram.
@@ -269,9 +271,9 @@ def connect_points(poster):
         ("M", 540, 833), ("L", 540, 952), ("L", 459, 952),
         ("L", 459, 1017),
     ], stroke=TEAL, width=.8)
-    poster.text("21 landmarks / x, y", 397, 705,
+    poster.text("21 landmarks / x, y", 592, 665,
                 9.5, "Latin", MID_GRAY)
-    poster.text("SPATIAL TO SYMBOLIC", 397, 725,
+    poster.text("SPATIAL TO SYMBOLIC", 592, 685,
                 8, "Latin", INK, tracking=1.15)
 
 
@@ -299,7 +301,7 @@ def draw_connection_field(poster):
     poster.text("FROM GESTURE", 44, 1038,
                 27, "Latin", INK, tracking=-.3)
     poster.text("TO", 380, 1114, 25, "Latin", PAPER)
-    poster.text("UNDER", 297, 1221,
+    poster.text("UNDER", 357, 1221,
                 103, "Grotesk", PAPER, tracking=-4.5)
     poster.fitted("STANDING.", 205, 1337, 549,
                   font="Grotesk", colour=PAPER, tracking=-4)

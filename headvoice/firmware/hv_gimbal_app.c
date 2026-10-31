@@ -17,6 +17,7 @@
 #include "headvoice_app.h"
 #include "hv_camera_preview.h"
 #include "hv_gimbal_core.h"
+#include "hv_hand_detector.h"  // 新增
 #include "hv_settings.h"
 #include "qm_cli.h"
 #include "yolo11_pose.h"
@@ -58,13 +59,29 @@ static bool write_pulse(int axis)
 
 static void status_locked(void)
 {
+  const char *mode_str = "unknown";
+  switch (s_core.target_mode) {
+    case HV_GIMBAL_TARGET_FACE: mode_str = "face"; break;
+    case HV_GIMBAL_TARGET_HAND: mode_str = "hand"; break;
+    case HV_GIMBAL_TARGET_AUTO: mode_str = "auto"; break;
+    default: break;
+  }
+
+  const char *tracking_str = "none";
+  switch (s_core.current_target.type) {
+    case HV_GIMBAL_TARGET_FACE: tracking_str = "face"; break;
+    case HV_GIMBAL_TARGET_HAND: tracking_str = "hand"; break;
+    default: break;
+  }
+
   printf(
     "GIMBAL {\"event\":\"status\",\"active\":%s,\"pan_us\":%d,\"tilt_us\":%d,"
     "\"pan_armed\":%s,\"tilt_armed\":%s,\"pan_dir\":%d,\"tilt_dir\":%d,"
-    "\"directions_ready\":%s,\"steps\":%u}\n",
+    "\"directions_ready\":%s,\"steps\":%u,\"target_mode\":\"%s\",\"tracking\":\"%s\"}\n",
     s_core.active ? "true" : "false", s_core.pulse[0], s_core.pulse[1],
     s_armed[0] ? "true" : "false", s_armed[1] ? "true" : "false", s_core.direction[0],
-    s_core.direction[1], s_directionsReady ? "true" : "false", s_core.steps);
+    s_core.direction[1], s_directionsReady ? "true" : "false", s_core.steps,
+    mode_str, tracking_str);
 }
 
 static bool number(const char * text, int low, int high, int * out)
@@ -152,13 +169,27 @@ static void command(char * buffer, int length, int argc, char ** argv)
     } else {
       hv_gimbal_begin(&s_core, now_ms());
     }
+  } else if (argc == 3 && strcmp(argv[1], "mode") == 0) {
+    // 新增：设置目标模式
+    if (strcmp(argv[2], "face") == 0) {
+      hv_gimbal_set_target_mode(&s_core, HV_GIMBAL_TARGET_FACE);
+      printf("GIMBAL mode set to face\n");
+    } else if (strcmp(argv[2], "hand") == 0) {
+      hv_gimbal_set_target_mode(&s_core, HV_GIMBAL_TARGET_HAND);
+      printf("GIMBAL mode set to hand\n");
+    } else if (strcmp(argv[2], "auto") == 0) {
+      hv_gimbal_set_target_mode(&s_core, HV_GIMBAL_TARGET_AUTO);
+      printf("GIMBAL mode set to auto\n");
+    } else {
+      printf("GIMBAL ERROR invalid mode (use: face|hand|auto)\n");
+    }
   } else if (argc == 3 && strcmp(argv[1], "arm") == 0 && !s_core.active && !s_probe) {
     int axis = strcmp(argv[2], "pan") == 0 ? 0 : strcmp(argv[2], "tilt") == 0 ? 1 : -1;
     if (axis >= 0) {
       s_core.pulse[axis] = 1500;
       s_armed[axis] = true;
       write_pulse(axis);
-      s_core.acceptAfterMs = now_ms() + 600;
+      s_core.acceptAfterMs = now_ms() + 400;
     }
   } else if (argc == 4 && strcmp(argv[1], "jog") == 0 && !s_core.active && !s_probe) {
     int axis = strcmp(argv[2], "pan") == 0 ? 0 : strcmp(argv[2], "tilt") == 0 ? 1 : -1;
@@ -168,7 +199,7 @@ static void command(char * buffer, int length, int argc, char ** argv)
       s_core.pulse[axis] + delta >= 1300 && s_core.pulse[axis] + delta <= 1700) {
       s_core.pulse[axis] += delta;
       write_pulse(axis);
-      s_core.acceptAfterMs = now_ms() + 600;
+      s_core.acceptAfterMs = now_ms() + 400;
     } else
       printf("GIMBAL ERROR jog_requires_armed_axis_and_safe_range\n");
   } else if (argc == 4 && strcmp(argv[1], "dir") == 0 && !s_core.active && !s_probe) {
@@ -181,7 +212,7 @@ static void command(char * buffer, int length, int argc, char ** argv)
       printf("GIMBAL ERROR directions_must_be_plus_or_minus_one\n");
   } else {
     printf(
-      "hv_gimbal status|pwm|probe|arm pan|arm tilt|jog pan <us>|jog tilt <us>|dir <pan_sign> "
+      "hv_gimbal status|pwm|probe|mode <face|hand|auto>|arm pan|arm tilt|jog pan <us>|jog tilt <us>|dir <pan_sign> "
       "<tilt_sign>|start|stop\n");
   }
   status_locked();
@@ -214,10 +245,10 @@ static void control_task(void * argument)
       printf("GIMBAL STOP timeout\n");
       work = false;
     }
-    uint64_t after = s_core.acceptAfterMs + 150;
+    uint64_t after = s_core.acceptAfterMs + 80;
     unlock();
     if (!work || now_ms() <= after) {
-      vTaskDelay(pdMS_TO_TICKS(30));
+      vTaskDelay(pdMS_TO_TICKS(20));
       continue;
     }
     atomic_store(&s_frameState, 1);
@@ -245,32 +276,54 @@ static void control_task(void * argument)
     atomic_store(&s_frameState, 0);
     yolo11_pose_frame_result_t pose = {0};
     if (ret == ESP_OK) ret = yolo11_pose_analyze_rgb888(rgb, width, height, "gimbal", &pose);
+
+    // 人脸检测
     bool face = ret == ESP_OK && pose.person_count == 1 && pose.head_valid;
-    float x = 0, y = 0;
+    float face_x = 0, face_y = 0;
     if (face && width && height) {
-      x = (pose.eye_x1 + pose.eye_x2) * 0.5f / width;
-      y = (pose.eye_y1 + pose.eye_y2) * 0.5f / height;
+      face_x = (pose.eye_x1 + pose.eye_x2) * 0.5f / width;
+      face_y = (pose.eye_y1 + pose.eye_y2) * 0.5f / height;
     }
+
+    // 手掌检测（新增）
+    hv_hand_detection_t hand = {0};
+    if (ret == ESP_OK && rgb) {
+      // 使用简化的颜色检测方法
+      hv_hand_detect_color_based(rgb, width, height, &hand);
+    }
+
     lock();
     s_probe = false;
     int before[2] = {s_core.pulse[0], s_core.pulse[1]};
-    HvGimbalResult result =
-      hv_gimbal_observe(&s_core, pose.person_count, face, x, y, captured, now_ms());
+
+    // 使用扩展API，传入人脸和手掌信息
+    HvGimbalResult result = hv_gimbal_observe_extended(
+      &s_core,
+      pose.person_count, face, face_x, face_y,
+      hand.detected, hand.center_x, hand.center_y, hand.confidence,
+      captured, now_ms());
+
     if (result == HV_GIMBAL_MOVE) {
       for (int axis = 0; axis < 2; ++axis)
         if (before[axis] != s_core.pulse[axis]) write_pulse(axis);
-      s_core.acceptAfterMs = now_ms() + 450;
+      s_core.acceptAfterMs = now_ms() + 200;
     }
+
     printf(
       "GIMBAL {\"event\":\"observation\",\"people\":%u,\"face\":%s,"
-      "\"x\":%.4f,\"y\":%.4f,\"captured_ms\":%u,\"infer_ms\":%u,"
-      "\"result\":%d,\"pan_us\":%d,\"tilt_us\":%d,\"active\":%s}\n",
-      pose.person_count, face ? "true" : "false", x, y, (unsigned)captured,
-      (unsigned)(now_ms() - started), result, s_core.pulse[0], s_core.pulse[1],
-      s_core.active ? "true" : "false");
-    if (result == HV_GIMBAL_STALE) s_core.acceptAfterMs = now_ms() + 150;
+      "\"face_x\":%.4f,\"face_y\":%.4f,\"hand\":%s,\"hand_x\":%.4f,\"hand_y\":%.4f,"
+      "\"hand_conf\":%.3f,\"captured_ms\":%u,\"infer_ms\":%u,"
+      "\"result\":%d,\"pan_us\":%d,\"tilt_us\":%d,\"active\":%s,\"tracking\":\"%s\"}\n",
+      pose.person_count, face ? "true" : "false", face_x, face_y,
+      hand.detected ? "true" : "false", hand.center_x, hand.center_y, hand.confidence,
+      (unsigned)captured, (unsigned)(now_ms() - started), result,
+      s_core.pulse[0], s_core.pulse[1], s_core.active ? "true" : "false",
+      s_core.current_target.type == HV_GIMBAL_TARGET_FACE ? "face" :
+      s_core.current_target.type == HV_GIMBAL_TARGET_HAND ? "hand" : "none");
+
+    if (result == HV_GIMBAL_STALE) s_core.acceptAfterMs = now_ms() + 80;
     unlock();
-    vTaskDelay(pdMS_TO_TICKS(30));
+    vTaskDelay(pdMS_TO_TICKS(20));
   }
 }
 
@@ -306,11 +359,11 @@ esp_err_t headvoice_start(void)
     return ESP_ERR_NO_MEM;
   static const struct qm_cli_command cli = {
     .name = "hv_gimbal",
-    .help = "status|pwm|probe|arm <axis>|jog <axis> <us>|dir <pan> <tilt>|start|stop",
+    .help = "status|pwm|probe|mode <face|hand|auto>|arm <axis>|jog <axis> <us>|dir <pan> <tilt>|start|stop",
     .function = command};
   if (qm_cli_register_command(&cli) != 0) return ESP_FAIL;
   ret = bsp_camera_set_frame_callback(camera_frame);
   if (ret != ESP_OK) return ret;
-  printf("GIMBAL ready pan=17 tilt=18 PWM=off limits=1300..1700us\n");
+  printf("GIMBAL ready pan=17 tilt=18 PWM=off limits=1300..1700us target=auto\n");
   return bsp_camera_stream_start();
 }

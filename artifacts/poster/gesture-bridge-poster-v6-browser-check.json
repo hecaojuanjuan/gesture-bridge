@@ -1,0 +1,21 @@
+{
+  "errors": [],
+  "checks": [
+    {
+      "viewport": 800,
+      "width": 800,
+      "height": 1800,
+      "ratio": 2.25,
+      "overflowX": 0,
+      "textOutsidePage": []
+    },
+    {
+      "viewport": 320,
+      "width": 320,
+      "height": 720,
+      "ratio": 2.25,
+      "overflowX": 0,
+      "textOutsidePage": []
+    }
+  ]
+}

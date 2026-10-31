@@ -130,5 +130,20 @@
     "The cropped wrist exits the left edge.",
     "The orange reply field intersects the teal quotation field.",
     "The opening quotation marks cross the orange field boundary."
-  ]
+  ],
+  "pdf_check": {
+    "pages": 1,
+    "dimensions_mm": [
+      800.0,
+      1800.0
+    ],
+    "embedded_fonts": [
+      "/AAAAAA+ArialMT",
+      "/AAAAAA+Arial-BoldMT",
+      "/AAAAAA+MicrosoftYaHei-0"
+    ],
+    "text_check": "passed",
+    "svg_xml": "valid",
+    "visual_review": "PDF and browser renders inspected"
+  }
 }

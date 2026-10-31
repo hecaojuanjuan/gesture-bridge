@@ -1,0 +1,28 @@
+{
+  "project_name": "Gesture Bridge",
+  "dimensions_mm": [
+    800,
+    1800
+  ],
+  "concept": "Gesture recognition to confirmed speech",
+  "landmark_count": 21,
+  "text_outside_page": [],
+  "expression_example": "我想喝水。",
+  "waveform_source": "headvoice/audio/AA.pcm (display envelope)",
+  "gesture_semantics": "Illustrative; no universal sign claimed",
+  "pdf_check": {
+    "page_count": 1,
+    "dimensions_mm": [
+      800.0,
+      1800.0
+    ],
+    "embedded_fonts": [
+      "/AAAAAA+Arial-BoldMT",
+      "/AAAAAA+MicrosoftYaHei-0",
+      "/AAAAAA+MicrosoftYaHei-Bold-0",
+      "/AAAAAA+ArialMT"
+    ],
+    "gesture_wording": "passed",
+    "svg_xml": "valid"
+  }
+}
