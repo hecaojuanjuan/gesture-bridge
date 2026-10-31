@@ -1,0 +1,176 @@
+{
+  "observations": 66,
+  "native_observations": 66,
+  "firmware_elf_sha256_values": [
+    "978e6be09..."
+  ],
+  "rom_banner_lines": 1,
+  "reset_reason_lines": [
+    {
+      "code": "0x1",
+      "reason": "POWERON"
+    }
+  ],
+  "sequence_regressions": 0,
+  "fault_pattern_line_counts": {},
+  "partial_lines_ignored": 0,
+  "malformed_rows_or_hg_messages": 0,
+  "ready_events": [
+    {
+      "classifier": "espdl_gesture11",
+      "classifier_ready": true,
+      "model_sha256": "52e18ceb0845121b4c0fa63aa06d69d17068c8c8135f43a7943a11812ac595d0",
+      "servo_control": false
+    }
+  ],
+  "ready_model_sha256_matches_pin": [
+    true
+  ],
+  "classifier_init_statuses": [],
+  "observation_status_counts": {
+    "1": 59,
+    "0": 7
+  },
+  "classification_valid": 7,
+  "valid_classification_bad_scores": 0,
+  "valid_classification_label_mismatches": 0,
+  "score_vector_lengths": {
+    "11": 66
+  },
+  "raw_classes_all_native": {
+    "unknown": 55,
+    "no_hand": 10,
+    "no_gesture": 1
+  },
+  "raw_classes_valid_classification": {
+    "no_hand": 6,
+    "no_gesture": 1
+  },
+  "confirmed_observations": 0,
+  "completed_gestures": {},
+  "top_score": {
+    "n": 7,
+    "min": 0.505606,
+    "median": 0.974363,
+    "p95": 0.999671,
+    "max": 0.999671
+  },
+  "margin": {
+    "n": 7,
+    "min": 0.26878500000000005,
+    "median": 0.958614,
+    "p95": 0.999548,
+    "max": 0.999548
+  },
+  "timing_all_observations_ms": {
+    "conversion_ms": {
+      "n": 66,
+      "min": 28,
+      "median": 40.0,
+      "p95": 56,
+      "max": 82
+    },
+    "detect_ms": {
+      "n": 66,
+      "min": 184,
+      "median": 213.0,
+      "p95": 238,
+      "max": 295
+    },
+    "classifier_ms": {
+      "n": 66,
+      "min": 0,
+      "median": 0.0,
+      "p95": 203,
+      "max": 220
+    },
+    "infer_ms": {
+      "n": 66,
+      "min": 216,
+      "median": 258.0,
+      "p95": 456,
+      "max": 482
+    },
+    "age_ms": {
+      "n": 66,
+      "min": 222,
+      "median": 311.5,
+      "p95": 490,
+      "max": 541
+    }
+  },
+  "timing_valid_classification_ms": {
+    "conversion_ms": {
+      "n": 7,
+      "min": 36,
+      "median": 39,
+      "p95": 56,
+      "max": 56
+    },
+    "detect_ms": {
+      "n": 7,
+      "min": 203,
+      "median": 214,
+      "p95": 230,
+      "max": 230
+    },
+    "classifier_ms": {
+      "n": 7,
+      "min": 182,
+      "median": 203,
+      "p95": 220,
+      "max": 220
+    },
+    "infer_ms": {
+      "n": 7,
+      "min": 434,
+      "median": 456,
+      "p95": 482,
+      "max": 482
+    },
+    "age_ms": {
+      "n": 7,
+      "min": 455,
+      "median": 490,
+      "p95": 541,
+      "max": 541
+    }
+  },
+  "memory_bytes": {
+    "internal_free": {
+      "first": 51663,
+      "last": 33519,
+      "min": 33519,
+      "max": 51763,
+      "n": 4
+    },
+    "internal_largest": {
+      "first": 36852,
+      "last": 20468,
+      "min": 20468,
+      "max": 36852,
+      "n": 4
+    },
+    "psram_free": {
+      "first": 1771148,
+      "last": 1691452,
+      "min": 1688320,
+      "max": 1771308,
+      "n": 4
+    }
+  },
+  "metric_counter_deltas_same_boot": {
+    "captured": 155,
+    "dropped": 107
+  },
+  "gesture_accuracy_verified": false,
+  "limits": [
+    "Startup markers are counted separately; two marker lines do not prove two reboots.",
+    "No matching fault text is not proof of fault-free operation; the recording may start late or miss lines.",
+    "Native status 1 also marks skipped inference; detector no-hand and classifier no_hand are distinct.",
+    "Raw labels, valid scores and confirmed observations are not additional completed gesture events.",
+    "Memory minima cover sampled metrics only, not heap low-water marks or fragmentation between samples.",
+    "No classifier preprocess/model/postprocess split, PSRAM largest block or stack watermark is emitted by this firmware.",
+    "Gesture correctness needs independently labelled trials; an unlabeled startup probe cannot verify accuracy."
+  ]
+}

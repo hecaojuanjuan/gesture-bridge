@@ -44,8 +44,8 @@ static bool advance_clock(hv_hand_gate_t *gate, uint64_t now_ms)
   }
   gate->have_clock = true;
   gate->last_now_ms = now_ms;
-  if (gate->have_capture && now_ms >= gate->last_capture_ms &&
-      now_ms - gate->last_capture_ms > HV_HAND_GATE_MAX_GAP_MS)
+  if (gate->have_received && now_ms >= gate->last_received_ms &&
+      now_ms - gate->last_received_ms > HV_HAND_GATE_MAX_GAP_MS)
     hv_hand_gate_invalidate(gate);
   return true;
 }
@@ -78,7 +78,10 @@ hv_hand_gate_event_t hv_hand_gate_observe(
     hv_hand_gate_invalidate(gate);
     return HV_HAND_GATE_EVENT_NONE;
   }
-  bool gap = gate->have_capture && now_ms - gate->last_capture_ms > HV_HAND_GATE_MAX_GAP_MS;
+  /* Compare two capture times, not arrival minus capture: the latter adds
+   * the current inference latency to the true interval between frames. */
+  bool gap = gate->have_capture &&
+             observation.captured_ms - gate->last_capture_ms > HV_HAND_GATE_MAX_GAP_MS;
   gate->last_capture_ms = observation.captured_ms;
   gate->have_capture = true;
   if (gap || !observation.valid ||
@@ -88,6 +91,8 @@ hv_hand_gate_event_t hv_hand_gate_observe(
     return HV_HAND_GATE_EVENT_NONE;
   }
 
+  gate->last_received_ms = now_ms;
+  gate->have_received = true;
   gate->visible = observation.kind;
   if (observation.kind == HV_HAND_GATE_NO_HAND || observation.kind == HV_HAND_GATE_OTHER) {
     clear_candidate(gate);

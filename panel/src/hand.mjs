@@ -2,7 +2,7 @@ export const HAND_MAX_AGE_MS = 600;
 export const GESTURE11_LABELS = Object.freeze(['one','two','three','four','five','like','ok','no_gesture','call','dislike','no_hand']);
 const LEGACY_CLASSES = ['open_palm','closed_fist','other'];
 const LEGACY_LABELS = new Set(['untrained','unknown','no_hand',...LEGACY_CLASSES]);
-const NATIVE_LABELS = new Set(['untrained','unknown',...GESTURE11_LABELS]);
+const NATIVE_LABELS = new Set(['untrained','unknown','unavailable',...GESTURE11_LABELS]);
 const GATE_LABELS = new Set(['unknown','no_hand','open_palm','closed_fist','other','v_sign']);
 const integer = (n,max=Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && n>=0 && n<=max;
 const score = n => Number.isFinite(n) && n>=0 && n<=1;
@@ -33,24 +33,37 @@ export function parseHand(raw) {
       ['gate_visible','gate_latched'].some(key=>h[key]!==undefined && !GATE_LABELS.has(h[key])) ||
       (h.classifier_status!==undefined && !integer(h.classifier_status,255)) ||
       ((native || h.scores!==undefined) && (!Array.isArray(h.scores) || h.scores.length!==classes.length || !h.scores.every(score)))) return null;
-  if (!h.classifier_ready && (!(h.gesture==='untrained' || (native && h.gesture==='unknown')) || h.classification_valid===true || h.confirmed===true ||
+  if (!h.classifier_ready && (!(h.gesture==='untrained' || (native && ['unknown','unavailable'].includes(h.gesture))) || h.classification_valid===true || h.confirmed===true ||
       h.scores?.some(n=>n!==0))) return null;
-  if (h.classifier_ready && h.gesture==='untrained') return null;
+  if (h.classifier_ready && ['untrained','unavailable'].includes(h.gesture)) return null;
   if (h.classification_valid===true) {
     const index=classes.indexOf(h.gesture);
     if (!h.valid || !h.classifier_ready || index<0 || !h.scores ||
         (h.classifier_status!==undefined && h.classifier_status!==0)) return null;
     const total=h.scores.reduce((a,b)=>a+b,0);
-    // Native quantized softmax need not sum to exactly one. Preserve its raw
-    // values and accept printed ties, but never attach the winning label to a
-    // different score entry. Legacy float-CNN probabilities retain their check.
-    if ((native ? total<=0 : Math.abs(total-1)>.001) ||
+    // Both adapters emit float probabilities. Native logits are int8, but
+    // its postprocessor applies softmax before telemetry. Allow six-decimal
+    // printing error without normalizing or changing the raw winning label.
+    if (Math.abs(total-1)>.001 ||
         h.scores[index]+.000002<Math.max(...h.scores)) return null;
   }
   // A retained gate_latched may describe an earlier action. Never treat it,
   // candidate counters, or raw gesture labels as a new completion event.
   if (h.confirmed===true && h.classification_valid!==true) return null;
   return h;
+}
+
+// Firmware increments these counters only when its confirmation gate emits an
+// event. They belong to the device's inference task (one per boot), not this
+// page or the number of observations. A stale observation can still describe
+// historical totals; the caller must label it as the last received value.
+export function handCompletionCounts(raw) {
+  const h=parseHand(raw);
+  if (!h) return null;
+  const native=h.classifier==='espdl_gesture11';
+  const second=native ? h.v_count : h.fist_count;
+  if (!integer(h.palm_count,4294967295) || !integer(second,4294967295)) return null;
+  return {palm:h.palm_count,second,secondLabel:native ? 'V字' : '握拳'};
 }
 
 export function handFresh(h,elapsed=0) {
@@ -81,6 +94,7 @@ export class HandStream {
   reset() {
     this.enabled=false; this.boot=null; this.hand=null; this.receivedAt=0;
     this.afterCapture=0; this.lastCapture=null; this.lastReportedAt=null; this.lastSequence=null; this.epoch=null;
+    this.lastCounts=null; this.classifierSchema=null;
   }
   confirm(report) {
     if (!report || !integer(report.boot,4294967295) || !integer(report.uptime_ms) || !integer(report.stage,3) || report.stage<2) {
@@ -94,15 +108,24 @@ export class HandStream {
     const h=parseHand(raw);
     if (!h || !this.enabled || !Number.isFinite(receivedAt) || receivedAt<0) return {accepted:false};
     const reportedAt=h.captured_ms+h.age_ms;
+    const schema=h.classifier==='espdl_gesture11' ? 'native11' : 'legacy3';
+    const counts=handCompletionCounts(h);
+    const countsBackwards=counts && this.lastCounts?.secondLabel===counts.secondLabel &&
+      (counts.palm<this.lastCounts.palm || counts.second<this.lastCounts.second);
     if ((this.lastCapture!==null && h.captured_ms<=this.lastCapture) ||
         (this.lastReportedAt!==null && reportedAt<this.lastReportedAt) ||
         (this.lastSequence!==null && h.seq<=this.lastSequence) ||
-        (this.epoch!==null && h.epoch!==this.epoch) || receivedAt<this.receivedAt) {
+        (this.epoch!==null && h.epoch!==this.epoch) || receivedAt<this.receivedAt || countsBackwards ||
+        (this.classifierSchema!==null && this.classifierSchema!==schema)) {
       this.reset(); return {accepted:false,invalidated:true};
     }
     if (h.captured_ms<=this.afterCapture) return {accepted:false};
     this.hand=h; this.receivedAt=receivedAt; this.lastCapture=h.captured_ms;
     this.lastReportedAt=reportedAt; this.lastSequence=h.seq; this.epoch=h.epoch;
+    this.classifierSchema=schema;
+    // A missing counter stays missing in the UI; retain the last complete pair
+    // only as an ordering guard, never as replacement data for this observation.
+    if (counts) this.lastCounts=counts;
     return {accepted:true};
   }
 }

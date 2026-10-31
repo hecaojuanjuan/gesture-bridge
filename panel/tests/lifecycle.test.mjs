@@ -384,7 +384,7 @@ test('hand epoch changes, ROM restarts and disconnect clear model and diagnostic
   await p.run("connect('serial')");deliver(handReport);telemetry.onHand(diagnosticHand);
   telemetry.onHand({...diagnosticHand,seq:2,captured_ms:1200,epoch:1});
   assert.equal(p.node('pose-age').textContent,'—');
-  assert.match(p.node('pose-status').textContent,/采样轮次变化/);
+  assert.match(p.node('pose-status').textContent,/手部诊断状态变化/);
   await p.run("send('get')");deliver({...handReport,id:102,uptime_ms:1300});
   telemetry.onHand({...diagnosticHand,seq:3,captured_ms:1400,epoch:1});
   assert.equal(p.node('pose-age').textContent,'250 ms');
@@ -431,7 +431,7 @@ test('native eleven-class hand diagnostics show V targets while legacy remains f
   const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
     return {name:'USB 串口',async send(){},async close(){}};});
   await p.run("connect('serial')");deliver(handReport);
-  const scores=Array(11).fill(.003906);scores[1]=.941406;
+  const scores=Array(11).fill(.003906);scores[1]=.960937;
   telemetry.onHand({...diagnosticHand,classifier:'espdl_gesture11',classifier_ready:true,
     gesture:'two',scores,classification_valid:true,classifier_status:0,confirmed:false,
     gate_visible:'unknown',gate_latched:'v_sign',v_count:2});
@@ -443,6 +443,165 @@ test('native eleven-class hand diagnostics show V targets while legacy remains f
   p.tick(351);assert.equal(p.node('pose-tilt').textContent,'—');
   telemetry.onHand({...diagnosticHand,seq:2,captured_ms:1600,classifier_ready:true,
     gesture:'closed_fist',scores:[.05,.9,.05],classification_valid:true,classifier_status:0,confirmed:false});
+  assert.equal(p.node('pose-tilt').textContent,'—');
+  assert.equal(p.node('hand-visual').hidden,true);
+  await p.run("send('get')");deliver({...handReport,id:102,uptime_ms:1700});
+  telemetry.onHand({...diagnosticHand,seq:3,captured_ms:1800,classifier_ready:true,
+    gesture:'closed_fist',scores:[.05,.9,.05],classification_valid:true,classifier_status:0,confirmed:false});
   assert.equal(p.node('pose-tilt').textContent,'握拳');
   assert.match(p.node('legend-hand').textContent,/蓝.*握拳/);
+});
+
+const countedHand={...diagnosticHand,classifier:'espdl_gesture11',classifier_ready:true,
+  gesture:'two',scores:Array.from({length:11},(_,i)=>i===1?.9:.01),
+  classification_valid:true,classifier_status:0,confirmed:true,
+  gate_visible:'v_sign',gate_latched:'v_sign',palm_count:3,v_count:2};
+
+test('hand counts render the device totals and repeated hold observations never add events',async()=>{
+  let deliver,telemetry;
+  const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
+    return {name:'USB 串口',async send(){},async close(){}};});
+  await p.run("connect('serial')");deliver(handReport);
+  for(let seq=1;seq<=5;seq++) {
+    telemetry.onHand({...countedHand,seq,captured_ms:1000+seq*100});
+    assert.equal(p.node('hand-completions').hidden,false);
+    assert.equal(p.node('hand-completions-title').textContent,'设备本次启动累计');
+    assert.equal(p.node('hand-palm-count').textContent,'3');
+    assert.equal(p.node('hand-second-label').textContent,'V字');
+    assert.equal(p.node('hand-second-count').textContent,'2');
+  }
+  telemetry.onHand({...countedHand,event:'gesture',seq:6,captured_ms:1600,v_count:99});
+  assert.equal(p.node('hand-second-count').textContent,'2');
+  telemetry.onHand({...countedHand,seq:6,captured_ms:1600,confirmed:false});
+  assert.equal(p.node('hand-second-count').textContent,'2');
+  telemetry.onHand({...countedHand,seq:7,captured_ms:1700,v_count:3});
+  assert.equal(p.node('hand-second-count').textContent,'3');
+  assert.equal(p.node('hand-completions-note').hidden,false);
+});
+
+test('missing legacy or partial native counts are not shown as zero',async()=>{
+  let deliver,telemetry;
+  const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
+    return {name:'USB 串口',async send(){},async close(){}};});
+  await p.run("connect('serial')");deliver(handReport);
+  telemetry.onHand(diagnosticHand);
+  assert.equal(p.node('hand-completions').hidden,false);
+  assert.equal(p.node('hand-completions-missing').hidden,false);
+  assert.equal(p.node('hand-completions-values').hidden,true);
+  assert.equal(p.node('hand-palm-count').textContent,'—');
+  assert.equal(p.node('hand-second-count').textContent,'—');
+  telemetry.onHand({...diagnosticHand,seq:2,captured_ms:1200,palm_count:4,fist_count:1});
+  assert.equal(p.node('hand-completions-values').hidden,false);
+  assert.equal(p.node('hand-completions-missing').hidden,true);
+  assert.equal(p.node('hand-palm-count').textContent,'4');
+  assert.equal(p.node('hand-second-label').textContent,'握拳');
+  assert.equal(p.node('hand-second-count').textContent,'1');
+  const {palm_count,...partial}=countedHand;
+  telemetry.onHand({...partial,seq:3,captured_ms:1300});
+  assert.equal(p.node('hand-completions').hidden,true);
+  await p.run("send('get')");deliver({...handReport,id:102,uptime_ms:1400});
+  telemetry.onHand({...partial,seq:4,captured_ms:1500});
+  assert.equal(p.node('hand-completions').hidden,false);
+  assert.equal(p.node('hand-completions-missing').hidden,false);
+  assert.equal(p.node('hand-completions-values').hidden,true);
+  assert.equal(p.node('hand-second-count').textContent,'—');
+});
+
+test('device counter rollback clears displayed totals until a new matching receipt',async()=>{
+  let deliver,telemetry;
+  const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
+    return {name:'USB 串口',async send(){},async close(){}};});
+  await p.run("connect('serial')");deliver(handReport);telemetry.onHand(countedHand);
+  telemetry.onHand({...countedHand,seq:2,captured_ms:1200,palm_count:2});
+  assert.equal(p.node('hand-completions').hidden,true);
+  assert.equal(p.node('hand-palm-count').textContent,'—');
+  assert.match(p.node('pose-status').textContent,/手部诊断状态变化/);
+  telemetry.onHand({...countedHand,seq:3,captured_ms:1300});
+  assert.equal(p.node('hand-completions').hidden,true);
+  await p.run("send('get')");deliver({...handReport,id:102,uptime_ms:1400});
+  telemetry.onHand({...countedHand,seq:4,captured_ms:1500,palm_count:2});
+  assert.equal(p.node('hand-completions').hidden,false);
+  assert.equal(p.node('hand-palm-count').textContent,'2');
+});
+
+test('expired hand totals are labelled as historical while fresh telemetry restores the label',async()=>{
+  let deliver,telemetry;
+  const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
+    return {name:'USB 串口',async send(){},async close(){}};});
+  await p.run("connect('serial')");deliver(handReport);telemetry.onHand(countedHand);
+  p.tick(351);
+  assert.equal(p.node('pose-tilt').textContent,'—');
+  assert.equal(p.node('hand-completions-title').textContent,'最近收到的累计值');
+  assert.equal(p.node('hand-palm-count').textContent,'3');
+  assert.equal(p.node('hand-second-count').textContent,'2');
+  telemetry.onHand({...countedHand,seq:2,captured_ms:1600});
+  assert.equal(p.node('hand-completions-title').textContent,'设备本次启动累计');
+  assert.equal(p.node('hand-second-count').textContent,'2');
+});
+
+test('ROM restart and disconnect clear counts and cannot reuse late observations',async()=>{
+  let deliver,telemetry;
+  const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
+    return {name:'USB 串口',async send(){},async close(){}};});
+  await p.run("connect('serial')");deliver(handReport);telemetry.onHand(countedHand);
+  telemetry.onReset('设备重新启动');
+  assert.equal(p.node('hand-completions').hidden,true);
+  assert.equal(p.node('hand-palm-count').textContent,'—');
+  assert.equal(p.node('hand-second-count').textContent,'—');
+  telemetry.onHand({...countedHand,seq:2,captured_ms:1200});
+  assert.equal(p.node('hand-completions').hidden,true);
+  deliver({...handReport,id:102,boot:2,uptime_ms:100});
+  telemetry.onHand({...countedHand,captured_ms:200,palm_count:0,v_count:0,confirmed:false});
+  assert.equal(p.node('hand-completions').hidden,false);
+  assert.equal(p.node('hand-palm-count').textContent,'0');
+  assert.equal(p.node('hand-second-count').textContent,'0');
+  await p.run('disconnect()');
+  telemetry.onHand({...countedHand,seq:2,captured_ms:400});
+  assert.equal(p.node('hand-completions').hidden,true);
+  assert.equal(p.node('hand-second-count').textContent,'—');
+});
+
+test('camera preview clears device totals until a follow-up receipt and fresh hand observation',async()=>{
+  let deliver,telemetry,finish;
+  const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
+    return {name:'USB 串口',async send(){},async close(){},
+      snapshot:()=>new Promise(resolve=>{finish=resolve;})};});
+  await p.run("connect('serial')");deliver(handReport);telemetry.onHand(countedHand);
+  const capture=p.run('captureCamera()');
+  assert.equal(p.node('hand-completions').hidden,true);
+  assert.equal(p.node('hand-palm-count').textContent,'—');
+  telemetry.onHand({...countedHand,seq:2,captured_ms:1200});
+  assert.equal(p.node('hand-completions').hidden,true);
+  finish(cameraFrame);await capture;
+  telemetry.onHand({...countedHand,seq:3,captured_ms:1300});
+  assert.equal(p.node('hand-completions').hidden,true);
+  deliver({...handReport,id:102,uptime_ms:1400});
+  telemetry.onHand({...countedHand,seq:4,captured_ms:1300});
+  assert.equal(p.node('hand-completions').hidden,true);
+  telemetry.onHand({...countedHand,seq:5,captured_ms:1500});
+  assert.equal(p.node('hand-completions').hidden,false);
+  assert.equal(p.node('hand-second-count').textContent,'2');
+});
+
+test('hand counts clear on an epoch or backend change and never leak into cloud snapshots',async()=>{
+  let deliver,telemetry;
+  const p=page(async(report,lost,options)=>{deliver=report;telemetry=options;
+    return {name:'USB 串口',async send(){},async close(){}};});
+  await p.run("connect('serial')");deliver(handReport);telemetry.onHand(countedHand);
+  telemetry.onHand({...countedHand,seq:2,captured_ms:1200,epoch:1});
+  assert.equal(p.node('hand-completions').hidden,true);
+  assert.equal(p.node('hand-second-count').textContent,'—');
+  await p.run("send('get')");deliver({...handReport,id:102,uptime_ms:1300});
+  telemetry.onHand({...countedHand,seq:3,captured_ms:1400,epoch:1});
+  assert.equal(p.node('hand-completions').hidden,false);
+  telemetry.onPose({...diagnosticPose,captured_ms:1500});
+  assert.equal(p.node('hand-completions').hidden,true);
+  assert.equal(p.node('hand-palm-count').textContent,'—');
+  await p.run("send('get')");deliver({...handReport,id:103,uptime_ms:1600});
+  telemetry.onHand({...countedHand,seq:4,captured_ms:1700,epoch:1});
+  assert.equal(p.node('hand-completions').hidden,false);
+  p.run("transportKind='cloud';render()");
+  assert.equal(p.node('hand-completions').hidden,true);
+  assert.equal(p.node('hand-palm-count').textContent,'—');
+  assert.equal(p.node('hand-second-count').textContent,'—');
 });

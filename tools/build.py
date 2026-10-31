@@ -59,6 +59,8 @@ if __name__ == "__main__":
                         help="Generated hv_hand_weights.h for hand builds; omitted means detection-only, never fake classifications")
     parser.add_argument("--hand-native-partition",
                         help="Build the pinned 11-class ESP-DL classifier; read its model from an existing data partition (build only, no model write)")
+    parser.add_argument("--wdt-rom", choices=["on", "off"],
+                        help="Explicit watchdog implementation for an isolated comparison build; omitted keeps the SDK default")
     args = parser.parse_args()
     vision = args.vision or "coco"
     if vision in ("face", "hand") and (args.mode != "headvoice" or args.gimbal):
@@ -69,7 +71,7 @@ if __name__ == "__main__":
         parser.error("--hand-weights requires a hand build and an existing generated model header")
     if args.hand_native_partition and (
             args.action != "build" or args.mode != "headvoice" or vision != "hand" or
-            args.hand_weights or not args.work_name or args.work_name == "headvoice" or
+            args.hand_weights or not args.work_name or args.work_name in ("headvoice", "baseline") or
             not re.fullmatch(r"[a-zA-Z0-9_][a-zA-Z0-9_-]{0,14}", args.hand_native_partition)):
         parser.error("--hand-native-partition requires an isolated hand build, a valid partition label, and no --hand-weights")
     if args.face_selftest and (args.action != "build" or args.mode != "headvoice" or
@@ -82,8 +84,18 @@ if __name__ == "__main__":
         parser.error("--port is required; never guess the board port")
     if args.baud and args.action != "flash":
         parser.error("--baud is only supported for flash")
+    if args.wdt_rom and (args.action != "build" or not args.work_name or args.work_name in ("headvoice", "baseline")):
+        parser.error("--wdt-rom requires an isolated --work-name build")
     app = prepare(args.mode, vision, args.work_name, args.face_selftest) if args.action == "build" else ROOT / \
         ".work" / (args.work_name or args.mode) / "apps"
+    if args.wdt_rom:
+        config_path = app / "sdkconfig"
+        setting = "CONFIG_HAL_WDT_USE_ROM_IMPL=y" if args.wdt_rom == "on" else "# CONFIG_HAL_WDT_USE_ROM_IMPL is not set"
+        config, count = re.subn(r"^(?:CONFIG_HAL_WDT_USE_ROM_IMPL=.*|# CONFIG_HAL_WDT_USE_ROM_IMPL is not set)$",
+                                setting, config_path.read_text(encoding="utf-8"), flags=re.MULTILINE)
+        if count != 1:
+            raise RuntimeError("Watchdog implementation SDK configuration seam changed")
+        config_path.write_text(config, encoding="utf-8")
     if args.action != "build" and args.mode == "headvoice" and args.vision:
         cache = app / "build/CMakeCache.txt"
         match = re.search(r"^HEADVOICE_VISION:STRING=(coco|face|hand)$",
@@ -94,7 +106,7 @@ if __name__ == "__main__":
     if args.action == "flash":
         cache = app / "build/CMakeCache.txt"
         cached = cache.read_text(encoding="utf-8") if cache.exists() else ""
-        if re.search(r"^HEADVOICE_HAND_NATIVE_PARTITION:STRING=.+$", cached, re.MULTILINE):
+        if re.search(r"^HEADVOICE_HAND_NATIVE_PARTITION:[^=\r\n]+=.+$", cached, re.MULTILINE):
             parser.error("Native hand firmware needs an explicit application/model deployment after backing up the selected model partition; full SDK flash would overwrite model assets")
     python, env = environment()
     command = [str(python), str(SDK / "esp-idf/tools/idf.py")]

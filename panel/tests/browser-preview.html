@@ -9,16 +9,24 @@
   <button id="qa-decode">检查真实 JPEG 解码</button>
   <button id="qa-pause">暂停诊断流</button>
   <button id="qa-candidate">回放已训练原始候选</button>
+  <button id="qa-native-five">离线 native11：张掌</button>
+  <button id="qa-native-two">离线 native11：V字</button>
+  <button id="qa-native-unavailable">离线 native11：模型未加载</button>
+  <button id="qa-counts">离线累计：张掌 3 / V字 2</button>
+  <button id="qa-counts-missing">回放缺少累计字段</button>
   <button id="qa-restart">回放设备重启</button>
   <output id="qa-result" style="display:block;margin-top:12px">尚未检查</output>
   <output id="qa-wire" style="display:block;margin-top:6px">尚无串口指令</output>
+  <output id="qa-camera-wire" style="display:block;margin-top:6px">尚无画面指令</output>
+  <output id="qa-mode" style="display:block;margin-top:6px">虚拟数据：legacy 未训练</output>
 </aside>
 <div id="app"></div>
 <script type="module">
 import {jpegWire} from './jpeg-fixture.mjs';
 import {JpegSnapshotParser,decodeJpegFrame} from '../src/jpeg.mjs';
 
-let input=null, timer=null, paused=false, trained=false, seq=0, boot=1, origin=performance.now();
+let input=null, timer=null, paused=false, trained=false, native=null, seq=0, boot=1, origin=performance.now();
+let provideCounts=true, palmCount=0, secondCount=0;
 const $=id=>document.getElementById(id);
 const uptime=()=>1000+Math.floor(performance.now()-origin);
 const emit=wire=>input?.enqueue(new TextEncoder().encode(wire));
@@ -30,7 +38,17 @@ function observation() {
     infer_ms:100,conversion_ms:20,detect_ms:80,classifier_ms:0,
     scores:trained?[.86,.1,.04]:[0,0,0],classification_valid:trained,classifier_status:trained?0:1,
     confirmed:false,gate_visible:'unknown',gate_latched:'unknown',candidate_samples:0,
-    palm_count:0,fist_count:0};
+    palm_count:palmCount,fist_count:secondCount};
+  if(native) {
+    const available=native!=='unavailable', top=native==='five'?4:1;
+    Object.assign(h,{classifier:'espdl_gesture11',classifier_ready:available,gesture:native,
+      scores:Array.from({length:11},(_,i)=>available?(i===top?.9:.01):0),
+      classification_valid:available,classifier_status:available?0:1,
+      gate_visible:available?(native==='five'?'open_palm':'v_sign'):'unknown',
+      candidate_samples:available?2:0,v_count:secondCount});
+    delete h.fist_count;
+  }
+  if(!provideCounts) {delete h.palm_count;delete h.fist_count;delete h.v_count;}
   emit('HG '+JSON.stringify(h)+'\n');
 }
 function makePort() {
@@ -41,6 +59,7 @@ function makePort() {
     writable:new WritableStream({write(bytes){
       const wire=new TextDecoder().decode(bytes).trim();
       $('qa-wire').textContent='最近虚拟串口指令：'+wire;
+      if(wire.startsWith('hv_camera ')) $('qa-camera-wire').textContent='最近虚拟画面指令：'+wire;
       const get=/^hv_panel (\d+) get$/.exec(wire);
       if(get) {
         emit('HP '+JSON.stringify({v:1,boot,id:Number(get[1]),ok:true,reset_reason:1,
@@ -67,8 +86,11 @@ $('qa-decode').onclick=async()=>{
   } catch(error) {$('qa-result').textContent='JPEG 解码失败：'+error.message;}
 };
 $('qa-pause').onclick=()=>{paused=!paused;$('qa-pause').textContent=paused?'恢复诊断流':'暂停诊断流';};
-$('qa-candidate').onclick=()=>{trained=!trained;$('qa-candidate').textContent=trained?'回放未训练状态':'回放已训练原始候选';};
-$('qa-restart').onclick=()=>{boot++;seq=0;origin=performance.now();emit('ESP-ROM:esp32s3-20210327\nrst:0x1\n');};
+$('qa-candidate').onclick=()=>{native=null;trained=!trained;$('qa-candidate').textContent=trained?'回放未训练状态':'回放已训练原始候选';$('qa-mode').textContent='虚拟数据：legacy '+(trained?'张掌原始候选':'未训练');};
+for(const value of ['five','two','unavailable']) $('qa-native-'+value).onclick=()=>{native=value;$('qa-mode').textContent='虚拟数据：espdl_gesture11 / '+value+'，非实机观测';};
+$('qa-counts').onclick=()=>{native='two';provideCounts=true;palmCount=3;secondCount=2;$('qa-mode').textContent='虚拟设备累计：张掌 3 / V字 2；每帧保持不递增，非实机观测';};
+$('qa-counts-missing').onclick=()=>{provideCounts=false;$('qa-mode').textContent='虚拟数据：本帧不提供累计计数，非实机观测';};
+$('qa-restart').onclick=()=>{boot++;seq=0;palmCount=0;secondCount=0;origin=performance.now();emit('ESP-ROM:esp32s3-20210327\nrst:0x1\n');};
 await import('../src/main.js');
 </script>
 </html>

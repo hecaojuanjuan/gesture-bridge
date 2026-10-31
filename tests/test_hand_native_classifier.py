@@ -1,8 +1,8 @@
 """Check the native adapter's real boundary code; no model accuracy or device claims."""
 import hashlib
 import json
-import shlex
 import shutil
+import struct
 import subprocess
 import tempfile
 import unittest
@@ -10,6 +10,60 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "headvoice/firmware/hv_hand_native_classifier.cpp"
+
+
+def pinned_model_layout(raw):
+    """Read real EDL2 FlatBuffer metadata using the SDK espdl.fbs field order.
+
+    This is a narrow test reader for the hash-pinned model, not a runtime parser
+    for untrusted models. TypeInfo's union occupies a tag plus a value slot.
+    """
+    assert raw[:4] == b"EDL2" and struct.unpack_from("<I", raw, 4)[0] == 0
+    size = struct.unpack_from("<I", raw, 8)[0]
+    assert size + 16 == len(raw)
+    data = raw[16:]
+
+    def u32(pos):
+        return struct.unpack_from("<I", data, pos)[0]
+
+    def field(table, index):
+        vtable = table - struct.unpack_from("<i", data, table)[0]
+        slot = 4 + 2 * index
+        length = struct.unpack_from("<H", data, vtable)[0]
+        offset = struct.unpack_from("<H", data, vtable + slot)[0] if slot < length else 0
+        return table + offset if offset else None
+
+    def reference(table, index):
+        pos = field(table, index)
+        return pos + u32(pos) if pos else None
+
+    def text(table, index):
+        pos = reference(table, index)
+        return data[pos + 4:pos + 4 + u32(pos)].decode() if pos else ""
+
+    def tables(table, index):
+        pos = reference(table, index)
+        return [pos + 4 + 4 * i + u32(pos + 4 + 4 * i) for i in range(u32(pos))] if pos else []
+
+    def tensor(value_info):
+        type_info = reference(value_info, 1)
+        assert data[field(type_info, 0)] == 1  # TypeInfoValue.tensor_type
+        tensor_type = reference(type_info, 1)
+        dtype = struct.unpack_from("<i", data, field(tensor_type, 0))[0]
+        dimensions = []
+        for dimension in tables(reference(tensor_type, 1), 0):
+            value = reference(dimension, 0)
+            assert data[field(value, 0)] == 1  # DimensionValueType.VALUE
+            pos = field(value, 1)
+            dimensions.append(struct.unpack_from("<q", data, pos)[0] if pos else 0)
+        return {"name": text(value_info, 0), "dtype": dtype, "shape": dimensions}
+
+    graph = reference(u32(0), 7)
+    nodes = tables(graph, 0)
+    return {"inputs": [tensor(t) for t in tables(graph, 4)],
+            "outputs": [tensor(t) for t in tables(graph, 5)],
+            "operators": [text(n, 3) for n in nodes],
+            "last_node_name": text(nodes[-1], 2)}
 
 SUPPORT = r"""
 #pragma once
@@ -25,11 +79,12 @@ SUPPORT = r"""
 #include <vector>
 extern int allocation_failure, shape_failure;
 extern unsigned models, preprocessors, postprocessors, model_runs, pre_runs;
-extern std::string loaded_partition;
+extern const char model_bytes[];
+extern bool mapping_active;
 inline void *allocate(std::size_t size, int stage) {
     return allocation_failure == stage ? nullptr : std::malloc(size);
 }
-namespace fbs { enum model_location_type_t { MODEL_LOCATION_IN_FLASH_PARTITION = 1 }; }
+namespace fbs { enum model_location_type_t { MODEL_LOCATION_IN_FLASH_RODATA = 0, MODEL_LOCATION_IN_FLASH_PARTITION = 1 }; }
 namespace dl {
 enum { DATA_TYPE_INT8=1, DATA_TYPE_INT16=2 };
 struct TensorBase {
@@ -44,8 +99,9 @@ class Model {
 public:
     static void *operator new(std::size_t size,const std::nothrow_t &) noexcept { return allocate(size,1); }
     static void operator delete(void *p) noexcept { std::free(p); }
-    Model(const char *label,fbs::model_location_type_t location) {
-        ++models; loaded_partition=label; assert(location==fbs::MODEL_LOCATION_IN_FLASH_PARTITION);
+    Model(const char *bytes,fbs::model_location_type_t location) {
+        ++models; assert(bytes==model_bytes && mapping_active);
+        assert(location==fbs::MODEL_LOCATION_IN_FLASH_RODATA);
         if(shape_failure==1)input.shape={1,64,64,1};
         if(shape_failure==2)output.count=10;
         if(shape_failure==3)input.dtype=DATA_TYPE_INT16;
@@ -54,7 +110,7 @@ public:
         if(shape_failure==6)inputs.clear();
         if(shape_failure==7)outputs.clear();
     }
-    ~Model() { --models; }
+    ~Model() { assert(mapping_active); --models; }
     auto &get_inputs() { return inputs; }
     auto &get_outputs() { return outputs; }
     TensorBase *get_input() { return &input; }
@@ -104,10 +160,16 @@ PARTITION = r"""
 #pragma once
 #include <cstddef>
 #include <cstdint>
-typedef struct { std::size_t size; } esp_partition_t;
+#include "esp_err.h"
+typedef struct { std::size_t size; uint32_t address; } esp_partition_t;
+typedef uint32_t esp_partition_mmap_handle_t;
+typedef enum { ESP_PARTITION_MMAP_DATA=0 } esp_partition_mmap_memory_t;
 enum { ESP_PARTITION_TYPE_DATA=1,ESP_PARTITION_SUBTYPE_ANY=255 };
 const esp_partition_t *esp_partition_find_first(int,int,const char *);
 int esp_partition_read(const esp_partition_t *,std::size_t,void *,std::size_t);
+esp_err_t esp_partition_mmap(const esp_partition_t *,std::size_t,std::size_t,
+    esp_partition_mmap_memory_t,const void **,esp_partition_mmap_handle_t *);
+void esp_partition_munmap(esp_partition_mmap_handle_t);
 """
 
 SHA = r"""
@@ -131,12 +193,15 @@ HARNESS = r"""
 
 int allocation_failure,shape_failure;
 unsigned models,preprocessors,postprocessors,model_runs,pre_runs;
-std::string loaded_partition;
+const char model_bytes[]="EDL2";
+bool mapping_active=false, mapping_null_pointer=false;
 std::vector<int> dl::image::last_crop;
 std::vector<dl::cls::result_t> dl::cls::scripted_results;
-esp_partition_t part{3200u*1024u};
+esp_partition_t part{3200u*1024u,0x810000};
 bool present=true,read_failure=false,digest_failure=false;
 int sha_failure=0;
+int mapping_error=ESP_OK;
+unsigned map_calls=0,unmap_calls=0;
 std::size_t read_bytes=0,hashed_bytes=0;
 unsigned partition_queries=0;
 static uint8_t rgb[320*240*3];
@@ -166,6 +231,21 @@ int mbedtls_sha256_finish(mbedtls_sha256_context *,uint8_t *digest) {
 }
 void mbedtls_sha256_free(mbedtls_sha256_context *) {}
 int64_t esp_timer_get_time() { static int64_t now=0; now+=1000; return now; }
+esp_err_t esp_partition_mmap(const esp_partition_t *p,std::size_t offset,std::size_t size,
+    esp_partition_mmap_memory_t memory,const void **out,esp_partition_mmap_handle_t *handle) {
+    ++map_calls;
+    assert(p==&part && offset==0 && size==HV_HAND_NATIVE_MODEL_BYTES);
+    assert(memory==ESP_PARTITION_MMAP_DATA && !mapping_active && !models);
+    assert(!digest_failure && !sha_failure && hashed_bytes==HV_HAND_NATIVE_MODEL_BYTES);
+    if(mapping_error!=ESP_OK)return mapping_error;
+    mapping_active=true;*out=mapping_null_pointer ? nullptr:model_bytes;
+    *handle=0; // Zero is a valid owned handle, not a sentinel for no mapping.
+    return ESP_OK;
+}
+void esp_partition_munmap(esp_partition_mmap_handle_t handle) {
+    assert(handle==0 && mapping_active && !models && !preprocessors && !postprocessors);
+    mapping_active=false;++unmap_calls;
+}
 
 static hv_hand_detection_t detection() {
     hv_hand_detection_t d{};d.count=1;d.valid=true;d.score=.9f;
@@ -182,7 +262,7 @@ static void start() {
 }
 static void stopped() {
     hv_hand_native_classifier_deinit();
-    assert(!hv_hand_native_classifier_ready() && !models && !preprocessors && !postprocessors);
+    assert(!hv_hand_native_classifier_ready() && !models && !preprocessors && !postprocessors && !mapping_active);
 }
 static void cleared(const hv_hand_native_result_t &r) {
     assert(!r.valid && r.top_index==HV_HAND_NATIVE_CLASS_UNKNOWN);
@@ -214,22 +294,35 @@ int main(int argc,char **argv) {
         digest_failure=false;
         for(sha_failure=1;sha_failure<=3;++sha_failure)
             assert(hv_hand_native_classifier_init("coco_pose",HV_HAND_NATIVE_MODEL_SHA256)==HV_HAND_NATIVE_IO_ERROR);
-        sha_failure=0;start();
-        assert(loaded_partition=="coco_pose" && read_bytes==HV_HAND_NATIVE_MODEL_BYTES && hashed_bytes==read_bytes);
-        const auto queries=partition_queries;start();assert(partition_queries==queries);
+        sha_failure=0;
+        assert(map_calls==0 && unmap_calls==0 && !mapping_active);
+        mapping_error=ESP_ERR_NO_MEM;
+        assert(hv_hand_native_classifier_init("coco_pose",HV_HAND_NATIVE_MODEL_SHA256)==HV_HAND_NATIVE_NO_MEMORY);
+        mapping_error=ESP_FAIL;
+        assert(hv_hand_native_classifier_init("coco_pose",HV_HAND_NATIVE_MODEL_SHA256)==HV_HAND_NATIVE_IO_ERROR);
+        assert(map_calls==2 && unmap_calls==0 && !mapping_active && !models);
+        mapping_error=ESP_OK;mapping_null_pointer=true;
+        assert(hv_hand_native_classifier_init("coco_pose",HV_HAND_NATIVE_MODEL_SHA256)==HV_HAND_NATIVE_IO_ERROR);
+        assert(map_calls==3 && unmap_calls==1 && !mapping_active && !models);
+        mapping_null_pointer=false;start();
+        assert(mapping_active && read_bytes==HV_HAND_NATIVE_MODEL_BYTES && hashed_bytes==read_bytes);
+        const auto queries=partition_queries,calls=map_calls;start();assert(partition_queries==queries && map_calls==calls);
         assert(hv_hand_native_classifier_init("another",HV_HAND_NATIVE_MODEL_SHA256)==HV_HAND_NATIVE_ALREADY_INITIALIZED);
         assert(hv_hand_native_classifier_ready());stopped();
+        assert(map_calls==4 && unmap_calls==2);stopped();assert(unmap_calls==2);
     } else if(test=="lifecycle") {
         for(shape_failure=1;shape_failure<=7;++shape_failure) {
             assert(hv_hand_native_classifier_init("coco_pose",HV_HAND_NATIVE_MODEL_SHA256)==HV_HAND_NATIVE_BAD_MODEL);
-            assert(!hv_hand_native_classifier_ready() && !models && !preprocessors && !postprocessors);
+            assert(!hv_hand_native_classifier_ready() && !models && !preprocessors && !postprocessors && !mapping_active);
+            assert(map_calls==unmap_calls);
         }
         shape_failure=0;
         for(allocation_failure=1;allocation_failure<=3;++allocation_failure) {
             assert(hv_hand_native_classifier_init("coco_pose",HV_HAND_NATIVE_MODEL_SHA256)==HV_HAND_NATIVE_NO_MEMORY);
-            assert(!hv_hand_native_classifier_ready() && !models && !preprocessors && !postprocessors);
+            assert(!hv_hand_native_classifier_ready() && !models && !preprocessors && !postprocessors && !mapping_active);
+            assert(map_calls==unmap_calls);
         }
-        allocation_failure=0;start();stopped();stopped();
+        allocation_failure=0;start();stopped();stopped();assert(map_calls==unmap_calls);
     } else if(test=="input") {
         auto d=detection();hv_hand_native_result_t r;
         assert(predict(d,r)==HV_HAND_NATIVE_NOT_READY);cleared(r);start();scores(1);
@@ -303,7 +396,7 @@ class NativeHandClassifierTest(unittest.TestCase):
             "hand_gesture_cls_postprocessor.hpp": '#include "support.hpp"\n',
             "esp_partition.h": PARTITION,
             "mbedtls/sha256.h": SHA,
-            "esp_err.h": "#pragma once\ntypedef int esp_err_t;\n#define ESP_OK 0\n",
+            "esp_err.h": "#pragma once\ntypedef int esp_err_t;\n#define ESP_OK 0\n#define ESP_FAIL -1\n#define ESP_ERR_NO_MEM 0x101\n",
             "esp_timer.h": "#pragma once\n#include <stdint.h>\nint64_t esp_timer_get_time();\n",
             "harness.cpp": HARNESS,
         }
@@ -356,6 +449,17 @@ class NativeHandClassifierTest(unittest.TestCase):
         subprocess.run([shutil.which("cc") or "clang", "-x", "c", "-std=c11", "-fsyntax-only",
                         "-I", str(self.directory), "-I", str(ROOT / "headvoice/firmware"), "-"],
                        input='#include "hv_hand_native_classifier.h"\n', check=True, capture_output=True, text=True)
+
+    def test_actual_model_has_int8_rgb_input_and_eleven_logits_without_softmax(self):
+        model = ROOT / "headvoice/third_party/hand_gesture_recognition/models/s3/mobilenetv2_0_5_128_128_gesture.espdl"
+        layout = pinned_model_layout(model.read_bytes())
+        # TensorDataType.INT8 == 3 in espdl.fbs (not the C++ dl dtype enum).
+        self.assertEqual(layout["inputs"], [{"name": "input.1", "dtype": 3, "shape": [1, 128, 128, 3]}])
+        self.assertEqual(layout["outputs"], [{"name": "466", "dtype": 3, "shape": [1, 11]}])
+        self.assertEqual(len(layout["operators"]), 68)
+        self.assertEqual(layout["operators"][-1], "Gemm")
+        self.assertEqual(layout["last_node_name"], "/classifier/classifier.1/Gemm")
+        self.assertNotIn("Softmax", layout["operators"])
 
 
 if __name__ == "__main__":

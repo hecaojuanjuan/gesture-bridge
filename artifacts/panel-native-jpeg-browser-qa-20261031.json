@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-31",
+  "status": "passed_offline_browser_checks",
+  "browser": "Google Chrome via CUA native accessibility and screenshots",
+  "url": "http://127.0.0.1:4174/tests/browser-preview.html",
+  "fixture": "panel/tests/browser-preview.html",
+  "scope": "Real browser decoding and UI lifecycle with a virtual navigator.serial implementation. Synthetic observations are not device results.",
+  "checks": {
+    "real_jpeg_decode": {"passed": true, "width": 2, "height": 1, "rgba": [254, 0, 2, 255, 1, 255, 0, 255]},
+    "panel_jpeg_capture": {"passed": true, "observed_command": "hv_camera inputjpeg", "displayed_dimensions": "2 × 1"},
+    "unknown_backend_hvcam_fallback": {"passed": true, "observed_command": "hv_camera snapshot", "displayed_dimensions": "2 × 1"},
+    "legacy_untrained": {"passed": true, "display": "分类器未加载", "candidate": "—"},
+    "legacy_trained_candidate": {"passed": true, "raw": "open_palm", "display": "张掌", "completion_not_claimed": true},
+    "native_five": {"passed": true, "classifier": "espdl_gesture11", "scores": 11, "display": "张掌", "readiness": "11 类分类器已加载"},
+    "native_two": {"passed": true, "classifier": "espdl_gesture11", "scores": 11, "display": "V字", "readiness": "11 类分类器已加载"},
+    "native_unavailable": {"passed": true, "display": "分类器未加载", "candidate": "—", "message": "尚不能识别张掌或V字"},
+    "pause_expiry": {"passed": true, "candidate_cleared": true, "display": "观测已过期：设备帧龄与本页停留合计超过 600 ms"},
+    "restart": {"passed": true, "image_cleared": true, "diagnostics_cleared_until_fresh_observation": true, "restart_count_displayed": 1},
+    "restart_resume": {"passed": true, "display": "V字", "readiness": "11 类分类器已加载"},
+    "disconnect": {"passed": true, "image_cleared": true, "candidate_cleared": true, "capture_disabled": true}
+  },
+  "screenshots": {
+    "captured_in_cua_tool_results": true,
+    "views": ["offline fixture banner with JPEG decode and inputjpeg command", "native V candidate diagnostic card", "expired native observation with cleared candidate"],
+    "saved_files": [],
+    "note": "Screenshots were emitted in the CUA conversation, not exported as filesystem artifacts. The observations above were also confirmed through accessibility state."
+  },
+  "cleanup": {"virtual_port_disconnected": true, "created_test_tab_closed": true, "vite_4174_stopped": true},
+  "limitations": {"real_usb_opened": false, "production_4173_modified": false, "hardware_gesture_accuracy_tested": false, "hardware_latency_tested": false, "physical_lights_tested": false}
+}

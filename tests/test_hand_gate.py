@@ -135,15 +135,15 @@ int main(void)
 
   reset();
   sample(HV_HAND_GATE_OPEN_PALM, 1000);
-  hv_hand_gate_tick(&gate, 1800);
+  hv_hand_gate_tick(&gate, 1900);
   assert(gate.candidate == HV_HAND_GATE_OPEN_PALM);
-  hv_hand_gate_tick(&gate, 1801);
+  hv_hand_gate_tick(&gate, 1901);
   assert(gate.visible == HV_HAND_GATE_UNKNOWN && gate.candidate == HV_HAND_GATE_UNKNOWN);
   sample(HV_HAND_GATE_OPEN_PALM, 1900); /* First post-gap frame is rejected. */
   assert(gate.candidate == HV_HAND_GATE_UNKNOWN);
   palm(2100);
   assert(palm_events == 1);
-  hv_hand_gate_tick(&gate, 3501);
+  hv_hand_gate_tick(&gate, 3601);
   assert(gate.visible == HV_HAND_GATE_UNKNOWN && gate.latched == HV_HAND_GATE_OPEN_PALM);
   sample(HV_HAND_GATE_OPEN_PALM, 3600);
   palm(3800);
@@ -221,6 +221,35 @@ int main(void)
   v_sign(7100);
   assert(v_events == 3 && !fist_events && !palm_events);
   puts("PASS V sign survives epoch invalidation and requires reliable release before repetition");
+  reset();
+  send(HV_HAND_GATE_V_SIGN, 1000, 1450, true, 1, .9f, .1f);
+  send(HV_HAND_GATE_V_SIGN, 1450, 1900, true, 1, .9f, .1f);
+  assert(!v_events && gate.samples == 2);
+  send(HV_HAND_GATE_V_SIGN, 1900, 2350, true, 1, .9f, .1f);
+  assert(v_events == 1 && gate.latched == HV_HAND_GATE_V_SIGN);
+  assert(gate.last_capture_ms == 1900 && gate.last_received_ms == 2350);
+  hv_hand_gate_tick(&gate, 2400);
+  hv_hand_gate_tick(&gate, 2800);
+  hv_hand_gate_tick(&gate, 3150);
+  assert(gate.visible == HV_HAND_GATE_V_SIGN && gate.last_received_ms == 2350);
+  hv_hand_gate_tick(&gate, 3151);
+  assert(gate.visible == HV_HAND_GATE_UNKNOWN && gate.latched == HV_HAND_GATE_V_SIGN);
+  puts("PASS 450ms inference and frame spacing confirm; periodic ticks do not extend arrival freshness");
+
+  reset();
+  send(HV_HAND_GATE_V_SIGN, 1000, 1450, true, 1, .9f, .1f);
+  send(HV_HAND_GATE_V_SIGN, 1450, 1900, true, 1, .9f, .1f);
+  send(HV_HAND_GATE_V_SIGN, 2301, 2751, true, 1, .9f, .1f);
+  assert(!v_events && gate.candidate == HV_HAND_GATE_UNKNOWN);
+  assert(gate.last_capture_ms == 2301 && gate.last_received_ms == 1900);
+  send(HV_HAND_GATE_V_SIGN, 2601, 3051, true, 1, .9f, .1f);
+  send(HV_HAND_GATE_V_SIGN, 2901, 3351, true, 1, .9f, .1f);
+  assert(!v_events);
+  send(HV_HAND_GATE_V_SIGN, 3201, 3651, true, 1, .9f, .1f);
+  assert(v_events == 1);
+  send(HV_HAND_GATE_NO_HAND, 3501, 3951, false, 0, 0, 0);
+  assert(gate.last_received_ms == 3651 && gate.last_now_ms == 3951);
+  puts("PASS capture gaps above 800ms restart confirmation and invalid input does not refresh arrival");
   return 0;
 }
 '''
@@ -237,7 +266,7 @@ class HandGateTests(unittest.TestCase):
                             "-Werror", "-UNDEBUG", "-I", str(ROOT/"headvoice/core"), str(harness),
                             str(ROOT/"headvoice/core/hv_hand_gate.c"), "-o", str(binary), "-lm"], check=True)
             result = subprocess.run([str(binary)], check=True, capture_output=True, text=True)
-            self.assertEqual(result.stdout.count("PASS "), 12)
+            self.assertEqual(result.stdout.count("PASS "), 14)
 
 
 if __name__ == "__main__":

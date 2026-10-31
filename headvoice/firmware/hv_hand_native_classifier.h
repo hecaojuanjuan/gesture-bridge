@@ -62,7 +62,9 @@ extern "C" {
 /* Read-only initialization. No default partition is selected and nothing is
  * written or erased. The data partition must contain the unmodified pinned
  * EDL2 model at byte zero; only its first MODEL_BYTES are hashed. The remaining
- * partition bytes may contain padding. expected_sha256 must match the pinned
+ * partition bytes may contain padding. Only the verified model prefix is
+ * mapped; its handle is released after all model objects are destroyed.
+ * expected_sha256 must match the pinned
  * MODEL_SHA256: changing a model also requires an explicit adapter review.
  * Same-label repeated init is idempotent. A different label requires deinit.
  * Call init/deinit and inference only while other users of this singleton are

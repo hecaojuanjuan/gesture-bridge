@@ -1,0 +1,570 @@
+{
+  "date": "2026-10-31",
+  "test": "native_v_sign_second_pilot",
+  "source_log": ".local/hand-tests/v-native-20261031-194057.jsonl",
+  "source_sha256": "6f8cae15eae03a75de3b2e8c1b8f0cd0f757b92f2d9bf3470dc2d22c71d28176",
+  "acquisition": "User-operated V-sign capture, reported via terminal screenshot; agent only analyzed completed files.",
+  "intended_label": "v_sign",
+  "preceding_preview": ".local/hand-tests/v-native-view-20261031-194041.jpg",
+  "preview_scope": "Not matched to any observation in this recording; cannot prove exactly what classifier saw.",
+  "readiness": {
+    "recording_status": "observations_received",
+    "observations": 25,
+    "hand_counts": {
+      "2": 6,
+      "1": 19
+    },
+    "valid_single_hand": 19,
+    "classifier_ready_values": [
+      true
+    ],
+    "classifier_names": [
+      "espdl_gesture11"
+    ],
+    "classification_valid": 19,
+    "confirmed_observations": 0,
+    "gesture_events": 0,
+    "gestures": {},
+    "raw_classes": {
+      "unknown": 6,
+      "no_gesture": 18,
+      "two": 1
+    },
+    "inference_ms": {
+      "n": 25,
+      "median": 479,
+      "p95": 522,
+      "max": 532
+    },
+    "result_age_ms": {
+      "n": 25,
+      "median": 499,
+      "p95": 554,
+      "max": 558
+    },
+    "startup_or_fault_lines": 2,
+    "ready_events": 1,
+    "latest_metrics": {
+      "v": 1,
+      "event": "metrics",
+      "captured": 189,
+      "dropped": 167,
+      "internal_free": 51755,
+      "internal_largest": 36852,
+      "psram_free": 1770972
+    },
+    "gesture_accuracy_verified": false,
+    "note": "Counts and timing only; validate the configured target gestures, other gestures and no-hand trials against independent labels. Raw classes and held/confirmed observations are not completed gesture events. Classifier readiness alone does not verify gesture accuracy."
+  },
+  "audit": {
+    "observations": 25,
+    "native_observations": 25,
+    "firmware_elf_sha256_values": [
+      "978e6be09..."
+    ],
+    "rom_banner_lines": 1,
+    "reset_reason_lines": [
+      {
+        "code": "0x1",
+        "reason": "POWERON"
+      }
+    ],
+    "sequence_regressions": 0,
+    "fault_pattern_line_counts": {},
+    "partial_lines_ignored": 0,
+    "malformed_rows_or_hg_messages": 0,
+    "ready_events": [
+      {
+        "classifier": "espdl_gesture11",
+        "classifier_ready": true,
+        "model_sha256": "52e18ceb0845121b4c0fa63aa06d69d17068c8c8135f43a7943a11812ac595d0",
+        "servo_control": false
+      }
+    ],
+    "ready_model_sha256_matches_pin": [
+      true
+    ],
+    "classifier_init_statuses": [],
+    "observation_status_counts": {
+      "1": 6,
+      "0": 19
+    },
+    "classification_valid": 19,
+    "valid_classification_bad_scores": 0,
+    "valid_classification_label_mismatches": 0,
+    "score_vector_lengths": {
+      "11": 25
+    },
+    "raw_classes_all_native": {
+      "unknown": 6,
+      "no_gesture": 18,
+      "two": 1
+    },
+    "raw_classes_valid_classification": {
+      "no_gesture": 18,
+      "two": 1
+    },
+    "confirmed_observations": 0,
+    "completed_gestures": {},
+    "top_score": {
+      "n": 19,
+      "min": 0.957654,
+      "median": 0.998753,
+      "p95": 0.999436,
+      "max": 0.999436
+    },
+    "margin": {
+      "n": 19,
+      "min": 0.932133,
+      "median": 0.998368,
+      "p95": 0.999327,
+      "max": 0.999327
+    },
+    "timing_all_observations_ms": {
+      "conversion_ms": {
+        "n": 25,
+        "min": 28,
+        "median": 43,
+        "p95": 57,
+        "max": 64
+      },
+      "detect_ms": {
+        "n": 25,
+        "min": 164,
+        "median": 231,
+        "p95": 251,
+        "max": 256
+      },
+      "classifier_ms": {
+        "n": 25,
+        "min": 0,
+        "median": 212,
+        "p95": 231,
+        "max": 232
+      },
+      "infer_ms": {
+        "n": 25,
+        "min": 222,
+        "median": 479,
+        "p95": 522,
+        "max": 532
+      },
+      "age_ms": {
+        "n": 25,
+        "min": 227,
+        "median": 499,
+        "p95": 554,
+        "max": 558
+      }
+    },
+    "timing_valid_classification_ms": {
+      "conversion_ms": {
+        "n": 19,
+        "min": 28,
+        "median": 43,
+        "p95": 64,
+        "max": 64
+      },
+      "detect_ms": {
+        "n": 19,
+        "min": 164,
+        "median": 231,
+        "p95": 256,
+        "max": 256
+      },
+      "classifier_ms": {
+        "n": 19,
+        "min": 153,
+        "median": 216,
+        "p95": 232,
+        "max": 232
+      },
+      "infer_ms": {
+        "n": 19,
+        "min": 345,
+        "median": 488,
+        "p95": 532,
+        "max": 532
+      },
+      "age_ms": {
+        "n": 19,
+        "min": 356,
+        "median": 509,
+        "p95": 558,
+        "max": 558
+      }
+    },
+    "memory_bytes": {
+      "internal_free": {
+        "first": 51655,
+        "last": 51755,
+        "min": 51655,
+        "max": 51755,
+        "n": 2
+      },
+      "internal_largest": {
+        "first": 36852,
+        "last": 36852,
+        "min": 36852,
+        "max": 36852,
+        "n": 2
+      },
+      "psram_free": {
+        "first": 1771224,
+        "last": 1770972,
+        "min": 1770972,
+        "max": 1771224,
+        "n": 2
+      }
+    },
+    "metric_counter_deltas_same_boot": {
+      "captured": 96,
+      "dropped": 85
+    },
+    "gesture_accuracy_verified": false,
+    "limits": [
+      "Startup markers are counted separately; two marker lines do not prove two reboots.",
+      "No matching fault text is not proof of fault-free operation; the recording may start late or miss lines.",
+      "Native status 1 also marks skipped inference; detector no-hand and classifier no_hand are distinct.",
+      "Raw labels, valid scores and confirmed observations are not additional completed gesture events.",
+      "Memory minima cover sampled metrics only, not heap low-water marks or fragmentation between samples.",
+      "No classifier preprocess/model/postprocess split, PSRAM largest block or stack watermark is emitted by this firmware.",
+      "Gesture correctness needs independently labelled trials; an unlabeled startup probe cannot verify accuracy."
+    ]
+  },
+  "diagnostic_observations": [
+    {
+      "seq": 1,
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw": "unknown",
+      "two_score": 0.0,
+      "no_gesture_score": 0.0,
+      "confirmed": false
+    },
+    {
+      "seq": 2,
+      "box": [
+        135,
+        135,
+        207,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.00014,
+      "no_gesture_score": 0.998391,
+      "confirmed": false
+    },
+    {
+      "seq": 3,
+      "box": [
+        135,
+        134,
+        207,
+        238
+      ],
+      "raw": "no_gesture",
+      "two_score": 6.6e-05,
+      "no_gesture_score": 0.999436,
+      "confirmed": false
+    },
+    {
+      "seq": 4,
+      "box": [
+        138,
+        135,
+        208,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.00014,
+      "no_gesture_score": 0.998884,
+      "confirmed": false
+    },
+    {
+      "seq": 5,
+      "box": [
+        137,
+        134,
+        207,
+        238
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.000203,
+      "no_gesture_score": 0.998253,
+      "confirmed": false
+    },
+    {
+      "seq": 6,
+      "box": [
+        140,
+        137,
+        208,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.000179,
+      "no_gesture_score": 0.998475,
+      "confirmed": false
+    },
+    {
+      "seq": 7,
+      "box": [
+        138,
+        137,
+        208,
+        238
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.00014,
+      "no_gesture_score": 0.998911,
+      "confirmed": false
+    },
+    {
+      "seq": 8,
+      "box": [
+        144,
+        144,
+        211,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.00023,
+      "no_gesture_score": 0.998386,
+      "confirmed": false
+    },
+    {
+      "seq": 9,
+      "box": [
+        141,
+        142,
+        211,
+        238
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.000158,
+      "no_gesture_score": 0.998897,
+      "confirmed": false
+    },
+    {
+      "seq": 10,
+      "box": [
+        144,
+        144,
+        214,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.00014,
+      "no_gesture_score": 0.998841,
+      "confirmed": false
+    },
+    {
+      "seq": 11,
+      "box": [
+        145,
+        144,
+        217,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.000158,
+      "no_gesture_score": 0.998565,
+      "confirmed": false
+    },
+    {
+      "seq": 12,
+      "box": [
+        145,
+        142,
+        217,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.000179,
+      "no_gesture_score": 0.997638,
+      "confirmed": false
+    },
+    {
+      "seq": 13,
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw": "unknown",
+      "two_score": 0.0,
+      "no_gesture_score": 0.0,
+      "confirmed": false
+    },
+    {
+      "seq": 14,
+      "box": [
+        141,
+        141,
+        214,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 9.6e-05,
+      "no_gesture_score": 0.998753,
+      "confirmed": false
+    },
+    {
+      "seq": 15,
+      "box": [
+        141,
+        85,
+        215,
+        238
+      ],
+      "raw": "two",
+      "two_score": 0.957654,
+      "no_gesture_score": 0.009389,
+      "confirmed": false
+    },
+    {
+      "seq": 16,
+      "box": [
+        141,
+        141,
+        214,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.00014,
+      "no_gesture_score": 0.998583,
+      "confirmed": false
+    },
+    {
+      "seq": 17,
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw": "unknown",
+      "two_score": 0.0,
+      "no_gesture_score": 0.0,
+      "confirmed": false
+    },
+    {
+      "seq": 18,
+      "box": [
+        142,
+        147,
+        212,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.000123,
+      "no_gesture_score": 0.998802,
+      "confirmed": false
+    },
+    {
+      "seq": 19,
+      "box": [
+        140,
+        154,
+        211,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 6.6e-05,
+      "no_gesture_score": 0.999384,
+      "confirmed": false
+    },
+    {
+      "seq": 20,
+      "box": [
+        142,
+        145,
+        211,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.00014,
+      "no_gesture_score": 0.998759,
+      "confirmed": false
+    },
+    {
+      "seq": 21,
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw": "unknown",
+      "two_score": 0.0,
+      "no_gesture_score": 0.0,
+      "confirmed": false
+    },
+    {
+      "seq": 22,
+      "box": [
+        142,
+        145,
+        211,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 0.000158,
+      "no_gesture_score": 0.998703,
+      "confirmed": false
+    },
+    {
+      "seq": 23,
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw": "unknown",
+      "two_score": 0.0,
+      "no_gesture_score": 0.0,
+      "confirmed": false
+    },
+    {
+      "seq": 24,
+      "box": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "raw": "unknown",
+      "two_score": 0.0,
+      "no_gesture_score": 0.0,
+      "confirmed": false
+    },
+    {
+      "seq": 25,
+      "box": [
+        147,
+        144,
+        215,
+        239
+      ],
+      "raw": "no_gesture",
+      "two_score": 8.5e-05,
+      "no_gesture_score": 0.999316,
+      "confirmed": false
+    }
+  ],
+  "finding": "One two prediction (seq15) at 0.957654 with box y1=85; 18 no_gesture predictions mostly box y1=134..154; six multiple-candidate observations skip classification. No stable V-sign completion. ROI truncation is a hypothesis, not established by the separate earlier photo.",
+  "acceptance": {
+    "v_prediction_observed": true,
+    "v_sign_completion_observed": false,
+    "target_pilot_passed": false,
+    "gesture_accuracy_verified": false
+  },
+  "next": "Timestamp-matched model input JPEG and HG observation to inspect actual classifier crop."
+}

@@ -22,6 +22,9 @@ namespace {
 dl::Model *s_model;
 dl::image::ImagePreprocessor *s_preprocessor;
 dl::cls::HandGestureClsPostprocessor *s_postprocessor;
+const void *s_model_mapping;
+esp_partition_mmap_handle_t s_model_mapping_handle;
+bool s_model_mapping_owned;
 char s_partition[17];
 
 const char *const CLASS_NAMES[HV_HAND_NATIVE_CLASS_COUNT] = {
@@ -101,6 +104,12 @@ extern "C" void hv_hand_native_classifier_deinit(void)
   s_postprocessor = nullptr;
   s_preprocessor = nullptr;
   s_model = nullptr;
+  /* Model/FbsModel may retain references into this mapping until destruction.
+   * Handle zero is valid, so ownership is tracked separately from its value. */
+  if (s_model_mapping_owned) esp_partition_munmap(s_model_mapping_handle);
+  s_model_mapping_owned = false;
+  s_model_mapping = nullptr;
+  s_model_mapping_handle = 0;
   s_partition[0] = '\0';
 }
 
@@ -123,9 +132,28 @@ extern "C" hv_hand_native_status_t hv_hand_native_classifier_init(
   const auto verified = verify_model(partition);
   if (verified != HV_HAND_NATIVE_OK) return verified;
 
+  /* Own a checked, model-sized mapping. ESP-DL's partition loader maps the
+   * entire partition with ESP_ERROR_CHECK; passing our mapped bytes through
+   * its RODATA path avoids that abort path and leaves cleanup with us. */
+  const esp_err_t map_result = esp_partition_mmap(
+      partition, 0, HV_HAND_NATIVE_MODEL_BYTES, ESP_PARTITION_MMAP_DATA,
+      &s_model_mapping, &s_model_mapping_handle);
+  if (map_result != ESP_OK) {
+    s_model_mapping = nullptr;
+    s_model_mapping_handle = 0;
+    return map_result == ESP_ERR_NO_MEM ? HV_HAND_NATIVE_NO_MEMORY : HV_HAND_NATIVE_IO_ERROR;
+  }
+  s_model_mapping_owned = true;
+  if (!s_model_mapping) {
+    hv_hand_native_classifier_deinit();
+    return HV_HAND_NATIVE_IO_ERROR;
+  }
   s_model = new (std::nothrow) dl::Model(
-      partition_label, fbs::MODEL_LOCATION_IN_FLASH_PARTITION);
-  if (!s_model) return HV_HAND_NATIVE_NO_MEMORY;
+      static_cast<const char *>(s_model_mapping), fbs::MODEL_LOCATION_IN_FLASH_RODATA);
+  if (!s_model) {
+    hv_hand_native_classifier_deinit();
+    return HV_HAND_NATIVE_NO_MEMORY;
+  }
   auto *input = s_model->get_inputs().size() == 1 ? s_model->get_input() : nullptr;
   auto *output = s_model->get_outputs().size() == 1 ? s_model->get_output() : nullptr;
   if (!input || !output || !input->data || !output->data ||

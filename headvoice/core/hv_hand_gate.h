@@ -48,7 +48,9 @@ typedef struct {
   hv_hand_gate_kind_t visible, candidate, latched;
   unsigned samples;
   uint64_t candidate_start_ms, release_start_ms, last_capture_ms, last_now_ms;
-  bool have_release, have_capture, have_clock;
+  /* Arrival time is separate: tick updates the clock, never this timestamp. */
+  uint64_t last_received_ms;
+  bool have_release, have_capture, have_clock, have_received;
 } hv_hand_gate_t;
 
 /* Defaults are provisional operating thresholds, not an accuracy guarantee.

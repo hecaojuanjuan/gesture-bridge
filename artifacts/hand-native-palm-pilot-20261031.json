@@ -1,0 +1,246 @@
+{
+  "date": "2026-10-31",
+  "test": "native_open_palm_pilot",
+  "acquisition": "User initiated the supplied 15-second capture command; agent only read the completed local file.",
+  "intended_label": "open_palm",
+  "label_evidence": "Prescribed manual palm test and palm-native filename; preceding local JPEG shows an open palm. The full recording was not independently visually labelled.",
+  "source_log": ".local/hand-tests/palm-native-20261031-193352.jsonl",
+  "source_sha256": "3eeaf49101da236af41ffa09c29c926d35c075f2d34facf801021689ac464f29",
+  "preceding_preview": ".local/hand-tests/palm-native-view-20261031-193336.jpg",
+  "preview_scope": "Separate preceding image, not frame-matched to observations. Hand is open; lower wrist reaches the image boundary; visible bright highlights.",
+  "readiness": {
+    "recording_status": "observations_received",
+    "observations": 26,
+    "hand_counts": {
+      "2": 4,
+      "1": 22
+    },
+    "valid_single_hand": 19,
+    "classifier_ready_values": [
+      true
+    ],
+    "classifier_names": [
+      "espdl_gesture11"
+    ],
+    "classification_valid": 19,
+    "confirmed_observations": 15,
+    "gesture_events": 1,
+    "gestures": {
+      "open_palm": 1
+    },
+    "raw_classes": {
+      "unknown": 7,
+      "five": 19
+    },
+    "inference_ms": {
+      "n": 26,
+      "median": 460.0,
+      "p95": 524,
+      "max": 534
+    },
+    "result_age_ms": {
+      "n": 26,
+      "median": 482.0,
+      "p95": 561,
+      "max": 583
+    },
+    "startup_or_fault_lines": 2,
+    "ready_events": 1,
+    "latest_metrics": {
+      "v": 1,
+      "event": "metrics",
+      "captured": 164,
+      "dropped": 141,
+      "internal_free": 51755,
+      "internal_largest": 36852,
+      "psram_free": 1771076
+    },
+    "gesture_accuracy_verified": false,
+    "note": "Counts and timing only; validate the configured target gestures, other gestures and no-hand trials against independent labels. Raw classes and held/confirmed observations are not completed gesture events. Classifier readiness alone does not verify gesture accuracy."
+  },
+  "audit": {
+    "observations": 26,
+    "native_observations": 26,
+    "firmware_elf_sha256_values": [
+      "978e6be09..."
+    ],
+    "rom_banner_lines": 1,
+    "reset_reason_lines": [
+      {
+        "code": "0x1",
+        "reason": "POWERON"
+      }
+    ],
+    "sequence_regressions": 0,
+    "fault_pattern_line_counts": {},
+    "partial_lines_ignored": 0,
+    "malformed_rows_or_hg_messages": 0,
+    "ready_events": [
+      {
+        "classifier": "espdl_gesture11",
+        "classifier_ready": true,
+        "model_sha256": "52e18ceb0845121b4c0fa63aa06d69d17068c8c8135f43a7943a11812ac595d0",
+        "servo_control": false
+      }
+    ],
+    "ready_model_sha256_matches_pin": [
+      true
+    ],
+    "classifier_init_statuses": [],
+    "observation_status_counts": {
+      "1": 7,
+      "0": 19
+    },
+    "classification_valid": 19,
+    "valid_classification_bad_scores": 0,
+    "valid_classification_label_mismatches": 0,
+    "score_vector_lengths": {
+      "11": 26
+    },
+    "raw_classes_all_native": {
+      "unknown": 7,
+      "five": 19
+    },
+    "raw_classes_valid_classification": {
+      "five": 19
+    },
+    "confirmed_observations": 15,
+    "completed_gestures": {
+      "open_palm": 1
+    },
+    "top_score": {
+      "n": 19,
+      "min": 0.98367,
+      "median": 0.997602,
+      "p95": 0.999225,
+      "max": 0.999225
+    },
+    "margin": {
+      "n": 19,
+      "min": 0.972742,
+      "median": 0.996571,
+      "p95": 0.9989950000000001,
+      "max": 0.9989950000000001
+    },
+    "timing_all_observations_ms": {
+      "conversion_ms": {
+        "n": 26,
+        "min": 29,
+        "median": 39.5,
+        "p95": 50,
+        "max": 54
+      },
+      "detect_ms": {
+        "n": 26,
+        "min": 153,
+        "median": 229.5,
+        "p95": 257,
+        "max": 258
+      },
+      "classifier_ms": {
+        "n": 26,
+        "min": 0,
+        "median": 197.0,
+        "p95": 236,
+        "max": 238
+      },
+      "infer_ms": {
+        "n": 26,
+        "min": 190,
+        "median": 460.0,
+        "p95": 524,
+        "max": 534
+      },
+      "age_ms": {
+        "n": 26,
+        "min": 215,
+        "median": 482.0,
+        "p95": 561,
+        "max": 583
+      }
+    },
+    "timing_valid_classification_ms": {
+      "conversion_ms": {
+        "n": 19,
+        "min": 29,
+        "median": 41,
+        "p95": 50,
+        "max": 50
+      },
+      "detect_ms": {
+        "n": 19,
+        "min": 163,
+        "median": 227,
+        "p95": 258,
+        "max": 258
+      },
+      "classifier_ms": {
+        "n": 19,
+        "min": 179,
+        "median": 210,
+        "p95": 238,
+        "max": 238
+      },
+      "infer_ms": {
+        "n": 19,
+        "min": 428,
+        "median": 473,
+        "p95": 534,
+        "max": 534
+      },
+      "age_ms": {
+        "n": 19,
+        "min": 439,
+        "median": 516,
+        "p95": 583,
+        "max": 583
+      }
+    },
+    "memory_bytes": {
+      "internal_free": {
+        "first": 51655,
+        "last": 51755,
+        "min": 51655,
+        "max": 51755,
+        "n": 2
+      },
+      "internal_largest": {
+        "first": 36852,
+        "last": 36852,
+        "min": 36852,
+        "max": 36852,
+        "n": 2
+      },
+      "psram_free": {
+        "first": 1771296,
+        "last": 1771076,
+        "min": 1771076,
+        "max": 1771296,
+        "n": 2
+      }
+    },
+    "metric_counter_deltas_same_boot": {
+      "captured": 84,
+      "dropped": 74
+    },
+    "gesture_accuracy_verified": false,
+    "limits": [
+      "Startup markers are counted separately; two marker lines do not prove two reboots.",
+      "No matching fault text is not proof of fault-free operation; the recording may start late or miss lines.",
+      "Native status 1 also marks skipped inference; detector no-hand and classifier no_hand are distinct.",
+      "Raw labels, valid scores and confirmed observations are not additional completed gesture events.",
+      "Memory minima cover sampled metrics only, not heap low-water marks or fragmentation between samples.",
+      "No classifier preprocess/model/postprocess split, PSRAM largest block or stack watermark is emitted by this firmware.",
+      "Gesture correctness needs independently labelled trials; an unlabeled startup probe cannot verify accuracy."
+    ]
+  },
+  "acceptance": {
+    "board_classification_executed": true,
+    "open_palm_completion_observed": true,
+    "v_sign_pilot_completed": false,
+    "physical_green_light_confirmed": false,
+    "gesture_accuracy_verified": false,
+    "long_term_stability_verified": false
+  },
+  "next": "User-run V-sign, non-target and no-hand trials, then repeated hold/release and visual RGB confirmation. No serial session opened by this audit."
+}

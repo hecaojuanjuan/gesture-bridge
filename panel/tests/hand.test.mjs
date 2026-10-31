@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {parseHand,HandStream,handState,handCandidate,handFresh,GESTURE11_LABELS} from '../src/hand.mjs';
+import {parseHand,HandStream,handState,handCandidate,handFresh,handCompletionCounts,GESTURE11_LABELS} from '../src/hand.mjs';
 
 const detector={v:1,event:'observation',seq:1,captured_ms:1100,age_ms:250,epoch:0,
   width:320,height:240,hands:1,box:[145,67,215,148],detect_score:.5,valid:true,
@@ -89,7 +89,7 @@ test('a new boot or non-vision stage clears prior model readiness',()=>{
 
 function nativeGesture(label,changes={}) {
   const scores=Array(11).fill(.003906);
-  scores[GESTURE11_LABELS.indexOf(label)]=.941406;
+  scores[GESTURE11_LABELS.indexOf(label)]=.960937;
   return {...detector,classifier:'espdl_gesture11',classifier_ready:true,gesture:label,scores,
     classification_valid:true,classifier_status:0,confirmed:false,
     gate_visible:'unknown',gate_latched:'v_sign',candidate_samples:1,v_count:2,...changes};
@@ -111,18 +111,22 @@ test('native classifier retains the fixed eleven-class order and maps only five/
 
 test('native packets require the model tag, eleven bounded scores and matching raw top class',()=>{
   const h=nativeGesture('two');
-  // Sum is deliberately not 1: preserve real quantized outputs, do not renormalize.
-  assert.ok(Math.abs(h.scores.reduce((a,b)=>a+b)-1)>.001);
-  assert.ok(parseHand(h));
+  // Float softmax probabilities are printed to six decimals. Keep those
+  // rounded values exactly; tolerate rounding without accepting a bad sum.
+  const roundingError=Math.abs(h.scores.reduce((a,b)=>a+b)-1);
+  assert.ok(roundingError>0 && roundingError<.0000055);
+  assert.equal(parseHand(h),h);
+  assert.equal(h.scores[1],.960937);
   for(const change of [{classifier:undefined},{classifier:'tiny_cnn3'},{classifier:'unknown-model'},
     {gesture:'five'},{gesture:'closed_fist'},{scores:[0,1,0]},
     {scores:Array(11).fill(0)},{scores:Array(11).fill(NaN)},
+    {scores:h.scores.map(n=>n*.95)},{scores:h.scores.map(n=>n*.8)},
     {scores:h.scores.map((n,i)=>i===3 ? 1.1 : n)},{v_count:-1}]) {
     assert.equal(parseHand({...h,...change}),null,JSON.stringify(change));
   }
-  const tie=[...h.scores];tie[4]=tie[1]+.000001;
+  const tie=Array(11).fill(0);tie[1]=.499999;tie[4]=.5;
   assert.ok(parseHand({...h,scores:tie}));
-  tie[4]=tie[1]+.000004;
+  tie[1]=.499998;tie[4]=.500002;
   assert.equal(parseHand({...h,scores:tie}),null);
 });
 
@@ -130,10 +134,103 @@ test('unready native and retained V latches never show a completed target',()=>{
   const h=nativeGesture('two',{classifier_ready:false,gesture:'untrained',scores:Array(11).fill(0),
     classification_valid:false,classifier_status:1,gate_visible:'unknown'});
   assert.ok(parseHand(h));assert.equal(handCandidate(h),'—');
+  assert.ok(parseHand({...h,gesture:'unavailable'}));
+  assert.equal(handCandidate({...h,gesture:'unavailable'}),'—');
+  assert.equal(parseHand({...h,gesture:'unavailable',classifier_ready:true}),null);
   assert.match(handState(h),/未加载.*张掌或V字/);
   assert.equal(parseHand({...h,confirmed:true}),null);
   const lost=nativeGesture('two',{gesture:'unknown',classification_valid:false,valid:false,
     gate_visible:'unknown',gate_latched:'v_sign'});
   assert.ok(parseHand(lost));assert.equal(handCandidate(lost),'—');
   assert.equal(handCandidate({...trained,classifier:'tiny_cnn3'}),'握拳');
+});
+
+test('completion totals copy the complete native or legacy device counters only',()=>{
+  const native=nativeGesture('two',{palm_count:4,v_count:7,fist_count:99});
+  assert.deepEqual(handCompletionCounts(native),{palm:4,second:7,secondLabel:'V字'});
+  assert.deepEqual(handCompletionCounts({...trained,v_count:99}),{palm:1,second:0,secondLabel:'握拳'});
+  assert.deepEqual(handCompletionCounts({...trained,classifier:'tiny_cnn3',fist_count:3}),
+    {palm:1,second:3,secondLabel:'握拳'});
+  assert.deepEqual(handCompletionCounts({...native,age_ms:10000}),
+    {palm:4,second:7,secondLabel:'V字'});
+  assert.deepEqual(handCompletionCounts({...detector,palm_count:0,fist_count:0}),
+    {palm:0,second:0,secondLabel:'握拳'});
+  assert.equal(native.palm_count,4);assert.equal(native.v_count,7);
+});
+
+test('missing or illegal completion counts are not presented as zero or inferred',()=>{
+  assert.equal(handCompletionCounts(null),null);
+  assert.equal(handCompletionCounts(detector),null);
+  assert.equal(handCompletionCounts(nativeGesture('two')),null);
+  assert.equal(handCompletionCounts({...trained,palm_count:undefined}),null);
+  assert.equal(handCompletionCounts({...trained,fist_count:undefined}),null);
+  for(const key of ['palm_count','v_count']) {
+    for(const value of [undefined,null,-1,1.5,'2',NaN,Infinity,4294967296]) {
+      assert.equal(handCompletionCounts(nativeGesture('two',{palm_count:0,[key]:value})),null);
+    }
+  }
+  assert.equal(handCompletionCounts({...trained,fist_count:-1}),null);
+  assert.equal(handCompletionCounts({...trained,event:'gesture'}),null);
+  assert.equal(handCompletionCounts(nativeGesture('two',{palm_count:1,classifier:'unknown'})),null);
+  assert.deepEqual(handCompletionCounts(nativeGesture('two',{palm_count:4294967295,v_count:4294967295})),
+    {palm:4294967295,second:4294967295,secondLabel:'V字'});
+});
+
+test('repeated confirmed or candidate observations never increment completion totals',()=>{
+  const stream=new HandStream();stream.confirm(report);
+  const held=nativeGesture('two',{palm_count:0,v_count:1,confirmed:true,gate_visible:'v_sign'});
+  for(let i=0;i<5;i++) {
+    const h={...held,seq:i+1,captured_ms:1100+i*400,candidate_samples:100+i};
+    assert.equal(stream.receive(h,10+i*400).accepted,true);
+    assert.deepEqual(handCompletionCounts(stream.hand),{palm:0,second:1,secondLabel:'V字'});
+  }
+  const candidate={...held,seq:6,captured_ms:3100,confirmed:false,candidate_samples:999};
+  assert.equal(stream.receive(candidate,2010).accepted,true);
+  assert.deepEqual(handCompletionCounts(stream.hand),{palm:0,second:1,secondLabel:'V字'});
+  assert.equal(stream.receive({...candidate,seq:7,captured_ms:3500,v_count:2},2410).accepted,true);
+  assert.deepEqual(handCompletionCounts(stream.hand),{palm:0,second:2,secondLabel:'V字'});
+});
+
+test('counter rollback invalidates a stream until fresh HP, including across a missing-field observation',()=>{
+  for(const initial of [nativeGesture('two',{palm_count:4,v_count:7}),{...trained,palm_count:4,fist_count:7}]) {
+    const secondKey=initial.classifier==='espdl_gesture11' ? 'v_count' : 'fist_count';
+    for(const key of ['palm_count',secondKey]) {
+      const stream=new HandStream();stream.confirm(report);stream.receive(initial,10);
+      const missing={...initial,seq:2,captured_ms:1500,palm_count:undefined,[secondKey]:undefined};
+      assert.equal(stream.receive(missing,410).accepted,true);
+      assert.equal(handCompletionCounts(stream.hand),null);
+      assert.equal(stream.receive({...initial,seq:3,captured_ms:1900,[key]:0},810).invalidated,true);
+      assert.equal(stream.hand,null);assert.equal(stream.lastCounts,null);
+      assert.equal(stream.receive({...initial,seq:4,captured_ms:2300},1210).accepted,false);
+      stream.confirm({...report,uptime_ms:2400});
+      assert.equal(stream.receive({...initial,seq:5,captured_ms:2500,palm_count:0,[secondKey]:0},1410).accepted,true);
+    }
+  }
+});
+
+test('reset and a newly confirmed boot cannot retain device completion totals',()=>{
+  const stream=new HandStream();stream.confirm(report);
+  stream.receive(nativeGesture('two',{palm_count:4,v_count:7}),10);
+  stream.reset();assert.equal(handCompletionCounts(stream.hand),null);assert.equal(stream.lastCounts,null);
+  stream.confirm(report);stream.receive(nativeGesture('two',{palm_count:4,v_count:7}),20);
+  stream.confirm({...report,boot:2,uptime_ms:100});
+  assert.equal(handCompletionCounts(stream.hand),null);assert.equal(stream.lastCounts,null);
+  assert.equal(stream.receive(nativeGesture('two',{seq:1,captured_ms:200,palm_count:0,v_count:0}),30).accepted,true);
+  assert.deepEqual(handCompletionCounts(stream.hand),{palm:0,second:0,secondLabel:'V字'});
+});
+
+test('native and legacy schemas need a new HP barrier while legacy tag aliases remain compatible',()=>{
+  for(const first of [nativeGesture('two',{palm_count:1,v_count:2}),trained]) {
+    const stream=new HandStream();stream.confirm(report);stream.receive(first,10);
+    const changed=first.classifier==='espdl_gesture11' ? trained : nativeGesture('two',{palm_count:1,v_count:2});
+    assert.equal(stream.receive({...changed,seq:2,captured_ms:1500},410).invalidated,true);
+    assert.equal(stream.hand,null);assert.equal(stream.lastCounts,null);assert.equal(stream.classifierSchema,null);
+    assert.equal(stream.receive({...changed,seq:3,captured_ms:1900},810).accepted,false);
+    stream.confirm({...report,uptime_ms:2000});
+    assert.equal(stream.receive({...changed,seq:4,captured_ms:2100},1010).accepted,true);
+  }
+  const stream=new HandStream();stream.confirm(report);stream.receive(trained,10);
+  assert.equal(stream.receive({...trained,classifier:'tiny_cnn3',seq:2,captured_ms:1500},410).accepted,true);
+  assert.equal(stream.receive({...trained,seq:3,captured_ms:1900},810).accepted,true);
+  assert.deepEqual(handCompletionCounts(stream.hand),{palm:1,second:0,secondLabel:'握拳'});
 });

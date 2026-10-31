@@ -44,7 +44,12 @@ typedef struct { int unused; } qm_spec_property_t;
 #define pdPASS 1
 #define pdMS_TO_TICKS(value) (value)
 static unsigned lock_depth, allocations;
-static void enter_guard(portMUX_TYPE *guard) { (void)guard; assert(lock_depth == 0); ++lock_depth; }
+static void (*guard_hook)(void);
+static void enter_guard(portMUX_TYPE *guard) {
+  (void)guard; assert(lock_depth == 0);
+  if (guard_hook) guard_hook();
+  ++lock_depth;
+}
 static void leave_guard(portMUX_TYPE *guard) { (void)guard; assert(lock_depth == 1); --lock_depth; }
 #define portENTER_CRITICAL(guard) enter_guard(guard)
 #define portEXIT_CRITICAL(guard) leave_guard(guard)
@@ -72,9 +77,10 @@ static int xTaskCreatePinnedToCoreWithCaps(void (*task)(void *), const char *nam
   (void)core; return xTaskCreateWithCaps(task, name, stack, arg, priority, handle, caps);
 }
 static void esp_log_level_set(const char *name, int level) { (void)name; (void)level; }
-static esp_err_t bsp_camera_early_init(void) { return 0; }
-static esp_err_t bsp_camera_stream_start(void) { return 0; }
-static esp_err_t bsp_camera_set_frame_callback(void (*callback)(const uint8_t*,size_t,uint32_t,uint32_t,uint32_t,uint64_t)) { (void)callback; return 0; }
+static unsigned camera_init_calls, camera_start_calls, camera_callback_calls;
+static esp_err_t bsp_camera_early_init(void) { ++camera_init_calls; return 0; }
+static esp_err_t bsp_camera_stream_start(void) { ++camera_start_calls; return 0; }
+static esp_err_t bsp_camera_set_frame_callback(void (*callback)(const uint8_t*,size_t,uint32_t,uint32_t,uint32_t,uint64_t)) { assert(callback); ++camera_callback_calls; return 0; }
 static esp_err_t yolo11_pose_uyvy_to_rgb888(const uint8_t *input, size_t length, unsigned w, unsigned h,
                                            uint8_t **output, uint16_t *width, uint16_t *height) {
   assert(lock_depth == 0 && input && length == 153600 && w == 240 && h == 320);
@@ -204,6 +210,163 @@ int main(void)
 '''
 
 
+# Same detector/camera/SDK scaffolding, actual app and gate; only the native
+# model boundary is replaced with deterministic labelled scores. These scores
+# test routing and safety, not the official model's accuracy or board timing.
+NATIVE_HARNESS = HARNESS.split("#ifdef HV_HAND_WEIGHTS_HEADER", 1)[0] + r'''
+static hv_hand_native_status_t native_init_status = HV_HAND_NATIVE_OK;
+static hv_hand_native_status_t native_infer_status = HV_HAND_NATIVE_OK;
+static bool native_ready_value = true, native_valid = true, native_bad_score;
+static bool native_fault, commit_fault, commit_expired;
+static unsigned native_calls, native_deinits, native_delay = 30, guard_countdown;
+static int native_top = HV_HAND_NATIVE_CLASS_FIVE;
+
+hv_hand_native_status_t hv_hand_native_classifier_init(const char *partition, const char *hash) {
+  assert(!strcmp(partition, "test_native_model"));
+  assert(!strcmp(hash, HV_HAND_NATIVE_MODEL_SHA256));
+  return native_init_status;
+}
+bool hv_hand_native_classifier_ready(void) { return native_ready_value; }
+void hv_hand_native_classifier_deinit(void) { native_ready_value = false; ++native_deinits; }
+const char *hv_hand_native_class_name(int index) {
+  const char *names[] = {"one","two","three","four","five","like","ok",
+                         "no_gesture","call","dislike","no_hand"};
+  return index >= 0 && index < 11 ? names[index] : "unknown";
+}
+static void before_commit(void) {
+  if (--guard_countdown) return;
+  guard_hook = NULL;
+  if (commit_fault) ++s_epoch;
+  if (commit_expired) clock_ms += 601;
+}
+hv_hand_native_status_t hv_hand_native_classifier_analyze_rgb888(
+    const uint8_t *rgb, size_t bytes, uint16_t width, uint16_t height,
+    const hv_hand_detection_t *hand, hv_hand_native_result_t *out) {
+  assert(lock_depth == 0 && rgb == rgb_pixels && bytes == sizeof(rgb_pixels));
+  assert(width == 320 && height == 240 && hand->valid && hand->count == 1);
+  ++native_calls; clock_ms += native_delay;
+  memset(out, 0, sizeof(*out));
+  out->valid = native_valid; out->top_index = native_top;
+  for (unsigned i = 0; i < 11; ++i) out->scores[i] = i == (unsigned)native_top ? .9f : .01f;
+  if (native_bad_score) out->scores[0] = NAN;
+  out->top_score = .9f; out->second_score = .01f; out->margin = .89f;
+  out->preprocess_ms = 3; out->model_ms = native_delay - 4; out->postprocess_ms = 1;
+  if (native_fault) stream_epoch(true);
+  if (commit_fault || commit_expired) {
+    /* First lock is the post-inference epoch read; second is output commit.
+     * This injects an interleaving after the final unlocked freshness test. */
+    guard_countdown = 2; guard_hook = before_commit;
+  }
+  return native_infer_status;
+}
+static void hold(hand_inference_state_t *state, uint64_t start, unsigned epoch) {
+  frame(state, start, 0, epoch); frame(state, start + 300, 0, epoch); frame(state, start + 600, 0, epoch);
+}
+int main(int argc, char **argv) {
+  assert(argc == 2);
+  if (!strcmp(argv[1], "missing")) native_init_status = HV_HAND_NATIVE_PARTITION_MISSING;
+  if (!strcmp(argv[1], "not-ready")) native_ready_value = false;
+  assert(headvoice_start() == ESP_OK);
+  assert(camera_init_calls == 1 && camera_start_calls == 1 && camera_callback_calls == 1);
+  assert(allocations == RAW_COUNT); /* Native adapter owns its own work memory. */
+  hand_inference_state_t state; inference_state_init(&state);
+  if (strcmp(argv[1], "ready")) {
+    assert(!s_classifierReady && native_deinits == 1);
+    hold(&state, 1000, 0);
+    assert(native_calls == 0 && detector_calls == 3 && offered_inputs == 3);
+    assert(state.palmCount == 0 && state.vCount == 0 && dark());
+  } else {
+    assert(s_classifierReady && native_deinits == 0);
+    frame(&state, 1000, 0, 0); assert(dark());
+    frame(&state, 1300, 0, 0); assert(dark());
+    frame(&state, 1600, 0, 0);
+    assert(state.palmCount == 1 && displayed_rgb[1] == 32 && !displayed_rgb[2]);
+    frame(&state, 1900, 0, 0); frame(&state, 2200, 0, 0);
+    assert(state.palmCount == 1);
+    native_top = HV_HAND_NATIVE_CLASS_TWO;
+    frame(&state, 2500, 0, 0); assert(dark());
+    frame(&state, 2800, 0, 0); assert(dark());
+    frame(&state, 3100, 0, 0);
+    assert(state.vCount == 1 && displayed_rgb[2] == 32 && !displayed_rgb[1]);
+    frame(&state, 3400, 0, 0); assert(state.vCount == 1);
+    feedback_tick(4000); assert(displayed_rgb[2] == 32);
+    feedback_tick(4001); assert(dark());
+    frame(&state, 4100, 0, 0); assert(state.vCount == 1);
+
+    /* All non-target classes stay OTHER, including model no_hand with hands=1. */
+    uint64_t next = 4300;
+    for (int i = 0; i < HV_HAND_NATIVE_CLASS_COUNT; ++i) {
+      if (i == HV_HAND_NATIVE_CLASS_TWO || i == HV_HAND_NATIVE_CLASS_FIVE) continue;
+      native_top = i; frame(&state, next, 0, 0); next += 300;
+      assert(state.gate.visible == HV_HAND_GATE_OTHER && dark());
+    }
+    assert(state.palmCount == 1 && state.vCount == 1 && state.fistCount == 0);
+    assert(state.gate.latched == HV_HAND_GATE_UNKNOWN);
+    native_top = HV_HAND_NATIVE_CLASS_TWO;
+    hold(&state, 7000, 0); assert(state.vCount == 2 && displayed_rgb[2] == 32);
+
+    /* Native compute exceeding the lease is rejected AFTER inference. */
+    native_top = HV_HAND_NATIVE_CLASS_FIVE; native_delay = 510;
+    frame(&state, 7900, 0, 0); assert(dark() && state.palmCount == 1);
+    native_delay = 30;
+    /* Already stale input never calls the classifier at all. */
+    unsigned calls = native_calls;
+    frame(&state, 8600, 600, 0); assert(native_calls == calls && dark());
+    native_fault = true;
+    frame(&state, 9500, 0, 0); assert(dark() && s_epoch == 1);
+    native_fault = false;
+    frame(&state, 9800, 0, 1); frame(&state, 10100, 0, 1);
+    assert(state.palmCount == 1 && dark());
+    frame(&state, 10400, 0, 1); assert(state.palmCount == 2 && displayed_rgb[1] == 32);
+
+    /* An epoch change right at commit cannot emit or latch the new V. */
+    native_top = HV_HAND_NATIVE_CLASS_TWO;
+    frame(&state, 10700, 0, 1); frame(&state, 11000, 0, 1);
+    commit_fault = true; frame(&state, 11300, 0, 1); commit_fault = false;
+    assert(state.vCount == 2 && dark() && s_epoch == 2);
+    assert(state.gate.latched == HV_HAND_GATE_OPEN_PALM);
+    frame(&state, 11600, 0, 2); frame(&state, 11900, 0, 2);
+    assert(state.vCount == 2);
+    frame(&state, 12200, 0, 2); assert(state.vCount == 3 && displayed_rgb[2] == 32);
+
+    /* Same commit safeguard for clock expiry, not only epoch mutation. */
+    native_top = HV_HAND_NATIVE_CLASS_FIVE;
+    frame(&state, 12500, 0, 2); frame(&state, 12800, 0, 2);
+    commit_expired = true; frame(&state, 13100, 0, 2); commit_expired = false;
+    assert(state.palmCount == 2 && dark() && state.gate.latched == HV_HAND_GATE_V_SIGN);
+
+    /* Failed/invalid native outputs cannot reach the gate or poison JSON. */
+    native_infer_status = HV_HAND_NATIVE_INVALID_OUTPUT;
+    frame(&state, 14000, 0, 2); assert(dark());
+    native_infer_status = HV_HAND_NATIVE_OK; native_valid = false;
+    frame(&state, 14300, 0, 2); assert(dark()); native_valid = true;
+    native_top = 99; frame(&state, 14600, 0, 2); assert(dark());
+    native_top = HV_HAND_NATIVE_CLASS_FIVE; native_bad_score = true;
+    frame(&state, 14900, 0, 2); assert(dark()); native_bad_score = false;
+    detected_count = 0; calls = native_calls;
+    frame(&state, 15200, 0, 2); assert(native_calls == calls && dark());
+    assert(state.gate.visible == HV_HAND_GATE_NO_HAND);
+    detected_count = 2;
+    frame(&state, 15500, 0, 2); assert(native_calls == calls && dark());
+    assert(state.gate.visible == HV_HAND_GATE_UNKNOWN);
+    detected_count = 1; detector_fault = true;
+    frame(&state, 15800, 0, 2); assert(native_calls == calls && dark());
+    detector_fault = false; native_top = HV_HAND_NATIVE_CLASS_ONE;
+    frame(&state, 16100, 0, 2);
+    commit_fault = true; frame(&state, 16600, 0, 2); commit_fault = false;
+    assert(s_epoch == 3 && state.gate.latched == HV_HAND_GATE_V_SIGN && dark());
+    /* Rejected release at commit must not unlock another copy of the same V. */
+    native_top = HV_HAND_NATIVE_CLASS_TWO;
+    hold(&state, 16900, 3);
+    assert(state.palmCount == 2 && state.vCount == 3 && state.fistCount == 0);
+  }
+  for (unsigned i = 0; i < RAW_COUNT; ++i) heap_caps_free(s_frames[i].data);
+  assert(offered_inputs == detector_calls && !guard_hook);
+  return 0;
+}
+'''
+
+
 class HandAppIntegrationTests(unittest.TestCase):
     def compile_and_run(self, trained):
         with tempfile.TemporaryDirectory(prefix="hand-app-test-") as temp:
@@ -253,6 +416,98 @@ class HandAppIntegrationTests(unittest.TestCase):
         self.assertFalse(uncertain["confirmed"])
         self.assertEqual(uncertain["gate_visible"], "unknown")
         self.assertTrue(all(row["valid"] is False for row in observations if row["captured_ms"] in (8400, 9600, 10300, 10600)))
+
+    def compile_and_run_native(self, scenario):
+        with tempfile.TemporaryDirectory(prefix="hand-native-app-test-") as temp:
+            directory = Path(temp)
+            (directory/"stubs.h").write_text(STUBS, encoding="utf-8")
+            for name in HEADERS:
+                path = directory/name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('#include "stubs.h"\n', encoding="utf-8")
+            harness = directory/"harness.c"
+            harness.write_text(NATIVE_HARNESS, encoding="utf-8")
+            binary = directory/"app-native-test"
+            subprocess.run([
+                shutil.which("cc") or "clang", "-std=c11", "-O1", "-Wall", "-Wextra", "-Werror", "-UNDEBUG",
+                "-DHV_STAGE=2", "-DHV_HAND_NATIVE_CLASSIFIER=1", '-DHV_HAND_NATIVE_PARTITION="test_native_model"',
+                "-I", str(directory), "-I", str(ROOT), "-I", str(ROOT/"headvoice/core"),
+                "-I", str(ROOT/"headvoice/firmware"), str(harness),
+                # No legacy classifier linked: native path must be self-contained.
+                str(ROOT/"headvoice/core/hv_hand_gate.c"), "-o", str(binary), "-lm",
+            ], check=True)
+            completed = subprocess.run([str(binary), scenario], capture_output=True, text=True)
+            self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout[-3000:])
+            return [json.loads(line[3:]) for line in completed.stdout.splitlines() if line.startswith("HG ")]
+
+    def test_native_official_names_gate_lifecycle_and_eleven_scores(self):
+        rows = self.compile_and_run_native("ready")
+        ready = next(row for row in rows if row["event"] == "ready")
+        self.assertEqual(ready["classifier"], "espdl_gesture11")
+        self.assertTrue(ready["classifier_ready"])
+        self.assertFalse(ready["servo_control"])
+        self.assertEqual(len(ready["model_sha256"]), 64)
+        events = [row for row in rows if row["event"] == "gesture"]
+        self.assertEqual([row["gesture"] for row in events], ["open_palm", "v_sign", "v_sign", "open_palm", "v_sign"])
+        self.assertEqual((events[-1]["palm_count"], events[-1]["v_count"]), (2, 3))
+        self.assertTrue(all(row["classifier"] == "espdl_gesture11" and "fist_count" not in row for row in events))
+        observations = [row for row in rows if row["event"] == "observation"]
+        self.assertTrue(all(len(row["scores"]) == 11 and row["classifier"] == "espdl_gesture11" for row in observations))
+        self.assertTrue(all("v_count" in row and "fist_count" not in row for row in observations))
+        at = {row["captured_ms"]: row for row in observations}
+        self.assertEqual(at[1000]["gesture"], "five")
+        self.assertTrue(at[1000]["classification_valid"])
+        self.assertFalse(at[1000]["confirmed"])
+        self.assertTrue(at[1600]["confirmed"])
+        self.assertEqual(at[3100]["gesture"], "two")
+        self.assertTrue(at[3100]["confirmed"])
+        self.assertEqual(at[1000]["scores"].index(max(at[1000]["scores"])), 4)
+        self.assertEqual(at[3100]["scores"].index(max(at[3100]["scores"])), 1)
+        self.assertEqual(at[1000]["classifier_ms"], 30)
+        other = [row for row in observations if 4300 <= row["captured_ms"] < 7000]
+        self.assertEqual([row["gesture"] for row in other],
+                         ["one", "three", "four", "like", "ok", "no_gesture", "call", "dislike", "no_hand"])
+        self.assertTrue(all(row["gate_visible"] == "other" and row["hands"] == 1 and
+                            row["classification_valid"] and not row["confirmed"] for row in other))
+        for stamp in (7900, 8600, 9500, 11300, 13100, 16600):
+            with self.subTest(stale_or_epoch=stamp):
+                self.assertFalse(at[stamp]["valid"])
+                self.assertFalse(at[stamp]["classification_valid"])
+                self.assertFalse(at[stamp]["confirmed"])
+                self.assertEqual(at[stamp]["gate_visible"], "unknown")
+        self.assertGreater(at[13100]["age_ms"], 600)
+        self.assertEqual(at[16600]["gate_latched"], "v_sign")
+        for stamp in (14000, 14300, 14600, 14900):
+            with self.subTest(invalid_model_output=stamp):
+                self.assertEqual(at[stamp]["classifier_status"], 10)
+                self.assertEqual(at[stamp]["gesture"], "unknown")
+                self.assertEqual(at[stamp]["scores"], [0] * 11)
+                self.assertFalse(at[stamp]["classification_valid"])
+                self.assertFalse(at[stamp]["confirmed"])
+        self.assertEqual(at[15200]["hands"], 0)
+        self.assertEqual(at[15200]["gate_visible"], "no_hand")
+        self.assertFalse(at[15200]["classification_valid"])
+
+    def test_native_missing_model_keeps_detection_and_camera_running(self):
+        self.assert_native_unavailable(self.compile_and_run_native("missing"), 4)
+
+    def test_native_false_readiness_is_not_reported_as_ready(self):
+        self.assert_native_unavailable(self.compile_and_run_native("not-ready"), 1)
+
+    def assert_native_unavailable(self, rows, status):
+        diagnostic = next(row for row in rows if row["event"] == "classifier_init")
+        self.assertEqual(diagnostic["classifier_status"], status)
+        self.assertFalse(diagnostic["classifier_ready"])
+        ready = next(row for row in rows if row["event"] == "ready")
+        self.assertFalse(ready["classifier_ready"])
+        self.assertEqual(ready["model_sha256"], "unavailable")
+        observations = [row for row in rows if row["event"] == "observation"]
+        self.assertEqual(len(observations), 3)
+        self.assertTrue(all(row["valid"] and row["hands"] == 1 for row in observations))
+        self.assertTrue(all(row["gesture"] == "unavailable" and row["scores"] == [0] * 11 and
+                            not row["classification_valid"] and not row["classifier_ready"] and
+                            not row["confirmed"] for row in observations))
+        self.assertFalse(any(row["event"] == "gesture" for row in rows))
 
 
 if __name__ == "__main__":

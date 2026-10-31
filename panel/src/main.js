@@ -1,7 +1,7 @@
 import './style.css';
 import {MODES, RequestTracker, PoseStream, poseState, resetReason, reportState} from './protocol.mjs';
 import {connectSerial} from './serial.js';
-import {HandStream, handState, handCandidate, handFresh} from './hand.mjs';
+import {HandStream, handState, handCandidate, handFresh, handCompletionCounts} from './hand.mjs';
 const $ = id => document.getElementById(id);
 const swatches = [{name:'湖蓝',rgb:[80,190,255]}, {name:'薄荷',rgb:[75,220,160]},
   {name:'暖橙',rgb:[255,145,60]}, {name:'玫红',rgb:[240,80,130]}, {name:'柔紫',rgb:[160,115,255]}, {name:'白色',rgb:[255,255,255]}];
@@ -32,7 +32,7 @@ document.querySelector('#app').innerHTML = `
       <progress id="camera-progress" value="0" max="100" aria-label="画面接收进度" hidden></progress>
       <p class="camera-details" id="camera-details">画面仅保留在本页，不会上传。</p>
       <div class="camera-actions"><button id="camera-capture" class="primary" disabled>获取画面</button><button id="camera-auto" aria-pressed="false" disabled>自动刷新</button></div>
-      <p class="hint">每张画面通过 USB 传输需要几秒。接收期间灯光保持原样，接收完成后可继续调节。自动刷新可随时停止，切到其他页面时也会停止。</p>
+      <p class="hint">每张画面通过 USB 传输需要几秒。接收期间本页无法调灯，设备状态灯和试灯计时继续运行。自动刷新可随时停止，切到其他页面时也会停止。</p>
       <p class="hint">画面预览不代表手势或姿态识别已启用。手机灵机云端暂不支持此画面入口。</p>
     </div></div>
   </section>
@@ -46,7 +46,14 @@ document.querySelector('#app').innerHTML = `
       <p class="hint">试灯顺序：红 → 绿 → 蓝 → 白 → 灭，结束后自动恢复。</p>
     </section>
     <div class="right-stack"><section class="card"><div class="card-heading"><div><span class="eyebrow">DEVICE REPORT</span><h2>设备回执</h2></div><button id="refresh" class="text-button" disabled>刷新 ↻</button></div><div class="report-state"><span class="status-dot" id="report-dot"></span><strong id="report-title">等待设备回应</strong></div><dl class="readings"><div><dt>当前模式</dt><dd id="actual-mode">—</dd></div><div><dt>设定亮度</dt><dd id="actual-brightness">—</dd></div><div><dt>最近回执</dt><dd id="actual-time">—</dd></div></dl><p class="hint" id="actual-boot">上次启动：—</p><p class="hint">驱动回执表示设备已处理指令，灯板是否亮起仍需目视确认。</p></section>
-    <section class="card pose-card"><div class="card-heading"><div><span class="eyebrow">VISION CHECK</span><h2 id="vision-title">视觉诊断</h2></div><span class="pill" id="stage">未连接</span></div><div class="pose-visual" id="pose-visual" aria-hidden="true" hidden><div class="face" id="face"><b></b><b></b><i></i></div><div class="zero-line"></div><span>眼线倾角</span></div><div class="hand-summary" id="hand-visual" hidden><strong id="hand-readiness">等待手部观测</strong><span id="hand-detection">—</span></div><div class="pose-stats"><div><strong id="pose-tilt">—</strong><span id="pose-primary-label">诊断值</span></div><div><strong id="pose-infer">—</strong><span>推理耗时</span></div><div><strong id="pose-age">—</strong><span>设备报告帧龄</span></div></div><div class="pose-stats pose-stat-pair"><div><strong id="pose-people">—</strong><span id="pose-count-label">检测目标数</span></div><div><strong id="pose-received">—</strong><span>本页最近接收</span></div></div><p id="pose-status" class="pose-status">等待诊断观测</p><p id="pose-source" class="hint">连接后显示诊断数据来源。</p><p class="hint" id="vision-help">等待设备提供诊断类型。检测到目标不代表动作已识别或播报已生效。</p></section></div>
+    <section class="card pose-card"><div class="card-heading"><div><span class="eyebrow">VISION CHECK</span><h2 id="vision-title">视觉诊断</h2></div><span class="pill" id="stage">未连接</span></div><div class="pose-visual" id="pose-visual" aria-hidden="true" hidden><div class="face" id="face"><b></b><b></b><i></i></div><div class="zero-line"></div><span>眼线倾角</span></div><div class="hand-summary" id="hand-visual" hidden><strong id="hand-readiness">等待手部观测</strong><span id="hand-detection">—</span></div><div class="pose-stats"><div><strong id="pose-tilt">—</strong><span id="pose-primary-label">诊断值</span></div><div><strong id="pose-infer">—</strong><span>推理耗时</span></div><div><strong id="pose-age">—</strong><span>设备报告帧龄</span></div></div><div class="pose-stats pose-stat-pair"><div><strong id="pose-people">—</strong><span id="pose-count-label">检测目标数</span></div><div><strong id="pose-received">—</strong><span>本页最近接收</span></div></div><p id="pose-status" class="pose-status">等待诊断观测</p>
+      <div id="hand-completions" class="hand-completions" hidden aria-labelledby="hand-completions-title">
+        <h3 id="hand-completions-title">设备本次启动累计</h3>
+        <p id="hand-completions-missing" class="hint">设备未提供累计计数。</p>
+        <dl id="hand-completions-values" class="hand-counts" hidden><div><dt>张掌</dt><dd id="hand-palm-count">—</dd></div><div><dt id="hand-second-label">—</dt><dd id="hand-second-count">—</dd></div></dl>
+        <p id="hand-completions-note" class="hint" hidden>设备确认的累计次数，不是本页观察次数；持续保持同一手势不会重复计数。计数不证明灯圈实际亮起。</p>
+      </div>
+      <p id="pose-source" class="hint">连接后显示诊断数据来源。</p><p class="hint" id="vision-help">等待设备提供诊断类型。检测到目标不代表动作已识别或播报已生效。</p></section></div>
   </div>
   <section class="legend"><span class="eyebrow">状态指示模式</span><span id="legend-pose" hidden>白 · 中立校准　黄 · 等待确认　蓝 · 正在播放</span><span id="legend-hand" hidden>绿 · 已确认张掌　蓝 · 已确认握拳</span><small id="legend-help">状态灯含义由当前固件决定，等待诊断类型确认。</small></section>
   <footer><span>颔语 / 让细小的动作被听见</span><span>控制设置在设备重启后恢复默认</span></footer>
@@ -68,7 +75,7 @@ function receivePose(raw) {
 function receiveHand(raw) {
   if (transportKind!=='serial' || camera.busy) return;
   const result=handStream.receive(raw,performance.now());
-  if (result.invalidated) resetPose('手部诊断时间或采样轮次变化，等待匹配设备回执重新确认');
+  if (result.invalidated) resetPose('手部诊断状态变化，等待匹配设备回执重新确认');
   if (result.accepted) {
     if (visionBackend && visionBackend!=='hand') resetPose('诊断类型变化，等待匹配设备回执重新确认');
     else visionBackend='hand';
@@ -99,6 +106,18 @@ function renderPose(now,live) {
     ? hand.classifier==='espdl_gesture11' ? '11 类分类器已加载' : '分类器已加载' : '分类器未加载';
   $('hand-detection').textContent=hand
     ? `单手检测${hand.valid ? '有效' : '无效'} · 分数 ${hand.detect_score>0 ? hand.detect_score.toFixed(2) : '—'}${handFresh(hand,elapsed) ? '' : ' · 上次观测已过期'}` : '—';
+  // Counts are device telemetry from the accepted observation, never a sum of
+  // raw candidates, confirmed flags, or how many messages this page received.
+  const counts=hand ? handCompletionCounts(hand) : null;
+  $('hand-completions').hidden=!hand;
+  $('hand-completions-title').textContent=counts && !handFresh(hand,elapsed)
+    ? '最近收到的累计值' : '设备本次启动累计';
+  $('hand-completions-missing').hidden=!!counts;
+  $('hand-completions-values').hidden=!counts;
+  $('hand-completions-note').hidden=!counts;
+  $('hand-palm-count').textContent=counts ? String(counts.palm) : '—';
+  $('hand-second-label').textContent=counts?.secondLabel ?? '—';
+  $('hand-second-count').textContent=counts ? String(counts.second) : '—';
   $('pose-primary-label').textContent=hand ? '分类原始候选' : knownPose ? '二维眼线倾角' : '诊断值';
   $('pose-count-label').textContent=hand ? '手部候选数' : '检测目标数';
   $('pose-tilt').textContent=hand ? handCandidate(hand,elapsed) : pose?.tracking ? pose.tilt.toFixed(1)+'°' : '—';

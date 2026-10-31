@@ -1,0 +1,85 @@
+{
+  "built_at_utc": "2026-10-31T11:22:52.883297+00:00",
+  "binary": "artifacts/headvoice-hand-palm-v-native-20261031.bin",
+  "sha256": "d14fa9052dabb04bb20f708699811f5fa6c92019ef5f2bb6bde153619a74ce16",
+  "bytes": 3602112,
+  "elf_sha256": "978e6be095a8c30f4d8ae3a33c860c6565eaca4dd6c527ba470ace940f3c1133",
+  "work": "hand-native-palm-v",
+  "stage": 2,
+  "vision": "hand",
+  "classifier": "espdl_gesture11",
+  "targets": {
+    "five": "open_palm",
+    "two": "v_sign"
+  },
+  "gate": {
+    "score_min": 0.8,
+    "margin_min": 0.2,
+    "min_samples": 3,
+    "hold_ms": 600,
+    "max_age_ms": 600,
+    "max_gap_ms": 800
+  },
+  "model": {
+    "path": "headvoice/third_party/hand_gesture_recognition/models/s3/mobilenetv2_0_5_128_128_gesture.espdl",
+    "sha256": "52e18ceb0845121b4c0fa63aa06d69d17068c8c8135f43a7943a11812ac595d0",
+    "bytes": 788608,
+    "partition": "coco_pose",
+    "offset": "0x810000",
+    "partition_size": 3276800,
+    "deployed": true,
+    "flash_hash_verified": true
+  },
+  "partition_table_sha256": "4c6a4099e941af88e0967062e92253e468c780843b2ecd2ecb7feb49eafdc8c9",
+  "backup": {
+    "application": ".local/hand-native-before-app-20261031.bin",
+    "application_sha256": "db915b6058a6d4a0b7b87f625b7ee9b98acc6a4e1bf77c1af92e011e3c4f7ffc",
+    "application_bytes": 4128768,
+    "model": ".local/hand-native-before-model-20261031.bin",
+    "model_sha256": "18cc6c4ecf7beb0e4753b6409c66aa44f7e5bd0bb9b92f5bf5f986287192253b",
+    "model_bytes": 3276800,
+    "previous_application_sha256": "b4175a0c09ce6f27517a05cb1f5afffbe724185cd5b7a701b9b9b4dee85faa6f"
+  },
+  "flash_performed": true,
+  "flash_hash_verified": true,
+  "runtime_verified": false,
+  "gesture_accuracy_verified": false,
+  "servo_control": false,
+  "camera_enabled": true,
+  "voice_enabled": true,
+  "voice_reverified": false,
+  "control_task_stack_bytes": 8192,
+  "wdt_rom_implementation": false,
+  "diagnostic_watchpoints": false,
+  "tests": {
+    "host_tests": 24,
+    "gate_scenarios": 14,
+    "full_idf_build": true,
+    "browser_qa": false
+  },
+  "source_sha256": {
+    "headvoice/firmware/hv_hand_app.c": "0f236de38be7c91bdfda25fe8b5e586868093413d0a4d1d5502ca35db52edce5",
+    "headvoice/firmware/hv_hand_native_classifier.cpp": "71cb15d5cec3911d940b2466179a4f77fadda9f2a3aa8eaa4e65e2ce312e32bd",
+    "headvoice/firmware/hv_hand_native_classifier.h": "f2684bd45c8ccc928f1b24acce99f48fc66fdb1585aad3788e83e09953d5983a",
+    "headvoice/core/hv_hand_gate.c": "c97d951471e7379f6df7d1d30a1df3f01d373ed228474714033219b70a287153",
+    "headvoice/core/hv_hand_gate.h": "58ce54204ad93bfe9e446f978256ac053fef5dec79e026c85343d780bd1a0596",
+    "headvoice/firmware/integration.cmake": "df1a48fd42f45c1993978559dab4f50e439bea5e3b4f55ef0c472076ab505bbe",
+    "tools/build.py": "09ebf8b04399c6277b4804b6ee9a492469d98b4c1d5548c2aafddc48b10515cc",
+    "tools/prepare_sdk.py": "3f6e6d6cbecb6620d67212b07afc85da0cf460e29677d138606ec7c163000f36"
+  },
+  "deployment_step": "verified_and_reset",
+  "flashed_at_utc": "2026-10-31T11:27:30.058381+00:00",
+  "flash_log": ".local/hand-native-deploy-20261031.log",
+  "on_board": true,
+  "classifier_loaded_verified": true,
+  "first_inference_verified": true,
+  "startup_probe": {
+    "summary": "artifacts/hand-native-startup-20261031.json",
+    "seconds": 25,
+    "observations": 66,
+    "classification_valid": 7,
+    "fault_pattern_line_counts": {},
+    "long_term_stability_verified": false,
+    "labelled_gesture_accuracy_verified": false
+  }
+}

@@ -263,6 +263,13 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
         '    }\n#endif\n\n#if defined(CONFIG_QM_POMODORO_SUPPORT)'))
     edit("CMakeLists.txt", lambda s: s + '\ninclude("' +
          (ROOT / "headvoice/firmware/integration.cmake").as_posix() + '")\n')
+    # A native hand build reuses this existing data partition for a different,
+    # explicitly deployed model. Never put the old COCO payload in flash_args.
+    edit("pose/private/coco_pose/CMakeLists.txt", lambda s: replace(
+        s, '        esptool_py_flash_to_partition(flash "coco_pose" ${packed_model})',
+        '        if(NOT DEFINED HEADVOICE_HAND_NATIVE_PARTITION OR HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "")\n'
+        '            esptool_py_flash_to_partition(flash "coco_pose" ${packed_model})\n'
+        '        endif()'))
     if vision in ("face", "hand"):
         component_name = "human_face_detect" if vision == "face" else "hand_detect"
         component = ROOT / "headvoice/third_party" / component_name

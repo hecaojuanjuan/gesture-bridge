@@ -182,6 +182,8 @@ static bool feedback_publish(const hv_hand_gate_t *gate, uint64_t captured,
                               unsigned epoch, uint64_t now)
 {
   portENTER_CRITICAL(&s_guard);
+  /* Task scheduling may have advanced the clock since gate evaluation. */
+  now = now_ms();
   bool current = epoch == s_epoch && now >= captured &&
                  now - captured <= HV_HAND_GATE_MAX_AGE_MS;
   s_feedback.valid = current && s_classifierReady && gate->visible == gate->latched &&
@@ -273,11 +275,47 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
     uint64_t now = now_ms();
     bool fresh = ret == ESP_OK && epoch == stream_epoch(false) && now >= captured &&
                  now - captured <= HV_HAND_GATE_MAX_AGE_MS;
+    uint32_t classifierMs = 0;
+    float runnerUp = 0;
+    bool outputValid = false;
+#if HV_HAND_NATIVE_CLASSIFIER
+    float scores[HV_HAND_NATIVE_CLASS_COUNT] = {0};
+    hv_hand_native_status_t classStatus = HV_HAND_NATIVE_NOT_READY;
+    unsigned top = 0; /* Only dereferenced as a zero score until outputValid. */
+    const char *rawLabel = s_classifierReady ? "unknown" : "unavailable";
+    if (s_classifierReady && fresh && hand.count == 0) rawLabel = "no_hand";
+    if (s_classifierReady && fresh && hand.valid) {
+      uint64_t classifyStarted = now_ms();
+      hv_hand_native_result_t result = {0};
+      classStatus = hv_hand_native_classifier_analyze_rgb888(
+          rgb, (size_t)width * height * 3, width, height, &hand, &result);
+      classifierMs = (uint32_t)(now_ms() - classifyStarted);
+      outputValid = classStatus == HV_HAND_NATIVE_OK && result.valid &&
+                    result.top_index >= 0 && result.top_index < HV_HAND_NATIVE_CLASS_COUNT;
+      /* Keep malformed model output out of both JSON and the confirmation gate,
+       * even if an adapter regression reports success. Use the score vector as
+       * the single source for the top/margin sent to the gate. */
+      if (outputValid) {
+        top = (unsigned)result.top_index;
+        for (unsigned i = 0; i < HV_HAND_NATIVE_CLASS_COUNT; ++i) {
+          float score = result.scores[i];
+          if (!isfinite(score) || score < 0 || score > 1 || score > result.scores[top])
+            outputValid = false;
+        }
+      }
+      if (outputValid) {
+        memcpy(scores, result.scores, sizeof(scores));
+        for (unsigned i = 0; i < HV_HAND_NATIVE_CLASS_COUNT; ++i)
+          if (i != top && scores[i] > runnerUp) runnerUp = scores[i];
+        rawLabel = hv_hand_native_class_name((int)top);
+      } else if (classStatus == HV_HAND_NATIVE_OK) {
+        classStatus = HV_HAND_NATIVE_INVALID_OUTPUT;
+      }
+    }
+#else
     float scores[HV_HAND_CLASSIFIER_CLASSES] = {0};
     hv_hand_classifier_status_t classStatus = HV_HAND_CLASSIFIER_NOT_READY;
-    uint32_t classifierMs = 0;
     unsigned top = HV_HAND_OTHER;
-    float runnerUp = 0;
     const char *rawLabel = s_classifierReady ? "unknown" : "untrained";
     if (s_classifierReady && fresh && hand.count == 0) rawLabel = "no_hand";
     if (s_classifierReady && fresh && hand.valid) {
@@ -295,8 +333,10 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
         for (unsigned i = 0; i < HV_HAND_CLASSIFIER_CLASSES; ++i)
           if (i != top && scores[i] > runnerUp) runnerUp = scores[i];
         rawLabel = hv_hand_classifier_label(top);
+        outputValid = true;
       }
     }
+#endif
     now = now_ms();
     currentEpoch = stream_epoch(false);
     fresh = ret == ESP_OK && epoch == currentEpoch && now >= captured &&
@@ -305,13 +345,22 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
       hv_hand_gate_invalidate(&state->gate);
       state->epoch = currentEpoch;
     }
-    bool classified = classStatus == HV_HAND_CLASSIFIER_OK && fresh && hand.valid;
+    bool classified = outputValid && fresh && hand.valid;
     hv_hand_gate_observation_t observation = {
       .captured_ms = captured, .valid = s_classifierReady && fresh,
       .hands = hand.count, .kind = HV_HAND_GATE_UNKNOWN, .score = scores[top], .runner_up = runnerUp};
     if (s_classifierReady && fresh && hand.count == 0) observation.kind = HV_HAND_GATE_NO_HAND;
-    if (classified) observation.kind = top == HV_HAND_OPEN_PALM ? HV_HAND_GATE_OPEN_PALM :
-                                     top == HV_HAND_CLOSED_FIST ? HV_HAND_GATE_CLOSED_FIST : HV_HAND_GATE_OTHER;
+    if (classified) {
+#if HV_HAND_NATIVE_CLASSIFIER
+      /* Model no_hand is an OTHER classification of a detected hand, not proof
+       * that the detector saw zero hands. Preserve its raw name in telemetry. */
+      observation.kind = top == HV_HAND_NATIVE_CLASS_FIVE ? HV_HAND_GATE_OPEN_PALM :
+                         top == HV_HAND_NATIVE_CLASS_TWO ? HV_HAND_GATE_V_SIGN : HV_HAND_GATE_OTHER;
+#else
+      observation.kind = top == HV_HAND_OPEN_PALM ? HV_HAND_GATE_OPEN_PALM :
+                         top == HV_HAND_CLOSED_FIST ? HV_HAND_GATE_CLOSED_FIST : HV_HAND_GATE_OTHER;
+#endif
+    }
     hv_hand_gate_kind_t previousLatched = state->gate.latched;
     hv_hand_gate_event_t event = hv_hand_gate_observe(&state->gate, observation, now);
     /* A camera fault can occur while the classifier runs. Check the epoch once
@@ -319,20 +368,24 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
     if (!feedback_publish(&state->gate, captured, epoch, now)) {
       fresh = classified = false;
       hv_hand_gate_invalidate(&state->gate);
-      if (event != HV_HAND_GATE_EVENT_NONE) state->gate.latched = previousLatched;
+      /* A rejected OTHER/NO_HAND must not release the deduplication latch,
+       * just as a rejected target must not replace it. */
+      state->gate.latched = previousLatched;
       event = HV_HAND_GATE_EVENT_NONE;
     }
+    now = now_ms();
     bool confirmed = classified && state->gate.visible == state->gate.latched &&
-                     (state->gate.visible == HV_HAND_GATE_OPEN_PALM ||
-                      state->gate.visible == HV_HAND_GATE_CLOSED_FIST);
+                     is_target(state->gate.visible);
     if (event != HV_HAND_GATE_EVENT_NONE) {
       if (event == HV_HAND_GATE_EVENT_OPEN_PALM) ++state->palmCount;
-      else ++state->fistCount;
+      else if (event == HV_HAND_GATE_EVENT_CLOSED_FIST) ++state->fistCount;
+      else if (event == HV_HAND_GATE_EVENT_V_SIGN) ++state->vCount;
       printf("HG {\"v\":1,\"event\":\"gesture\",\"gesture\":\"%s\","
              "\"captured_ms\":%llu,\"at_ms\":%llu,\"epoch\":%u,"
-             "\"classifier_ready\":true,\"palm_count\":%u,\"fist_count\":%u}\n",
+             HAND_CLASSIFIER_JSON HAND_SECOND_COUNT_JSON
+             "\"classifier_ready\":true,\"palm_count\":%u}\n",
              hv_hand_gate_kind_name(state->gate.latched), (unsigned long long)captured,
-             (unsigned long long)now, epoch, state->palmCount, state->fistCount);
+             (unsigned long long)now, epoch, second_count(state), state->palmCount);
     }
     /* Keep detector fields unchanged for same-frame JPEG sample collection.
      * gesture/scores are raw classifier output; only the gesture event denotes
@@ -340,10 +393,15 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
     printf("HG {\"v\":1,\"event\":\"observation\",\"seq\":%u,\"captured_ms\":%llu,"
            "\"age_ms\":%llu,\"epoch\":%u,\"width\":%u,\"height\":%u,\"hands\":%u,"
            "\"box\":[%d,%d,%d,%d],\"detect_score\":%.5f,\"valid\":%s,"
-           "\"classifier_ready\":%s,\"gesture\":\"%s\",\"scores\":[%.6f,%.6f,%.6f],"
+           HAND_CLASSIFIER_JSON
+           "\"classifier_ready\":%s,\"gesture\":\"%s\",\"scores\":[%.6f,%.6f,%.6f"
+#if HV_HAND_NATIVE_CLASSIFIER
+           ",%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f"
+#endif
+           "],"
            "\"classification_valid\":%s,\"classifier_status\":%d,\"confirmed\":%s,"
            "\"gate_visible\":\"%s\",\"gate_latched\":\"%s\",\"candidate_samples\":%u,"
-           "\"palm_count\":%u,\"fist_count\":%u,"
+           "\"palm_count\":%u," HAND_SECOND_COUNT_JSON
            "\"infer_ms\":%u,\"conversion_ms\":%u,\"detect_ms\":%u,\"classifier_ms\":%u}\n",
            ++state->sequence, (unsigned long long)captured,
            (unsigned long long)(now >= captured ? now - captured : 0), epoch,
@@ -351,9 +409,13 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
            (double)hand.score, fresh && hand.valid ? "true" : "false",
            s_classifierReady ? "true" : "false", rawLabel,
            (double)scores[0], (double)scores[1], (double)scores[2],
+#if HV_HAND_NATIVE_CLASSIFIER
+           (double)scores[3], (double)scores[4], (double)scores[5], (double)scores[6],
+           (double)scores[7], (double)scores[8], (double)scores[9], (double)scores[10],
+#endif
            classified ? "true" : "false", (int)classStatus, confirmed ? "true" : "false",
            hv_hand_gate_kind_name(state->gate.visible), hv_hand_gate_kind_name(state->gate.latched),
-           state->gate.samples, state->palmCount, state->fistCount,
+           state->gate.samples, state->palmCount, second_count(state),
            (unsigned)(now - started), (unsigned)conversionMs, (unsigned)detectMs,
            (unsigned)classifierMs);
     if (now - state->lastMetrics >= 5000) {
@@ -411,6 +473,7 @@ esp_err_t headvoice_start(void)
   ret = bsp_camera_set_frame_callback(camera_frame);
   if (ret != ESP_OK) return ret;
   printf("HG {\"v\":1,\"event\":\"ready\",\"backend\":\"hand\","
+         HAND_CLASSIFIER_JSON
          "\"classifier_ready\":%s,\"model_sha256\":\"%s\",\"servo_control\":false}\n",
          s_classifierReady ? "true" : "false", classifier_hash());
   return bsp_camera_stream_start();
