@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-31",
+  "feature": "Local BLE provisioning guide and serial RGB control panel",
+  "transport": "USB serial, 115200 8N1, DTR/RTS false before open",
+  "rgb": {"gpio": 1, "leds": 8, "driver": "official WS2812", "connected": false},
+  "validation": {
+    "python_tests": {"passed": 14, "panel_protocol_tests": 6},
+    "production_core_host_tests": "passed; synthetic observations only",
+    "tkinter_startup": "passed",
+    "provisioning_guide_layout": "visually checked",
+    "firmware_build": "passed: headvoice stage 2, rotate-cw90, gimbal",
+    "expression_rgb_adapter_compilation": "passed with the same ESP-IDF compiler configuration",
+    "binary_bytes": 3075568,
+    "binary_sha256": "e3d37fb475da39e4c48e00f35afc51f1f8bbfa5a096891623ad8eaea52309ae2"
+  },
+  "device_actions": {"serial_opened": false, "flashed": false, "wifi_cleared": false},
+  "pending": ["RGB wiring", "Firmware flash", "BLE provisioning and RGB hardware acceptance", "Voice regression on device"],
+  "gimbal_diagnosis": "paused"
+}

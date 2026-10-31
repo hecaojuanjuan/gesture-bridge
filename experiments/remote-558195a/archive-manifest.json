@@ -1,0 +1,131 @@
+{
+  "source_commit": "558195a05623d493db712e596322cda85b82a381",
+  "common_base": "61680391a23ee85eddc12bf673c0710f97429bc0",
+  "date": "2026-10-31",
+  "files": [
+    {
+      "path": "GIMBAL_OPTIMIZATION.md",
+      "sha256": "bafc585d4b64da4d472947aa795717f7c6b4cdb02c2181fcc6d5cf4f2a6a9a2e"
+    },
+    {
+      "path": "GIMBAL_QUICK_GUIDE.md",
+      "sha256": "37fcbd4120246a9fdf88ce460650ed68d7f3647b4299bac31a2f19bf13c667ec"
+    },
+    {
+      "path": "HAND_TRACKING_GUIDE.md",
+      "sha256": "6de33093b5f6353afec0a14be6c5066fa9adbfdc1612ce170c222cf55d5136ae"
+    },
+    {
+      "path": "README.md",
+      "sha256": "25d25bac717cc777988e910bed82688eeed006a5ec812af4c374b77db9f0e006"
+    },
+    {
+      "path": "README_GIMBAL_HAND.md",
+      "sha256": "3c3473ba6d8ec5e96bd64018f7c08a6be0c5a56890513ae4bad9a3278389976d"
+    },
+    {
+      "path": "START_HERE.md",
+      "sha256": "5a68e74d91b5f2d394d8411eaa5d5a119e9ce2a1cd12ebeafa00cc70c67ea19e"
+    },
+    {
+      "path": "apply_gimbal_optimization.bat",
+      "sha256": "6b480cab6616fc5224798ff5de1a1520a13ed4cb3349414737d706f1ef9cb6fb"
+    },
+    {
+      "path": "apply_gimbal_optimization.sh",
+      "sha256": "b8524ecc70423e8f4d17f31d73bfd44a71d7288011961c0b44322541444afd63"
+    },
+    {
+      "path": "check_files.bat",
+      "sha256": "2a794029d6237fd6641a7df71a21ab219ed0a84b31629a3894a75b90e30373c3"
+    },
+    {
+      "path": "check_files.sh",
+      "sha256": "32fc38a4d0056885ee6d6d814422c3b58e303a864954a803c5b833d059630193"
+    },
+    {
+      "path": "deploy_hand_tracking.bat",
+      "sha256": "2fa4fdd7f9e321e2c4eac027ac695669fb7d5d6355fe7934125568c61025aede"
+    },
+    {
+      "path": "deploy_hand_tracking.sh",
+      "sha256": "173abc07ef7d89af9a3150b7da6e4691aab0ccd5c5238a0aff9071f11b89a0a2"
+    },
+    {
+      "path": "docs/control-panel.md",
+      "sha256": "d4479bd9f0344e441493b00c1a0d35ca8dc1c9afa37a87da5bb49f641a8d802c"
+    },
+    {
+      "path": "docs/rgb-wiring.md",
+      "sha256": "8092c6a022438c950f2736974b6d4e83f6eeeda8f40f4537638745bb7462771b"
+    },
+    {
+      "path": "headvoice/CMakeLists_example.txt",
+      "sha256": "e9e53896ee5b043b8641a6113bd891aaab2332382405341722b3a74453610411"
+    },
+    {
+      "path": "headvoice/core/GIMBAL_OPTIMIZATION.md",
+      "sha256": "bafc585d4b64da4d472947aa795717f7c6b4cdb02c2181fcc6d5cf4f2a6a9a2e"
+    },
+    {
+      "path": "headvoice/core/hv_gimbal_core.c",
+      "sha256": "0344f286c0a334a23e828cd3aa8ba9f88cc60a0ee5e1811cde6200988d77f8df"
+    },
+    {
+      "path": "headvoice/core/hv_gimbal_core.h",
+      "sha256": "02efda67474dd17cb847cccef097636e190fcb8e712b780b4900238182c84cd1"
+    },
+    {
+      "path": "headvoice/core/hv_gimbal_core_optimized.c",
+      "sha256": "bd66857cdcc0ce2d6b22378268340521a819c40aa5a1b6e744d4a5e20949792f"
+    },
+    {
+      "path": "headvoice/core/hv_hand_detector.c",
+      "sha256": "d869c0c3c86d0fcf3e5716fbc189624f3df3de19ae1628e312ac3a48a84565ee"
+    },
+    {
+      "path": "headvoice/core/hv_hand_detector.h",
+      "sha256": "81dfbcd070a76cd5ade156bb2ee3ccac86f366f21c1cabf8df8c8ee2c0da37b8"
+    },
+    {
+      "path": "headvoice/firmware/headvoice_app.c",
+      "sha256": "d30aa601b0cdf29531d14b47acccfaf2dc79cabbaa529f67485a146429ba65f7"
+    },
+    {
+      "path": "headvoice/firmware/hv_gimbal_app.c",
+      "sha256": "e258bb5d4f109a3ebd18fc4dc4d5787fd2a642d987e0bae4ec7707f6949b742c"
+    },
+    {
+      "path": "headvoice/firmware/hv_panel.c",
+      "sha256": "f2c1be4d8984f6c7381809e6ff200fda4f4e14d90ebac0d9aa7b7581252ee45a"
+    },
+    {
+      "path": "headvoice/firmware/hv_panel.h",
+      "sha256": "6dd7b468a5fd15f2b72a3030d34ac5c3ad3ae5318018167f9027fee15f2c8ca5"
+    },
+    {
+      "path": "headvoice/firmware/hv_provision_cli.c",
+      "sha256": "bd2ae5cf7d67f7d43259a2d57c80feecd8af5607774fca058798ac2abdedc816"
+    },
+    {
+      "path": "tests/test_control_panel.py",
+      "sha256": "09907f0f83e1c1ee6a22fe89835598eeb11631913f94ee9efedace5842f03c74"
+    },
+    {
+      "path": "tools/control_panel.ps1",
+      "sha256": "14fd9a5c5e113026926afe3a67fef70a2cce59b6cb095dc21cdee43e87a005e2"
+    },
+    {
+      "path": "tools/control_panel.py",
+      "sha256": "276df0c52b46a950f6a26c1a5402616016c80947e5ee8d176b3eb17aa6406e3f"
+    },
+    {
+      "path": "tools/prepare_sdk.py",
+      "sha256": "51feea4f21ebf3b9af7e97dcbd21e979c6f2fbe4ebac8c5faf38d117b40e58db"
+    },
+    {
+      "path": "artifacts/integration.patch",
+      "sha256": "daf045eb32a4413972f2189b27b18376e06c38185a2ac497263cc463b4feb27d"
+    }
+  ]
+}

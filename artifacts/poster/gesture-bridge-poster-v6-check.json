@@ -1,0 +1,24 @@
+{
+  "project_name": "Gesture Bridge",
+  "dimensions_mm": [
+    800,
+    1800
+  ],
+  "direction": "User reference: charcoal / ochre / hand-drawn",
+  "landmark_count": 21,
+  "text_outside_page": [],
+  "artwork_status": "Product concept; no detection result claimed",
+  "pdf_check": {
+    "page_count": 1,
+    "size_mm": [
+      800.0,
+      1800.0
+    ],
+    "embedded_fonts": [
+      "/AAAAAA+SegoePrint-Bold",
+      "/AAAAAA+KaiTi"
+    ],
+    "svg_xml": "valid",
+    "visual_review": "PDF render checked"
+  }
+}

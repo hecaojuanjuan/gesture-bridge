@@ -1,0 +1,402 @@
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -315,3 +315,5 @@
+         "${AGORA_SDK}/libs/libagora-cjson.a"
+     )
+ endif()
++target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_panel.c")
++target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -84,7 +84,7 @@
+     "${QDEV}/utility/sprintf/qm_sprintf.c"
+ 
+     "${QDEV}/drivers/VB701N/src/vb701n.c"
+-    "${QDEV}/platform/mcu/esp32s3/qm_audio/qm_audio_device_vb701n.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_audio_device_vb701n.c"
+     "${QDEV}/components/qm_audio/src/audio/qm_audio.c"
+     "${QDEV}/components/qm_audio/src/capture/qm_audio_capture.c"
+     "${QDEV}/components/qm_audio/src/control/qm_audio_control.c"
+--- a/qumios-dev/platform/mcu/esp32s3/qm_audio/qm_audio_device_vb701n.c
++++ b/apps/main/hv_diagnostics/qm_audio_device_vb701n.c
+@@ -1,4 +1,5 @@
+ #include "qm.h"
++#include "hv_voice_probe.h"
+ #include "adapter/qm_audio_device.h"
+ #include "qm_audio.h"
+ #include "qm_gpio.h"
+@@ -251,6 +252,7 @@
+     if ((len & 1u) != 0) {
+         return;
+     }
++    hv_voice_probe_mic(data, len);
+     if (!g_mic_logged) {
+         g_mic_logged = 1;
+         QM_LOGD(LOG_TAG, "mic %u bytes", (unsigned)len);
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -190,7 +190,7 @@
+ 
+ list(APPEND COMPONENT_SRCS
+     "./agent/private/opus.c"
+-    "${QDEV}/components/qm_agent/src/transport/qm_agent_transport_agora.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/qm_agent_transport_agora.c"
+     "${QDEV}/components/qm_agent/src/transport/qm_agent_agora_stream.c"
+ )
+ 
+--- a/qumios-dev/components/qm_agent/src/transport/qm_agent_transport_agora.c
++++ b/apps/main/hv_diagnostics/qm_agent_transport_agora.c
+@@ -10,6 +10,7 @@
+  */
+ 
+ #include "qm_agent_internal.h"
++#include "hv_voice_probe.h"
+ 
+ /* 1: let the SDK create its built-in encoder for the negotiated codec.
+  * 0: disable the built-in encoder. Defaults to 1 when undefined.
+@@ -1003,7 +1004,9 @@
+                 qm_agent_audio_codec_name(qm_agent_audio_data_type(&ctx->input_format)));
+         s_agora_uplink_log_emitted = QM_TRUE;
+     }
+-    return agora_rtc_send_audio_data(ctx->conn_id, data, len, &info);
++    int result = agora_rtc_send_audio_data(ctx->conn_id, data, len, &info);
++    hv_voice_probe_tx(len, result);
++    return result;
+ #else
+     return -QM_ENOSYS;
+ #endif
+--- a/apps/main/main.c
++++ b/apps/main/main.c
+@@ -9,6 +9,7 @@
+ #include "agent_app.h"
+ #include "ljyd_cloud.h"
+ #include "ljyd_provision.h"
++#include "hv_provision_cli.h"
+ #include "iot_control.h"
+ #include "pomodoro.h"
+ #include "ljyd_course.h"
+@@ -91,6 +92,7 @@
+     if (ljyd_course_init(ljyd_cloud_get_handle()) != QM_EOK) {
+         QM_LOGE("main", "ljyd_course_init failed");
+     }
++    hv_provision_cli_init();
+     if (ljyd_provision_init() != QM_EOK) {
+         QM_LOGE("main", "ljyd_provision_init failed");
+     }
+--- a/apps/main/cloud/ljyd_provision.c
++++ b/apps/main/cloud/ljyd_provision.c
+@@ -1,4 +1,5 @@
+ #include "ljyd_provision.h"
++#include "hv_panel.h"
+ #include "ljyd_cloud.h"
+ 
+ #include "qm.h"
+@@ -102,6 +103,7 @@
+ 
+ static int provision_start_wifi(void)
+ {
++    hv_panel_network("connecting");
+     int ret = qm_wifi_init();
+     if (ret != QM_EOK) {
+         return ret;
+@@ -120,16 +122,19 @@
+     (void)arg;
+     ret = qm_wifi_init();
+     if (ret != QM_EOK) {
++        hv_panel_network("error");
+         QM_LOGE(LOG_TAG, "wifi init ret=%d", ret);
+         return;
+     }
+     ret = qm_wifi_set_mode(QM_WIFI_MODE_STA);
+     if (ret != QM_EOK) {
++        hv_panel_network("error");
+         QM_LOGE(LOG_TAG, "wifi set mode ret=%d", ret);
+         return;
+     }
+     ret = provision_apply_wifi(pending_ssid, pending_password);
+     if (ret != QM_EOK) {
++        hv_panel_network("error");
+         QM_LOGE(LOG_TAG, "save provision wifi failed ret=%d", ret);
+         return;
+     }
+@@ -149,6 +154,7 @@
+     if (recv->env_type_valid) {
+         provision_env_save(recv->env_type);
+     }
++    hv_panel_network("connecting");
+     memset(pending_ssid, 0, sizeof(pending_ssid));
+     memset(pending_password, 0, sizeof(pending_password));
+     strncpy(pending_ssid, recv->ssid, sizeof(pending_ssid) - 1);
+@@ -184,7 +190,9 @@
+             return -QM_ENOMEM;
+         }
+     }
++    hv_panel_network("provisioning");
+     ret = qm_provision_start(provision_handle);
++    if (ret != QM_EOK) hv_panel_network("error");
+     QM_LOGI(LOG_TAG, "ble provision start ret=%d", ret);
+     return ret;
+ }
+@@ -205,10 +213,12 @@
+             break;
+         case QM_WIFI_EVENT_STA_GOT_IP:
+             QM_LOGI(LOG_TAG, "wifi got ip");
++            hv_panel_network("cloud_connecting");
+             ljyd_cloud_on_network_up();
+             break;
+         case QM_WIFI_EVENT_STA_DISCONNECTED:
+             QM_LOGW(LOG_TAG, "wifi disconnected");
++            hv_panel_network("disconnected");
+             ljyd_cloud_on_network_down();
+             (void)qm_wifi_connect();
+             break;
+@@ -225,7 +235,8 @@
+         ret = qm_event_handler_register(QM_EVENT_WIFI, QM_EVENT_ANY_ID,
+                                         provision_wifi_event_handler, NULL);
+         if (ret != QM_EOK) {
+-            QM_LOGE(LOG_TAG, "wifi event register failed ret=%d", ret);
++            hv_panel_network("error");
++        QM_LOGE(LOG_TAG, "wifi event register failed ret=%d", ret);
+             return ret;
+         }
+         wifi_event_registered = 1;
+--- a/apps/main/cloud/ljyd_cloud.c
++++ b/apps/main/cloud/ljyd_cloud.c
+@@ -1,4 +1,5 @@
+ #include "ljyd_cloud.h"
++#include "hv_panel.h"
+ #include "ljyd_method.h"
+ #include "ljyd_provision.h"
+ #include "time_sync.h"
+@@ -308,6 +309,7 @@
+     }
+     switch (event->type) {
+         case QM_IOT_EVENT_CLOUD_CONN:
++            hv_panel_network("online");
+             QM_LOGI(LOG_TAG, "cloud connected");
+ #if defined(CONFIG_APP_CAMERA_TEST) && CONFIG_APP_CAMERA_TEST
+             if (bsp_camera_stream_start() != ESP_OK) {
+@@ -324,12 +326,14 @@
+             }
+             break;
+         case QM_IOT_EVENT_CLOUD_DISCONN:
++            hv_panel_network("disconnected");
+             QM_LOGW(LOG_TAG, "cloud disconnected");
+             if (cloud_event_cb != NULL) {
+                 cloud_event_cb(LJYD_CLOUD_EVENT_DISCONNECTED, iot_handle, cloud_event_userdata);
+             }
+             break;
+         case QM_IOT_EVENT_CONNING_CLOUD:
++            hv_panel_network("cloud_connecting");
+             QM_LOGI(LOG_TAG, "cloud connecting");
+             break;
+         case QM_IOT_EVENT_RESET:
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -121,7 +121,7 @@
+     "${QDEV}/components/qm_http_client/src/qm_http_client_transport.c"
+     "${QDEV}/components/http/util_httpc.c"
+     "${QDEV}/components/network/util_net.c"
+-    "${QDEV}/components/mqtt/iot_mqtt_client.c"
++    "C:/Users/jiawa/Desktop/gesture-bridge/.work/headvoice/apps/main/hv_diagnostics/iot_mqtt_client.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTConnectClient.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTDeserializePublish.c"
+     "${QDEV}/components/mqtt/MQTTPacket/MQTTPacket.c"
+--- a/qumios-dev/components/mqtt/iot_mqtt_client.c
++++ b/apps/main/hv_diagnostics/iot_mqtt_client.c
+@@ -69,6 +69,7 @@
+ {
+     int mask = 0;
+     char *delim = "/";
++    char *context = NULL;
+     char *iterm = NULL;
+     char topicString[IOT_MC_TOPIC_NAME_MAX_LEN];
+     if (NULL == topicName) {
+@@ -83,7 +84,7 @@
+     memset(topicString, 0x0, IOT_MC_TOPIC_NAME_MAX_LEN);
+     strncpy(topicString, topicName, IOT_MC_TOPIC_NAME_MAX_LEN - 1);
+ 
+-    iterm = strtok(topicString, delim);
++    iterm = strtok_r(topicString, delim, &context);
+ 
+     if (SUCCESS_RETURN != iot_mc_check_rule(iterm, type)) {
+         mqtt_log_err("run iot_check_rule error");
+@@ -91,7 +92,7 @@
+     }
+ 
+     for (;;) {
+-        iterm = strtok(NULL, delim);
++        iterm = strtok_r(NULL, delim, &context);
+ 
+         if (iterm == NULL) {
+             break;
+--- a/apps/sdkconfig
++++ b/apps/sdkconfig
+@@ -1950,7 +1950,7 @@
+ # CONFIG_NEWLIB_STDIN_LINE_ENDING_CRLF is not set
+ # CONFIG_NEWLIB_STDIN_LINE_ENDING_LF is not set
+ CONFIG_NEWLIB_STDIN_LINE_ENDING_CR=y
+-CONFIG_NEWLIB_NANO_FORMAT=y
++# CONFIG_NEWLIB_NANO_FORMAT is not set
+ CONFIG_NEWLIB_TIME_SYSCALL_USE_RTC_HRT=y
+ # CONFIG_NEWLIB_TIME_SYSCALL_USE_RTC is not set
+ # CONFIG_NEWLIB_TIME_SYSCALL_USE_HRT is not set
+--- a/apps/main/qm_config/qm_config.h
++++ b/apps/main/qm_config/qm_config.h
+@@ -180,3 +180,5 @@
+ 
+ /* 0 关，1 打方向和命令，2 再打整帧十六进制 */
+ #define VB701N_UART_TRACE 0
++
++#define CONFIG_HEADVOICE_SUPPORT 1
+--- a/apps/main/main.c
++++ b/apps/main/main.c
+@@ -1,4 +1,5 @@
+ #include "qm.h"
++#include "headvoice_app.h"
+ #include "qm_work.h"
+ #include "bsp_io.h"
+ /* #include "bsp_mpu6050.h" */
+@@ -45,7 +46,9 @@
+ void qm_application_start(void)
+ {
+ #if defined(CONFIG_QM_POSE_SUPPORT) && CONFIG_QM_POSE_SUPPORT
++#if !defined(CONFIG_HEADVOICE_SUPPORT) || !CONFIG_HEADVOICE_SUPPORT
+     example_pose_run();
++#endif
+ #endif
+     // if (bsp_servo_init() != QM_EOK) {
+     //     QM_LOGE("main", "servo init failed");
+@@ -107,6 +110,12 @@
+     }
+ #endif
+ 
++#if CONFIG_HEADVOICE_SUPPORT
++    if (headvoice_start() != ESP_OK) {
++        QM_LOGE("main", "HeadVoice unavailable; see diagnostics");
++    }
++#endif
++
+ #if defined(CONFIG_QM_POMODORO_SUPPORT) && CONFIG_QM_POMODORO_SUPPORT
+     pomodoro_init();
+ #endif
+--- a/apps/main/CMakeLists.txt
++++ b/apps/main/CMakeLists.txt
+@@ -317,3 +317,5 @@
+ endif()
+ target_sources(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_provision_cli.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_voice_probe.c" "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/hv_panel.c")
+ target_include_directories(${COMPONENT_LIB} PRIVATE "C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware")
++
++include("C:/Users/jiawa/Desktop/gesture-bridge/headvoice/firmware/integration.cmake")
+--- a/apps/main/peripheral/bsp_camera.h
++++ b/apps/main/peripheral/bsp_camera.h
+@@ -7,6 +7,10 @@
+ 
+ #include "esp_err.h"
+ #include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++typedef void (*bsp_camera_frame_fn)(const uint8_t *, size_t, uint32_t, uint32_t, uint32_t, uint64_t);
++esp_err_t bsp_camera_set_frame_callback(bsp_camera_frame_fn callback);
+ 
+ /*
+  * BF3901 模组丝印是 DVP 名，驱动按 1-bit SPI 收：
+--- a/apps/main/peripheral/bsp_camera.c
++++ b/apps/main/peripheral/bsp_camera.c
+@@ -1,4 +1,13 @@
+ #include "bsp_camera.h"
++#include "esp_timer.h"
++static bsp_camera_frame_fn s_frame_callback;
++esp_err_t bsp_camera_set_frame_callback(bsp_camera_frame_fn callback)
++{
++  if (s_frame_callback) return ESP_ERR_INVALID_STATE;
++  s_frame_callback = callback;
++  return ESP_OK;
++}
++
+ 
+ #include "esp_cam_ctlr_spi.h"
+ #include "esp_cam_sensor_xclk.h"
+@@ -232,6 +241,12 @@
+             continue;
+         }
+ 
++        /* MMAP bytes are borrowed until QBUF below. */
++        if (s_frame_callback) {
++            s_frame_callback(buf.index < CAM_BUF_NUM ? s_cam.buffer[buf.index] : NULL,
++                buf.bytesused, s_cam.width, s_cam.height, s_cam.pixel_format,
++                (uint64_t)(esp_timer_get_time() / 1000));
++        }
+         frames++;
+         if (buf.bytesused == expect) {
+             good++;
+--- a/apps/main/pose/yolo11_pose.h
++++ b/apps/main/pose/yolo11_pose.h
+@@ -3,6 +3,7 @@
+ 
+ #include "esp_err.h"
+ #include <stddef.h>
++#include <stdbool.h>
+ #include <stdint.h>
+ 
+ #ifdef __cplusplus
+@@ -27,6 +28,9 @@
+ typedef struct {
+     yolo11_pose_frame_status_t status;
+     yolo11_pose_err_type_t err_type;
++    unsigned person_count;
++    float eye_x1, eye_y1, eye_x2, eye_y2;
++    bool head_valid;
+     float yaw;
+     float roll;
+     float shoulder_diff;
+--- a/apps/main/pose/yolo11_pose.cpp
++++ b/apps/main/pose/yolo11_pose.cpp
+@@ -499,6 +499,23 @@
+         return ESP_OK;
+     }
+ 
++    if (out) {
++        out->person_count = pose_results.size();
++        if (pose_results.size() == 1) {
++            const auto &r = pose_results.front();
++            const auto &k = r.keypoint;
++            if (k.size() >= 10 && r.score >= 0.5f) {
++                out->eye_x1 = k[2]; out->eye_y1 = k[3];
++                out->eye_x2 = k[4]; out->eye_y2 = k[5];
++                out->head_valid = kpt_valid(k[0], k[1]) &&
++                    kpt_valid(k[2], k[3]) && kpt_valid(k[4], k[5]) &&
++                    k[0] > 0 && k[1] > 0 && k[0] < (int)img.width && k[1] < (int)img.height &&
++                    k[2] > 0 && k[3] > 0 && k[4] > 0 && k[5] > 0 &&
++                    k[2] < (int)img.width && k[4] < (int)img.width &&
++                    k[3] < (int)img.height && k[5] < (int)img.height;
++            }
++        }
++    }
+     const auto &res = pose_results.front();
+     ESP_LOGI(TAG,
+              "%s [score: %f, x1: %d, y1: %d, x2: %d, y2: %d]",
+@@ -840,6 +857,23 @@
+         return ESP_OK;              /* img.data 是常驻缓冲，不能释放 */
+     }
+ 
++    if (out) {
++        out->person_count = pose_results.size();
++        if (pose_results.size() == 1) {
++            const auto &r = pose_results.front();
++            const auto &k = r.keypoint;
++            if (k.size() >= 10 && r.score >= 0.5f) {
++                out->eye_x1 = k[2]; out->eye_y1 = k[3];
++                out->eye_x2 = k[4]; out->eye_y2 = k[5];
++                out->head_valid = kpt_valid(k[0], k[1]) &&
++                    kpt_valid(k[2], k[3]) && kpt_valid(k[4], k[5]) &&
++                    k[0] > 0 && k[1] > 0 && k[0] < (int)img.width && k[1] < (int)img.height &&
++                    k[2] > 0 && k[3] > 0 && k[4] > 0 && k[5] > 0 &&
++                    k[2] < (int)img.width && k[4] < (int)img.width &&
++                    k[3] < (int)img.height && k[5] < (int)img.height;
++            }
++        }
++    }
+     const auto &res = pose_results.front();
+     ESP_LOGI(TAG,
+              "%s [score: %f, x1: %d, y1: %d, x2: %d, y2: %d]",
