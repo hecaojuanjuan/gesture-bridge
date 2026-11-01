@@ -1,5 +1,7 @@
 # 摄像头双轴自动对准：现有硬件实施说明
 
+> 版本提示（2026-11-01）：本文中的“当前固件”描述当时的 face 云台试验版本。最近一次有记录的实机部署已改为 native 张掌／V 字手势版，`servo_control:false`，不包含自动居中；不能直接照本文的运动命令操作。日常操作见[用户使用说明](device-user-guide.md)，版本核对见[维护说明](device-maintenance-guide.md)。
+
 ## 2026-10-31 人脸后端集成固件与上板初测
 
 此前的 `--gimbal` 模式会替换整条姿态应用，并固定使用 COCO 模型；它不能让 face stage 2 面板自动对准。现已在**同一条 face stage 2 推理链路**加入双轴控制：用检测到的脸框中心计算画面偏差，双眼仍只用于倾角；摄像头、RGB 面板和姿态诊断继续运行。集成镜像见 [`headvoice-face-autocenter-stage2-20261031.json`](../artifacts/headvoice-face-autocenter-stage2-20261031.json)。离线构建与主机测试通过，镜像已烧录且刷写哈希校验通过。启动日志确认 stage 2 face、云台 PWM 默认关闭，摄像头连续取帧；**真实自动居中尚未通过验收**。

@@ -1,4 +1,8 @@
-# HeadVoice（颔语）第一阶段原型
+# Gesture Bridge 第一阶段原型
+
+日常使用先看[Gesture Bridge 使用说明](docs/device-user-guide.md)：上电后做手势、看灯板反馈，打开小程序联网并进入控制面板，无需电脑网页调试。最近一次已部署的手势固件上电自动识别；该版不含舵机自动居中。换网、串口、按键和版本核对见[维护说明](docs/device-maintenance-guide.md)。
+
+[保存 Gesture Bridge 用户操作图](artifacts/user-guide/gesture-bridge-user-guide-v3.png)，仅保留 A 手势操作与 B 小程序联网两栏，灯色说明已与固件逻辑核对。
 
 2026-11-01 新增[手势建库控制面板设计](docs/gesture-dictionary-panel-design-2026-11-01.md)：图卡选意、照护者填写、模拟录入、确认绑定与本机演示词典。可下载[独立 HTML 原型](artifacts/panel-design/gesture-setup-preview.html)后在浏览器打开，或启动 `panel` 开发服务器访问 `/setup.html`；[界面截图](artifacts/panel-design/)一并保存。100 项前端测试和生产构建通过；真实采集、设备词典和播报尚未接入。
 
