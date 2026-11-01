@@ -17,7 +17,7 @@ const camera = {frame:null, receivedAt:0, busy:false, auto:false, progress:0,
   error:'', nextAt:0, sequence:0};
 const requests = new RequestTracker();
 document.querySelector('#app').innerHTML = `
-<header><a class="brand" href="#"><span class="brand-mark">颔</span><span>颔语 <small>HEADVOICE</small></span></a><span class="device-tag">XJWB03 · PID 11785</span></header>
+<header><a class="brand" href="#"><span class="brand-mark">颔</span><span>颔语 <small>HEADVOICE</small></span></a><a href="./setup.html" style="color:#236555;font-size:14px;text-underline-offset:5px">手势建库 · 设计预览 ↗</a><span class="device-tag">XJWB03 · PID 11785</span></header>
 <main>
   <section class="intro"><div><span class="eyebrow">DEVICE STUDIO / 01</span><h1>看见状态，<br>让表达有回应。</h1><p>灯光控制与视觉诊断，汇集在这里。</p></div>
   <aside class="connection"><span id="connection-state" class="connection-label">○ 尚未连接设备</span><p id="connection-detail">连接后读取设备状态。颜色预览不会发送指令。</p><div class="connection-actions"><button id="serial-connect" class="primary">连接 USB 设备 ↗</button><button id="cloud-connect">连接灵机</button><button id="disconnect" hidden>断开</button></div></aside></section>

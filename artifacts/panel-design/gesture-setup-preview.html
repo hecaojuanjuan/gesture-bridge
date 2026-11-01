@@ -1,0 +1,279 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>颔语 · 手势建库设计预览</title><style>:root{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;color:#283e35;background:#f5f6f1;font-synthesis:none;--green:#2d6653;--deep:#234d3e;--muted:#78847a;--border:#e2e7dd;--white:#fffefa;--soft:#eef2e9;--blue:#eaf2f4;--peach:#faeee5;--lilac:#f0edf5;--sand:#f5f1e4;--mint:#ebf2e9;--rose:#f7edef}
+*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer;color:inherit}button:disabled{cursor:not-allowed;opacity:.46}button,a{touch-action:manipulation}a{color:inherit}button{border:0}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #bb8a2f;outline-offset:4px}button:hover:not(:disabled){filter:brightness(.975)}button:active:not(:disabled){transform:translateY(1px)}svg{flex-shrink:0;vertical-align:middle}h1,h2,h3,p{margin:0}p{line-height:1.75}button{line-height:1.4}[hidden]{display:none!important}[tabindex="-1"]{outline:none}.skip-link{position:fixed;top:-70px;left:20px;z-index:100;padding:14px;background:white}.skip-link:focus{top:15px}
+.sidebar{position:fixed;inset:0 auto 0 0;width:218px;background:#fafbf7;border-right:1px solid var(--border);padding:35px 21px 20px;display:flex;flex-direction:column;z-index:10}.brand{display:flex;align-items:center;gap:12px;padding:0 9px;text-decoration:none;font-weight:650;font-size:23px;letter-spacing:2px}.brand-emblem{display:grid;place-items:center;background:var(--deep);color:#f6f7e9;width:44px;height:48px;border-radius:15px 15px 18px 5px;font-family:'Songti SC',serif;font-size:25px;font-weight:500}.brand small{display:block;font-size:8px;letter-spacing:1.5px;font-weight:500;color:#74816e;margin-top:5px}.nav-caption{font-size:11px;color:#8a9489;padding:52px 15px 17px;letter-spacing:1px}.sidebar nav{display:flex;flex-direction:column;gap:9px}.nav-item{display:flex;align-items:center;gap:12px;min-height:49px;text-decoration:none;font-size:14px;font-weight:500;padding:12px 15px;border-radius:9px;background:transparent;color:#6a796d;width:100%;text-align:left}.nav-item.active{background:#e7eee2;color:#315d46;font-weight:650}.nav-item>svg:last-child:not(:first-child){margin-left:auto}.nav-item i{margin-left:auto;width:5px;height:5px;border-radius:50%;background:var(--green)}.nav-item b{margin-left:auto;font-size:11px;background:#edf0e8;border:1px solid #dce3d6;border-radius:5px;min-width:20px;height:20px;display:grid;place-items:center;font-weight:500}.sidebar-bottom{margin-top:auto}.gentle-note{margin:38px 12px 42px;color:#6f826e}.note-symbol{font-family:Georgia,serif;font-size:58px;height:35px;display:block;color:#a6b89e}.gentle-note p{font-family:'Songti SC','STSong',serif;font-size:17px;line-height:1.95;letter-spacing:1px}.little-line{display:block;width:30px;border-top:1px solid #b3c3a9;margin-top:20px}.help-link{display:flex;align-items:center;gap:10px;background:transparent;font-size:12px;padding:12px;color:#788573}.sidebar-foot{border-top:1px solid var(--border);margin:18px 8px 0;padding-top:19px;font-size:8px;letter-spacing:1.3px;color:#8e9988}.sidebar-foot span{display:block;margin-top:8px;letter-spacing:.5px;font-size:10px}.app-body{margin-left:218px;min-height:100vh;display:flex;flex-direction:column}.topbar{height:78px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 39px;background:#fafbf7}.breadcrumb{display:flex;gap:14px;font-size:12px;color:#92998e}.breadcrumb strong{font-weight:500;color:#4b5e50}.breadcrumb>span{color:#c0c9b9}.top-actions{display:flex;align-items:center;gap:21px}.demo-tag{display:flex;align-items:center;gap:7px;font-size:11px;color:#7b816c;background:#f0f0e4;border:1px solid #e4e5d7;border-radius:20px;padding:6px 11px}.demo-tag i{height:5px;width:5px;background:#a6aa80;border-radius:50%}.size-toggle{background:transparent;display:flex;align-items:center;gap:6px;font-size:17px;font-family:Georgia,serif;font-weight:600;padding:8px}.size-toggle span{font-family:-apple-system,'PingFang SC',sans-serif;font-size:11px;font-weight:400}.size-toggle[aria-pressed=true]{background:#e5ecdf;border-radius:7px}.profile-dot{border:1px solid #dce4d5;background:#ecf1e6;border-radius:50%;width:33px;height:33px;display:grid;place-items:center;color:#73866d}
+main{width:100%;max-width:1370px;padding:39px 39px 28px;margin:0 auto;flex:1}.page-title-row{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:29px}.eyebrow{font-size:10px;letter-spacing:1.5px;font-weight:550;color:#85927c;display:block}h1{font-size:30px;line-height:1.5;font-weight:550;letter-spacing:.3px;margin-top:9px}h1 span{color:#637a5d}.page-title-row p{font-size:13px;color:#7d8978;margin-top:8px}.quiet-button,.text-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;padding:10px 0;font-size:12px;color:#6e7d6b}.quiet-button:hover,.text-button:hover{color:var(--green)}.steps{list-style:none;margin:0 0 28px;padding:0 7px;display:flex;max-width:900px;gap:20px}.steps li{display:flex;align-items:center;flex:1;gap:11px;font-size:12px;color:#96a08f;white-space:nowrap}.steps li:last-child{flex:.62}.step-number{width:27px;height:27px;border:1px solid #dce3d4;border-radius:50%;display:grid;place-items:center;font-size:10px;letter-spacing:.5px;background:#f6f7f2}.steps .current{color:#345c46;font-weight:600}.current .step-number{background:var(--green);border-color:var(--green);color:white;box-shadow:0 0 0 4px #e5ece0}.done .step-number{background:#e2eddb;color:#507748;border-color:#d6e3cd}.step-line{flex:1;border-top:1px solid #e0e5d8;margin-left:8px}.setup-layout{display:grid;grid-template-columns:minmax(0,1fr) 264px;gap:25px;align-items:start}.workflow-card{border:1px solid var(--border);border-radius:17px;background:var(--white);padding:28px 27px 0;box-shadow:0 3px 10px #33432202;min-width:0}.screen-heading{display:flex;justify-content:space-between;align-items:center;gap:15px}.screen-heading .eyebrow{font-size:10px;letter-spacing:.7px;color:#8a9580}.screen-heading h2{font-size:22px;font-weight:550;line-height:1.5;margin:8px 0}.screen-heading p{font-size:12px;color:#839079;line-height:1.8}.read-button{white-space:nowrap;font-size:11px;align-self:center}.mode-switch{display:flex;gap:5px;padding:4px;background:#f0f3eb;border:1px solid #e7ebdf;border-radius:8px;margin-top:23px;width:max-content}.mode-switch button{display:flex;align-items:center;gap:7px;background:transparent;padding:9px 16px;border-radius:5px;font-size:12px;color:#809076}.mode-switch button[aria-pressed=true]{background:#fffefa;color:#365b44;box-shadow:0 1px 5px #28392110;font-weight:550}.phrase-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:21px}.phrase-card{position:relative;border:1.5px solid transparent;background:var(--tone);border-radius:12px;display:flex;flex-direction:column;align-items:center;padding:12px 7px 17px;min-height:185px;transition:border-color .15s,box-shadow .15s,transform .15s}.blue{--tone:var(--blue)}.lilac{--tone:var(--lilac)}.peach{--tone:var(--peach)}.sand{--tone:var(--sand)}.mint{--tone:var(--mint)}.rose{--tone:var(--rose)}.selection-mark{position:absolute;top:11px;right:11px;width:20px;height:20px;border:1px solid #8a9a8033;border-radius:50%;background:#ffffff55;display:grid;place-items:center;color:transparent}.phrase-card.selected{border-color:#487b59;box-shadow:0 0 0 2px #487b5910}.selected .selection-mark{background:#487b59;color:white;border-color:#487b59}.phrase-card.scanning{outline:3px solid #bd8f32;outline-offset:3px}.phrase-art{width:128px;height:108px;display:block;margin:0 0 6px;max-width:90%}.phrase-art svg{height:100%;width:100%}.phrase-card strong{font-size:18px;font-weight:550;color:#34483d;letter-spacing:.3px;line-height:1.6}.phrase-caption{font-size:10px;color:#82907e;margin-top:4px}.scan-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px;min-height:30px}.scan-bar>span{display:flex;align-items:center;gap:7px;color:#8b957e;font-size:11px}.scan-bar .text-button{font-size:11px;color:#53754c;padding:6px 0;text-decoration:underline;text-underline-offset:4px}.scan-pick{background:#e5eddf;border-radius:6px;padding:8px 12px;font-size:12px;color:#43653d}.scan-explanation{font-size:10px;color:#8d9785;margin-top:4px;line-height:1.5}.step-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e9ecdf;padding:21px 0;margin-top:22px}.primary,.secondary,.danger-button{min-height:44px;border-radius:8px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:12px 19px;font-weight:500}.primary{background:var(--green);color:#fffefa;box-shadow:0 2px 4px #234d3e0c}.primary:disabled{background:#a2b4a1;color:#f8faf5;opacity:.65;box-shadow:none}.secondary{background:#f6f8f0;color:#3e654c;border:1px solid #dfe7d8}.danger-button{background:#8d4d3b;color:white}.binding-card{border:1px solid var(--border);border-radius:16px;background:#fafbf6;padding:24px 21px 0;text-align:center}.card-overline{font-size:12px;color:#6e7e63;text-align:left;font-weight:500}.summary-picture{background:var(--tone);border-radius:50%;width:106px;height:106px;margin:25px auto 18px;display:grid;place-items:center}.summary-picture svg{width:106px;height:90px}.binding-card h3{font-size:19px;line-height:1.7;font-weight:550;overflow-wrap:anywhere}.binding-card p{font-size:11px;color:#909b86;margin-top:8px}.binding-divider{display:flex;align-items:center;gap:12px;margin:24px 5px;color:#9baa8d}.binding-divider span{flex:1;border-top:1px dashed #dce4d4}.summary-gesture{display:flex;text-align:left;gap:13px;align-items:center;margin:0 0 23px 6px}.summary-gesture>span{width:45px;height:48px;border:1px dashed #cddbc1;background:#f0f4e9;border-radius:9px;color:#95a386;display:grid;place-items:center}.summary-gesture svg{width:38px;max-height:43px}.summary-gesture small{font-size:10px;color:#8b997d;display:block;margin-bottom:5px}.summary-gesture strong{font-size:12px;font-weight:500;color:#63785a}.summary-state{border-top:1px solid #e4eada;padding:15px 0;font-size:10px;color:#879578;display:flex;justify-content:center;align-items:center;gap:6px}.tip-card{display:flex;align-items:flex-start;gap:11px;margin-top:21px;padding:18px 17px;background:#edf1e4;border-radius:11px}.tip-icon{color:#738c60;margin-top:1px}.tip-card h3{font-size:12px;font-weight:550;color:#59704d;margin-bottom:7px}.tip-card p{font-size:11px;line-height:1.9;color:#7b8d6d}.prototype-note{font-size:10px;color:#919a87;line-height:1.9;margin:17px 9px}.page-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:22px 40px;font-size:10px;color:#a0a794;max-width:1370px;width:100%;margin:0 auto}.page-footer>span:last-child{display:flex;align-items:center;gap:6px}
+.caregiver-form{margin-top:22px;background:#f4f5ee;border:1px solid #e8ecdf;border-radius:13px;padding:25px}.form-icon{display:grid;place-items:center;width:46px;height:46px;background:#e6eddf;color:#6e8b5f;border-radius:12px;margin-bottom:15px}.caregiver-form h3{font-size:19px;font-weight:550}.caregiver-form p{font-size:12px;color:#7e8c72;margin-top:8px}.caregiver-form label{display:block;font-size:12px;font-weight:550;margin:23px 0 10px}textarea{resize:vertical;background:#fffefa;width:100%;border:1px solid #d3ddc7;border-radius:8px;padding:15px;color:#344e3b;font-size:19px;line-height:1.7;min-height:119px}textarea::placeholder{color:#a0ac94}.input-count{display:flex;justify-content:space-between;gap:10px;color:#88977b;font-size:10px;margin:9px 0 21px}.form-note{font-size:11px;color:#7f8f71;border-top:1px solid #e1e7d7;padding-top:16px;display:flex;gap:8px;align-items:center}
+.gesture-options{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:23px 0}.gesture-option{position:relative;border:1.5px solid #e3e8da;border-radius:11px;background:#f6f7f0;padding:13px 15px;display:grid;grid-template-columns:65px 1fr;grid-template-rows:1fr 1fr;text-align:left;align-items:center;column-gap:15px}.gesture-option>span{grid-row:span 2;width:65px;height:70px}.gesture-option>span svg{width:100%;height:100%}.gesture-option>strong{font-size:16px;font-weight:550;align-self:end;margin-bottom:4px}.gesture-option>small{font-size:11px;color:#8a977e;align-self:start}.gesture-option>svg{position:absolute;top:9px;right:9px;color:#497443}.gesture-option.selected{border-color:#58834d;background:#edf3e7}.capture-panel{display:grid;grid-template-columns:1.1fr 1fr;background:#f3f5ed;border:1px solid #e5eadc;border-radius:12px;overflow:hidden}.capture-demo{background:#e7eee1;display:flex;align-items:center;flex-direction:column;text-align:center;padding:16px 15px 25px;position:relative}.sample-tag{font-size:9px;color:#7c8b70;display:flex;align-items:center;gap:5px;align-self:flex-start}.capture-frame{position:relative;width:160px;height:170px;margin:22px 0 14px;padding:14px}.capture-frame>svg{width:100%;height:100%;opacity:.85}.capture-frame i{position:absolute;width:21px;height:21px;border-color:#8ba27a;border-style:solid}.capture-frame i:nth-child(1){top:0;left:0;border-width:2px 0 0 2px;border-radius:6px 0 0 0}.capture-frame i:nth-child(2){top:0;right:0;border-width:2px 2px 0 0;border-radius:0 6px 0 0}.capture-frame i:nth-child(3){bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 6px}.capture-frame i:nth-child(4){bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 6px 0}.capture-frame.capturing{animation:breathe .6s ease-in-out infinite alternate}.capture-demo>strong{font-size:11px;line-height:1.8;font-weight:500;color:#667f58}.capture-demo>span:last-child{font-size:9px;color:#94a185;margin-top:8px}.capture-controls{padding:22px 19px}.capture-controls h3{font-size:16px;font-weight:550}.capture-controls p{font-size:11px;color:#839273;margin-top:8px}.sample-slots{list-style:none;padding:0;margin:18px 0;display:flex;gap:8px}.sample-slots li{flex:1;display:flex;align-items:center;flex-direction:column;font-size:10px;color:#8c997e;gap:6px}.sample-slots li>span{width:27px;height:27px;border-radius:50%;border:1px solid #d3ddc7;display:grid;place-items:center;color:#879779}.sample-slots .complete>span{background:#60844c;border-color:#60844c;color:white}.sample-slots small{font-size:8px;color:#93a085}.full{width:100%;font-size:11px}.under-note{font-size:10px;line-height:1.9;color:#8a977e;margin-top:16px}.inline-alert{padding:13px 16px;background:#f8eedd;border:1px solid #e9d7b5;color:#846732;border-radius:8px;font-size:12px;line-height:1.8;margin-bottom:18px}.review-binding{display:grid;grid-template-columns:1fr 50px 1fr;gap:9px;margin:28px 0 20px;align-items:center}.review-hand,.review-meaning{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px 15px;border-radius:13px;min-height:220px;background:#f1f4eb;text-align:center}.review-meaning{background:var(--tone)}.review-binding svg{width:136px;height:130px;max-width:100%}.review-binding strong{font-size:20px;font-weight:550;line-height:1.6;margin-top:10px;overflow-wrap:anywhere}.review-arrow{color:#91a081;display:flex;flex-direction:column;align-items:center;gap:8px}.review-arrow svg{width:28px;height:28px}.review-arrow small{font-size:10px}.read-review{display:flex;gap:9px;align-items:center;justify-content:center;margin:0 auto 24px;background:transparent;color:#4f7449;font-size:13px;min-height:44px}.confirmation-box{border:1px solid #dce5d1;background:#f5f7ee;border-radius:10px;padding:20px}.confirmation-box h3{font-size:15px;font-weight:550}.confirmation-box p{font-size:11px;color:#849474;margin:8px 0 15px}.confirmation-box label{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;min-height:40px}.confirmation-box input{width:21px;height:21px;accent-color:#426b36}.save-destination{display:flex;flex-wrap:wrap;gap:7px;align-items:center;font-size:10px;color:#7e8d70;margin-top:17px}.save-destination>span{margin-left:auto;padding:4px 8px;background:#eef1e6;border-radius:5px;font-size:9px}.success-screen{text-align:center;padding:35px 0 49px}.success-icon{display:grid;place-items:center;width:73px;height:73px;border-radius:50%;background:#e6efdd;color:#4d7640;margin:0 auto 24px}.success-screen h2{font-size:27px;font-weight:550;line-height:1.6;margin:17px 0}.success-screen>p{font-size:18px;margin:21px 0}.success-screen>p span{margin:0 12px;color:#9bab8c}.success-note{padding:21px;background:#f3f5ed;border-radius:9px;font-size:12px;color:#81916f;line-height:1.9;margin:24px 0}.success-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.dictionary-notice{display:flex;align-items:center;gap:9px;font-size:13px;color:#617b50;background:#edf2e6;border:1px solid #e0e7d7;border-radius:9px;padding:15px 19px;margin:28px 0 24px}.dictionary-notice>span{margin-left:auto;font-size:11px;color:#849772}.dictionary-list{display:grid;grid-template-columns:1fr 1fr;gap:20px}.entry-card{display:flex;align-items:center;flex-wrap:wrap;gap:15px;border:1px solid var(--border);border-radius:13px;padding:23px;background:#fffefa}.entry-gesture{width:80px;height:85px;background:#f2f4eb;border-radius:10px;display:grid;place-items:center}.entry-gesture svg{width:72px;height:75px}.entry-words{flex:1;min-width:100px}.entry-words>span{display:flex;align-items:center;gap:6px;font-size:11px;color:#859576}.entry-words h2{font-size:20px;font-weight:550;margin:9px 0;overflow-wrap:anywhere}.entry-words small{font-size:10px;color:#9aa48d}.entry-actions{display:flex;gap:2px;margin-left:auto}.icon-button{width:39px;height:39px;background:transparent;display:inline-grid;place-items:center;border-radius:7px;color:#819274}.dictionary-footnote{display:flex;align-items:center;gap:9px;font-size:11px;color:#89987a;margin:29px 0;line-height:1.8}.empty-dictionary{background:#fffefa;border:1px dashed #cddbbf;border-radius:15px;padding:70px 20px;text-align:center}.empty-dictionary>span{color:#a3b494}.empty-dictionary h2{font-size:24px;font-weight:550;margin:23px 0 12px}.empty-dictionary p{font-size:13px;color:#859775;margin-bottom:26px}.toast{position:fixed;bottom:24px;left:calc(50% + 109px);transform:translateX(-50%);background:#294b3e;color:#fffef7;border-radius:10px;padding:14px 22px;font-size:13px;line-height:1.7;box-shadow:0 8px 30px #1a312827;z-index:50;max-width:min(600px,85vw);width:max-content}dialog{padding:28px;border:1px solid #dce5d2;border-radius:17px;background:#fffefa;box-shadow:0 30px 80px #142c2433;max-width:520px;width:calc(100% - 36px);color:#354e3b}dialog::backdrop{background:#23382b66;backdrop-filter:blur(3px)}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}.dialog-head h2{font-size:21px;font-weight:550}dialog p{font-size:14px;color:#748768}.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:26px}.help-steps{padding-left:24px}.help-steps li{padding-left:6px;margin-bottom:19px;font-size:15px}.help-steps strong{font-weight:550}.help-steps p{font-size:13px;margin-top:5px}.dialog-note{font-size:11px;line-height:1.9;background:#f0f4e9;padding:15px;border-radius:8px;color:#7d906f}
+.large-text .phrase-card strong{font-size:25px}.large-text .phrase-caption{font-size:14px}.large-text .screen-heading h2{font-size:27px}.large-text .screen-heading p,.large-text .primary,.large-text .secondary,.large-text .quiet-button{font-size:16px}.large-text .summary-column p,.large-text .summary-gesture strong{font-size:14px}.large-text .phrase-card{min-height:205px}.large-text .step-actions{flex-wrap:wrap}.large-text .gesture-option strong{font-size:21px}.large-text .confirmation-box p{font-size:15px}.large-text .caregiver-form p{font-size:16px}
+@keyframes breathe{from{opacity:.5}to{opacity:1}}
+@media(min-width:1500px){.phrase-card{min-height:199px}.phrase-art{width:140px;height:118px}.workflow-card{padding:31px 32px 0}.screen-heading h2{font-size:25px}.phrase-card strong{font-size:20px}}
+@media(max-width:1200px){.sidebar{width:187px;padding-left:14px;padding-right:14px}.app-body{margin-left:187px}main{padding:30px 25px}.topbar{padding:0 25px}.setup-layout{grid-template-columns:minmax(0,1fr) 220px;gap:18px}.workflow-card{padding:24px 21px 0}.phrase-art{width:108px;height:96px}.phrase-card{min-height:169px}.phrase-card strong{font-size:16px}.phrase-caption{font-size:9px}.screen-heading{display:block}.read-button{margin:5px 0 -8px}.binding-card{padding-left:15px;padding-right:15px}.capture-panel{grid-template-columns:1fr}.capture-demo{padding-bottom:17px}.capture-frame{width:135px;height:140px;margin:12px 0}.sample-slots{max-width:240px;margin:16px auto}.capture-controls .full{max-width:260px;margin:0 auto;display:flex}.toast{left:calc(50% + 93px)}}
+@media(max-width:1000px){.setup-layout{grid-template-columns:minmax(0,1fr)}.summary-column{display:none}.screen-heading{display:flex}.steps{max-width:none}.dictionary-list{grid-template-columns:1fr}.page-title-row h1{font-size:27px}.page-title-row h1 span{display:block}.capture-panel{grid-template-columns:1.1fr 1fr}.capture-frame{width:160px;height:170px}.phrase-art{width:128px;height:108px}.phrase-card{min-height:185px}.phrase-card strong{font-size:19px}.phrase-caption{font-size:10px}}
+@media(max-width:760px){.sidebar{position:static;width:100%;height:auto;padding:18px 20px 0;border-right:0;border-bottom:1px solid var(--border)}.brand{font-size:20px;padding:0;gap:10px}.brand-emblem{width:36px;height:40px;font-size:22px;border-radius:12px 12px 14px 5px}.brand small{font-size:7px}.sidebar nav{flex-direction:row;margin-top:18px;gap:8px}.nav-item{justify-content:center;gap:7px;font-size:12px;min-height:44px;padding:10px 6px;border-radius:8px 8px 0 0}.nav-item svg{width:18px;height:18px}.nav-item>svg:last-child:not(:first-child){display:none}.nav-item i,.nav-item b,.nav-caption,.sidebar-bottom{display:none}.app-body{margin-left:0}.topbar{height:58px;padding:0 20px}.top-actions{gap:10px}.profile-dot{display:none}.breadcrumb{font-size:10px;gap:8px}.demo-tag{font-size:9px;padding:5px 8px}.size-toggle{padding:6px;font-size:16px}.size-toggle span{font-size:10px}main{padding:26px 18px 12px}.page-title-row{margin-bottom:26px;align-items:flex-start}.page-title-row h1{font-size:25px;line-height:1.6}.page-title-row p{font-size:12px}.page-title-row .eyebrow{font-size:8px;letter-spacing:1.2px}.page-title-row>.quiet-button{font-size:0;padding:0;min-height:34px}.page-title-row>.quiet-button svg{width:21px;height:21px}.page-title-row>.primary{font-size:11px;padding:10px;white-space:nowrap;margin-top:25px}.steps{gap:12px;padding:0 3px;margin-bottom:25px}.steps li{font-size:11px;gap:7px}.steps li:last-child{flex:.83}.step-number{width:24px;height:24px;font-size:9px}.step-line{margin-left:2px}.workflow-card{padding:23px 18px 0;border-radius:14px}.screen-heading{display:block}.screen-heading h2{font-size:21px}.screen-heading p{font-size:12px}.screen-heading .eyebrow{font-size:9px}.read-button{margin:6px 0 -9px;font-size:11px;padding:8px 0}.mode-switch{margin-top:24px;width:100%}.mode-switch button{flex:1;padding:10px 5px;font-size:11px}.phrase-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:18px}.phrase-card{min-height:176px;padding:12px 5px 15px}.phrase-art{width:117px;height:99px}.phrase-card strong{font-size:19px}.phrase-caption{font-size:9px}.selection-mark{width:17px;height:17px;top:9px;right:9px}.scan-bar{gap:8px}.scan-bar>span{font-size:10px}.scan-explanation{font-size:9px}.step-actions{gap:10px;padding:18px 0;margin-top:20px;flex-wrap:wrap}.step-actions>.primary{flex:1;font-size:12px;min-width:160px}.step-actions>.quiet-button{font-size:10px;min-height:44px}.page-footer{font-size:8px;padding:20px;gap:6px}.page-footer svg{width:12px;height:12px}.gesture-options{gap:10px}.gesture-option{padding:11px 7px;grid-template-columns:48px 1fr;gap:7px}.gesture-option>span{width:48px;height:62px}.gesture-option>strong{font-size:14px}.gesture-option>small{font-size:10px}.gesture-option>svg{width:14px;height:14px;top:5px;right:5px}.capture-panel{grid-template-columns:1fr}.capture-demo{padding:15px}.capture-frame{width:145px;height:155px;margin:15px 0}.capture-controls{padding:22px}.capture-controls h3{text-align:center}.capture-controls .full{max-width:none}.sample-slots{max-width:none}.sample-slots li{font-size:12px}.sample-slots small{font-size:10px}.capture-controls p{font-size:12px}.capture-demo>strong{font-size:12px}.sample-tag{font-size:10px}.capture-demo>span:last-child{font-size:10px}.review-binding{grid-template-columns:1fr 25px 1fr;gap:7px}.review-hand,.review-meaning{padding:15px 8px;min-height:188px}.review-binding svg{width:108px;height:104px}.review-binding strong{font-size:18px}.review-arrow svg{width:22px;height:22px}.confirmation-box{padding:16px}.confirmation-box label{font-size:13px}.save-destination{font-size:10px;line-height:1.7}.save-destination>span{margin-left:24px}.success-screen{padding:25px 0 33px}.success-screen h2{font-size:23px}.success-screen>p{font-size:16px}.success-note{font-size:11px}.dictionary-notice{font-size:11px;padding:12px;flex-wrap:wrap}.dictionary-notice>span{font-size:10px}.entry-card{padding:18px 15px;gap:12px}.entry-gesture{width:61px;height:69px}.entry-gesture svg{width:55px;height:61px}.entry-words h2{font-size:19px}.entry-actions{width:100%;border-top:1px solid #edf0e6;padding-top:9px;justify-content:flex-end}.entry-actions .icon-button{width:44px;height:40px}.dictionary-footnote{font-size:10px}.empty-dictionary{padding:50px 16px}.empty-dictionary h2{font-size:22px}.empty-dictionary p{font-size:12px}.caregiver-form{padding:22px 17px}.input-count{flex-wrap:wrap;font-size:10px}textarea{font-size:18px}.form-note{font-size:10px;line-height:1.9}.toast{left:50%;bottom:18px;font-size:12px;padding:12px 17px;max-width:90vw}.large-text .phrase-card strong{font-size:23px}.large-text .phrase-caption{font-size:12px}.large-text .screen-heading h2{font-size:25px}.large-text .screen-heading p{font-size:15px}.large-text .step-actions>.primary{font-size:15px;width:100%;flex-basis:100%}.large-text .gesture-option{display:flex;flex-direction:column;text-align:center}.large-text .gesture-option strong{font-size:19px}.large-text .review-binding strong{font-size:21px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style></head><body><div id="setup-app"></div><script type="module">// This store is deliberately separate from device settings and production dictionaries.
+const STORAGE_KEY = 'headvoice:dictionary-prototype:v1';
+const GESTURES = [
+  {id:'open_palm', title:'张开手掌', subtitle:'五指自然张开，掌心朝向摄像头', icon:'palm'},
+  {id:'v_sign', title:'V 字手势', subtitle:'伸出食指和中指，其余手指收起', icon:'victory'},
+];
+const PHRASES = [
+  {id:'water', text:'我想喝水', caption:'喝一点水', icon:'water', tone:'blue'},
+  {id:'rest', text:'我想休息', caption:'安静地休息一会儿', icon:'rest', tone:'lilac'},
+  {id:'help', text:'请过来帮我', caption:'需要有人在身边', icon:'help', tone:'peach'},
+  {id:'toilet', text:'我想上厕所', caption:'需要协助去洗手间', icon:'toilet', tone:'sand'},
+  {id:'cold', text:'我觉得冷', caption:'想加一件衣服', icon:'cold', tone:'mint'},
+  {id:'company', text:'陪我坐一会儿', caption:'想和你待在一起', icon:'company', tone:'rose'},
+];
+function blankDraft() { return {text:'', phraseId:null, gesture:null, samples:0, confirmed:false, editId:null}; }
+function validateBinding(draft, entries) {
+  if (!draft.text?.trim() || draft.text.trim().length > 60) return '请填写 1–60 字的表达。';
+  if (!GESTURES.some(g=>g.id===draft.gesture)) return '请选择一种手势。';
+  if (entries.some(e=>e.gesture===draft.gesture && e.id!==draft.editId)) return '这个手势已有含义，请编辑原词条或选择另一种手势。';
+  if (draft.samples!==3) return '请完成三次演示采集。';
+  if (draft.confirmed!==true) return '请先核对手势和表达，再确认保存。';
+  return null;
+}
+function readEntries(storage) {
+  try {
+    const raw=storage.getItem(STORAGE_KEY);
+    if (!raw) return {entries:[],error:null};
+    const saved=JSON.parse(raw), gestures=new Set(), ids=new Set();
+    if (saved.version!==1 || !Array.isArray(saved.entries)) throw new Error('invalid');
+    for (const e of saved.entries) {
+      if (!e || typeof e.id!=='string' || !e.id || ids.has(e.id) || typeof e.text!=='string' || !e.text.trim() || e.text.length>60 ||
+          !GESTURES.some(g=>g.id===e.gesture) || gestures.has(e.gesture) || e.status!=='demo' ||
+          typeof e.updatedAt!=='string' || !Number.isFinite(Date.parse(e.updatedAt))) throw new Error('invalid');
+      ids.add(e.id); gestures.add(e.gesture);
+    }
+    return {entries:saved.entries,error:null};
+  } catch { return {entries:[],error:'无法读取本机演示词典。原数据未覆盖，请检查浏览器存储。'}; }
+}
+function writeEntries(storage, entries) {
+  try { storage.setItem(STORAGE_KEY, JSON.stringify({version:1, entries})); return null; }
+  catch { return '浏览器未能保存，请允许本地存储后重试。'; }
+}
+
+function icon(name, size=22) {
+  const paths={
+    plus:'<path d="M12 5v14M5 12h14"/>', book:'<path d="M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-3H4zM13 7a3 3 0 0 1 3-3h4v14h-3a4 4 0 0 0-4 3"/>',
+    grid:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>',
+    check:'<path d="m5 12 4 4L19 6"/>', arrow:'<path d="M5 12h14m-6-6 6 6-6 6"/>', back:'<path d="M19 12H5m6-6-6 6 6 6"/>',
+    sound:'<path d="M11 4 6 8H3v8h3l5 4zM15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>',
+    monitor:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/>',
+    help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 8.5a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4M12 16h.01"/>',
+    person:'<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+    edit:'<path d="m14 5 5 5M4 20l5-1L20 8a2 2 0 0 0-5-5L4 14z"/>',
+    trash:'<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v6m4-6v6"/>',
+    pause:'<path d="M8 5v14M16 5v14"/>', play:'<path d="m8 4 12 8-12 8z"/>',
+    reset:'<path d="M3 4v6h6M3 10a9 9 0 1 1 2 9"/>', shield:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/>',
+    link:'<path d="m10 13 4-4M8 16l-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2-2 2-2a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0" transform="translate(1 1) scale(.9)"/>',
+    close:'<path d="m6 6 12 12M6 18 18 6"/>',
+  };
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]||paths.help}</svg>`;
+}
+// Purpose-built vector illustrations, intentionally distinct from camera images.
+function illustration(name) {
+  const art={
+    water:'<ellipse cx="80" cy="111" rx="43" ry="7" fill="#d5e6e8"/><path d="M49 28h60l-6 73q-23 12-48 0z" fill="#fff" stroke="#497b87" stroke-width="3"/><path d="M53 65q12-7 24 0t26 0l-3 33q-21 10-42 0z" fill="#80bac9"/><path d="M63 39v15M61 75l2 17" stroke="white" stroke-width="4" stroke-linecap="round"/><path d="M121 27c0 6 9 6 9 0 0-4-4-9-4-9s-5 5-5 9" fill="#97c4d0"/>',
+    rest:'<ellipse cx="80" cy="113" rx="53" ry="6" fill="#ddd8e9"/><path d="M30 75h100v30H30z" fill="#b5a3cd" stroke="#75638c" stroke-width="3"/><path d="M30 56v56m100-44v44M32 68h42v19H32" fill="#fff" stroke="#75638c" stroke-width="3" stroke-linejoin="round"/><path d="M74 66h42q14 0 14 14v8H74z" fill="#e1d9ef" stroke="#75638c" stroke-width="3"/><path d="M103 21a17 17 0 1 0 22 22 17 17 0 0 1-22-22" fill="#b4a0cf"/><path d="m70 32 3 5 6 1-5 4 1 6-5-3-5 3 1-6-5-4 6-1z" fill="#ccb9e1"/>',
+    help:'<ellipse cx="80" cy="112" rx="46" ry="6" fill="#ead6cb"/><path d="M35 83 61 68q7-4 12 2l13 11 15-13q6-5 11 0l15 17-29 24H64z" fill="#dca68b"/><path d="m28 86 18 25 15-10-18-26z" fill="#608b7c"/><path d="m130 88-18 23-14-12 17-25z" fill="#f5f2e7" stroke="#ab806b" stroke-width="2"/><path d="m62 77 15 12q5 4 9-1l9-9M72 97l9 7m0-15 12 11" fill="none" stroke="#9c6d57" stroke-width="2.5" stroke-linecap="round"/><path d="M80 54S59 42 59 31c0-13 17-15 21-4 5-11 21-9 21 4 0 11-21 23-21 23" fill="#ca8168"/>',
+    toilet:'<ellipse cx="80" cy="114" rx="42" ry="6" fill="#e6dfca"/><rect x="44" y="28" width="51" height="43" rx="6" fill="#faf9f1" stroke="#8e896c" stroke-width="3"/><path d="M46 72h74q0 28-30 28l4 12H66l5-19q-25-7-25-21" fill="#efecdd" stroke="#8e896c" stroke-width="3"/><rect x="41" y="66" width="81" height="9" rx="4.5" fill="#c7c3a4" stroke="#8e896c" stroke-width="2"/><path d="M77 40h8" stroke="#8e896c" stroke-width="4" stroke-linecap="round"/>',
+    cold:'<ellipse cx="80" cy="113" rx="46" ry="6" fill="#d3e3d7"/><path d="m62 31-25 14-14 29 20 10 9-17v42h56V67l9 17 20-10-14-29-25-14q-18 17-36 0" fill="#91b8a0" stroke="#4e7c65" stroke-width="3" stroke-linejoin="round"/><path d="M64 31q16 26 32 0M59 96h42M80 47v48" fill="none" stroke="#4e7c65" stroke-width="3"/><path d="m28 22 6 6m-6 0 6-6m98-3v12m-5-9 10 6m-10 0 10-6" stroke="#8ab69c" stroke-width="2.5" stroke-linecap="round"/>',
+    company:'<ellipse cx="80" cy="113" rx="52" ry="6" fill="#e8d7da"/><circle cx="55" cy="48" r="16" fill="#d8a98e"/><circle cx="105" cy="48" r="16" fill="#e1b69d"/><path d="M39 43q0-20 17-20 17 0 17 22l-12-10-21 10" fill="#7e8078"/><path d="M89 42q0-19 17-19 17 0 17 22l-13-9-20 9" fill="#a09693"/><path d="M29 108V86q0-23 26-23t26 23v22" fill="#769b91"/><path d="M80 108V86q0-23 25-23t26 23v22" fill="#c9969d"/><path d="m64 82 16 14 17-14" fill="none" stroke="#f6eee8" stroke-width="7" stroke-linecap="round"/><path d="M78 33s-10-6-10-11 8-7 10-2c3-5 11-4 11 2s-11 11-11 11" fill="#ca8c98"/>',
+    palm:'<path d="M57 111 40 78q-6-12 2-15 7-3 14 11V37q0-12 10-12 8 0 8 12v22-41q0-11 9-11t9 11v40-34q0-11 9-11t9 11v39-26q0-11 9-11t9 11v45q0 31-18 39z" fill="#e6c3a7" stroke="#9f785f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M75 79q19-13 35 0M83 88v13" fill="none" stroke="#c69a7b" stroke-width="2.5" stroke-linecap="round"/>',
+    victory:'<path d="m62 68-9-46q-3-12 6-14t12 10l12 40 16-41q4-10 12-6t4 15L99 72q15-8 22 2l-2 27q-2 18-20 21H72q-18-2-22-19l-6-22q-2-13 8-13 7 0 10 10z" fill="#e6c3a7" stroke="#9f785f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M64 70q7-10 16-3l12 13q5 8-2 13-6 4-12-4l-13-12M96 68l12 12q5 8-3 12" fill="none" stroke="#9f785f" stroke-width="3" stroke-linecap="round"/>',
+  };
+  return `<svg viewBox="0 0 160 132" fill="none" aria-hidden="true">${art[name]||art.help}</svg>`;
+}
+
+
+const root=document.querySelector('#setup-app');
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let storage;
+try { storage=window.localStorage; } catch { storage={getItem(){throw Error();},setItem(){throw Error();}}; }
+let {entries,error:storageError}=readEntries(storage);
+let draft=blankDraft(), view='setup', step=1, mode='cards', large=false, busy=false, saved=null;
+let scanning=false, scanIndex=-1, scanTimer=null, captureTimer=null, toastTimer=null;
+const gesture=()=>GESTURES.find(g=>g.id===draft.gesture);
+const phrase=()=>PHRASES.find(p=>p.id===draft.phraseId);
+
+root.innerHTML=`
+  <a class="skip-link" href="#content">跳到主要内容</a>
+  <aside class="sidebar">
+    <a class="brand" href="./gesture-setup-preview.html"><span class="brand-emblem">颔</span><span>颔语<small>GESTURE BRIDGE</small></span></a>
+    <div class="nav-caption">我的沟通空间</div>
+    <nav aria-label="主导航">
+      <button class="nav-item active" data-nav="setup">${icon('plus')}<span>手势建库</span><i></i></button>
+      <button class="nav-item" data-nav="dictionary">${icon('book')}<span>我的词典</span><b id="dictionary-count">0</b></button>
+      <button class="nav-item" data-action="standalone-device">${icon('monitor')}<span>设备控制</span>${icon('arrow',16)}</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="gentle-note"><span class="note-symbol">“</span><p>每一个小动作，<br>都有想说的话。</p><span class="little-line"></span></div>
+    <button class="help-link" data-action="help">${icon('help',19)} 建库使用说明</button>
+    <div class="sidebar-foot">HEADVOICE <span>设计预览 · v1</span></div></div>
+  </aside>
+  <div class="app-body">
+    <header class="topbar"><div class="breadcrumb">控制面板 <span>/</span> <strong id="crumb">手势建库</strong></div><div class="top-actions"><span class="demo-tag"><i></i>交互原型</span><button class="size-toggle" data-action="font" aria-pressed="false" aria-label="切换大字模式">A<span>大字</span></button><span class="profile-dot" aria-label="个人词典">${icon('person',19)}</span></div></header>
+    <main id="content" tabindex="-1"></main>
+    <footer class="page-footer"><span>颔语 · 让表达更简单</span><span>${icon('shield',14)} 演示数据仅保存在此浏览器</span></footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="dialog" aria-labelledby="dialog-title"><div id="dialog-content"></div></dialog>`;
+
+function notify(message) {
+  const toast=document.querySelector('#toast'); toast.textContent=message; toast.hidden=false;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{toast.hidden=true;},5000);
+}
+function stopScan() { scanning=false; scanIndex=-1; clearInterval(scanTimer); scanTimer=null; }
+function stopCapture() { clearTimeout(captureTimer); captureTimer=null; busy=false; }
+function stopSpeech() { window.speechSynthesis?.cancel(); }
+function speak(text) {
+  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) { notify('此浏览器无法朗读，请查看文字或由照护者协助。'); return; }
+  stopSpeech();
+  const u=new SpeechSynthesisUtterance(text); u.lang='zh-CN'; u.rate=.85;
+  u.onerror=()=>notify('朗读未完成，请查看文字或由照护者协助。');
+  window.speechSynthesis.speak(u);
+  notify('正在请求浏览器朗读，请核对声音。');
+}
+function showDialog(title, body, actions='') {
+  stopScan(); stopCapture();
+  document.querySelector('#dialog-content').innerHTML=`<div class="dialog-head"><h2 id="dialog-title">${title}</h2><button class="icon-button" data-action="close-dialog" aria-label="关闭">${icon('close')}</button></div>${body}<div class="dialog-actions">${actions||'<button class="primary" data-action="close-dialog">知道了</button>'}</div>`;
+  document.querySelector('#dialog').showModal();
+}
+function focusHeading() { document.querySelector('#screen-title')?.focus({preventScroll:true}); }
+function reset() { stopScan(); stopCapture(); stopSpeech(); draft=blankDraft(); step=1; mode='cards'; saved=null; view='setup'; }
+function navigate(next) {
+  stopScan(); stopCapture(); stopSpeech(); view=next; render(); focusHeading();
+}
+function stepper() {
+  return `<ol class="steps" aria-label="建库进度">${['选择含义','录入手势','确认绑定'].map((label,i)=>`<li class="${step===i+1?'current':step>i+1?'done':''}" ${step===i+1?'aria-current="step"':''}><span class="step-number">${step>i+1?icon('check',16):`0${i+1}`}</span><span>${label}</span>${i<2?'<span class="step-line"></span>':''}</li>`).join('')}</ol>`;
+}
+function summary() {
+  const p=phrase(), g=gesture();
+  return `<aside class="summary-column"><section class="binding-card"><div class="card-overline">这一次，想说的话</div><div class="summary-picture ${p?.tone||'mint'}">${p?illustration(p.icon):illustration('help')}</div><h3 id="summary-text">${esc(draft.text)||'等待选择含义'}</h3><p id="summary-caption">${draft.text?'这句话将与一个手势固定绑定。':'从左边选一张图卡，慢慢来。'}</p><div class="binding-divider"><span></span>${icon('link',18)}<span></span></div><div class="summary-gesture"><span>${g?illustration(g.icon):icon('plus',24)}</span><div><small>对应手势</small><strong>${g?g.title:'下一步录入'}</strong></div></div><div class="summary-state">${icon('shield',15)} ${saved?'已存为本机演示词条':'未写入设备词典'}</div></section>
+    <section class="tip-card"><span class="tip-icon">${icon('help',20)}</span><div><h3>让老人参与决定</h3><p>可以指一指、点一点，或由照护者协助。没有回应时，先等一等。</p></div></section>
+    <p class="prototype-note">当前为设计预览。录入使用模拟样本，不采集摄像头画面，也不改变设备设置。</p></aside>`;
+}
+function phraseCard(p,i) {
+  return `<button class="phrase-card ${p.tone} ${draft.phraseId===p.id?'selected':''} ${scanIndex===i?'scanning':''}" data-phrase="${p.id}" aria-pressed="${draft.phraseId===p.id}" aria-label="${p.text}"><span class="selection-mark">${icon('check',14)}</span><span class="phrase-art">${illustration(p.icon)}</span><strong>${p.text}</strong><span class="phrase-caption">${p.caption}</span></button>`;
+}
+function meaningScreen() {
+  return `<div class="screen-heading"><div><span class="eyebrow">第一步 · 选一句想说的话</span><h2 id="screen-title" tabindex="-1">您想用手势表达什么？</h2><p>选中一张图卡，就可以开始。不需要开口说话。</p></div><button class="quiet-button read-button" data-action="read">${icon('sound',19)} 朗读提示</button></div>
+    <div class="mode-switch" role="group" aria-label="选择含义的方式"><button data-mode="cards" aria-pressed="${mode==='cards'}">${icon('grid',17)} 图卡选择</button><button data-mode="caregiver" aria-pressed="${mode==='caregiver'}">${icon('edit',17)} 照护者填写</button></div>
+    ${mode==='cards'?`<div class="phrase-grid">${PHRASES.map(phraseCard).join('')}</div>
+    <div class="scan-bar"><span>${icon('play',17)} 不方便点击图卡？</span><button class="text-button" data-action="scan">${scanning?'暂停轮播':'试试逐项轮播'}</button>${scanning?'<button class="scan-pick" data-action="scan-pick">选中当前项</button>':''}</div><p class="scan-explanation">轮播可用“选中当前项”按钮或空格键选择；当前未接入手势选择。</p>`:
+    `<div class="caregiver-form"><span class="form-icon">${icon('edit',28)}</span><h3>替老人记下想说的话</h3><p>可以填写熟悉的称呼和日常表达，再请老人核对。</p><label for="custom-text">想表达的完整句子</label><textarea id="custom-text" rows="3" maxlength="60" placeholder="例如：请帮我拿一下眼镜">${esc(draft.text)}</textarea><div class="input-count"><span>简短、明确，保留老人的意思。</span><output id="text-count">${draft.text.length} / 60</output></div><div class="form-note">${icon('sound',18)} 本版支持文字填写与浏览器朗读；照护者语音录入待接入。</div></div>`}
+    <div class="step-actions"><button class="quiet-button" data-action="none">${icon('close',18)} 都不是 / 暂不设置</button><button class="primary" id="next-button" data-action="next" ${!draft.text.trim()?'disabled':''}>下一步：录入手势 ${icon('arrow',19)}</button></div>`;
+}
+function captureScreen() {
+  const conflict=entries.find(e=>e.gesture===draft.gesture && e.id!==draft.editId);
+  return `<div class="screen-heading"><div><span class="eyebrow">第二步 · 为这句话选一个动作</span><h2 id="screen-title" tabindex="-1">选一个做起来舒服的手势</h2><p>以后做出这个手势，就表达「${esc(draft.text)}」。</p></div></div>
+    <div class="gesture-options">${GESTURES.map(g=>`<button class="gesture-option ${draft.gesture===g.id?'selected':''}" data-gesture="${g.id}" aria-pressed="${draft.gesture===g.id}" ${busy?'disabled':''}><span>${illustration(g.icon)}</span><strong>${g.title}</strong><small>${entries.some(e=>e.gesture===g.id && e.id!==draft.editId)?'已有词条绑定':'可选择'}</small>${draft.gesture===g.id?icon('check',19):''}</button>`).join('')}</div>
+    ${conflict?`<div class="inline-alert" role="alert">${gesture().title}已绑定「${esc(conflict.text)}」。请选择另一手势，或到“我的词典”编辑原词条。</div>`:''}
+    <section class="capture-panel"><div class="capture-demo"><span class="sample-tag">${icon('monitor',14)} 手势示意 · 非摄像头画面</span><div class="capture-frame ${busy?'capturing':''}"><i></i><i></i><i></i><i></i>${illustration(gesture()?.icon||'palm')}</div><strong>${busy?'正在演示采集…':draft.samples===3?'三次演示采集已完成':gesture()?.subtitle||'请先选择一种手势'}</strong><span>真实录入时由开发板摄像头采集</span></div>
+    <div class="capture-controls"><h3>每次做完，放松一下</h3><p>重复三次，体验录入流程。这里不会训练模型或判断动作是否正确。</p><ol class="sample-slots">${[1,2,3].map(n=>`<li class="${draft.samples>=n?'complete':''}"><span>${draft.samples>=n?icon('check',15):n}</span>第 ${n} 次<small>${draft.samples>=n?'模拟完成':'等待演示'}</small></li>`).join('')}</ol>
+    <button class="primary full" data-action="capture" ${!draft.gesture||conflict||busy||draft.samples===3?'disabled':''}>${icon('play',18)} ${busy?'演示中…':draft.samples===3?'演示采集已完成':'演示采集一次'}</button><button class="quiet-button full" data-action="recapture" ${!draft.samples||busy?'disabled':''}>${icon('reset',16)} 重新采集</button></div></section>
+    <p class="under-note">当前仅展示张掌与 V 字。录入新动作所需的个性化学习尚未实现；演示完成不代表设备已学会。</p>
+    <div class="step-actions"><button class="quiet-button" data-action="back">${icon('back',18)} 返回选含义</button><button class="primary" data-action="next" ${draft.samples!==3||conflict?'disabled':''}>下一步：确认绑定 ${icon('arrow',19)}</button></div>`;
+}
+function confirmScreen() {
+  return `<div class="screen-heading"><div><span class="eyebrow">第三步 · 一起核对一下</span><h2 id="screen-title" tabindex="-1">这个手势，是这个意思吗？</h2><p>确认后，同一手势固定对应同一句表达。</p></div></div>
+    <div class="review-binding"><div class="review-hand">${illustration(gesture().icon)}<strong>${gesture().title}</strong></div><span class="review-arrow">${icon('arrow',28)}<small>表示</small></span><div class="review-meaning ${phrase()?.tone||'mint'}">${illustration(phrase()?.icon||'help')}<strong>${esc(draft.text)}</strong></div></div>
+    <button class="read-review" data-action="read">${icon('sound',20)} 听听这句话</button>
+    <div class="confirmation-box"><h3>请先核对，再保存</h3><p>实际使用时，请通过老人可用的沟通方式确认。此处的点击只用于演示，不记录为老人本人已确认。</p><label><input id="confirmed" type="checkbox" ${draft.confirmed?'checked':''}><span>我已核对这条演示绑定</span></label></div>
+    <div class="save-destination">${icon('monitor',18)} 保存位置：此浏览器的演示词典 <span>设备同步待接入</span></div>
+    <div class="step-actions"><button class="quiet-button" data-action="back">${icon('back',18)} 返回修改</button><button class="primary" id="save-button" data-action="save" ${!draft.confirmed||storageError?'disabled':''}>${icon('check',19)} 保存演示词条</button></div>`;
+}
+function successScreen() {
+  return `<section class="success-screen"><span class="success-icon">${icon('check',34)}</span><span class="eyebrow">已保存到本机演示词典</span><h2 id="screen-title" tabindex="-1">一个手势，多了一句表达。</h2><p>${gesture().title} <span>→</span> <strong>${esc(saved.text)}</strong></p><div class="success-note">这是本机演示记录，尚未同步到开发板。<br>真实识别、设备播报和老人独立使用仍需接入并验证。</div><div class="success-actions"><button class="primary" data-nav="dictionary">查看我的词典 ${icon('arrow',19)}</button><button class="secondary" data-action="new">${icon('plus',19)} 再添加一句</button></div></section>`;
+}
+function dictionaryScreen() {
+  return `<div class="page-title-row"><div><span class="eyebrow">MY DICTIONARY</span><h1 id="screen-title" tabindex="-1">把想说的话，留在这里。</h1><p>每个手势对应一个固定含义，可以随时回来修改。</p></div><button class="primary" data-action="new">${icon('plus',19)} 添加表达</button></div>
+    <div class="dictionary-notice">${icon('monitor',19)} 本机演示词典 <span>${entries.length} 个词条 · 未同步设备</span></div>
+    ${entries.length?`<div class="dictionary-list">${entries.map(e=>{const g=GESTURES.find(g=>g.id===e.gesture);return `<article class="entry-card"><div class="entry-gesture">${illustration(g.icon)}</div><div class="entry-words"><span>${g.title} ${icon('arrow',15)}</span><h2>${esc(e.text)}</h2><small>演示词条 · ${new Date(e.updatedAt).toLocaleDateString('zh-CN')}</small></div><div class="entry-actions"><button class="icon-button" data-speak="${esc(e.id)}" aria-label="朗读：${esc(e.text)}">${icon('sound')}</button><button class="icon-button" data-edit="${esc(e.id)}" aria-label="编辑：${esc(e.text)}">${icon('edit')}</button><button class="icon-button" data-delete="${esc(e.id)}" aria-label="删除：${esc(e.text)}">${icon('trash')}</button></div></article>`;}).join('')}</div>`:
+    `<section class="empty-dictionary"><span>${icon('book',43)}</span><h2>从一句常用的话开始</h2><p>还没有演示词条。可以先为“我想喝水”选一个手势。</p><button class="primary" data-action="new">${icon('plus',18)} 建立第一个词条</button></section>`}
+    <section class="dictionary-footnote">${icon('shield',18)} 已绑定的手势不会自动换成别的意思。修改需重新核对；删除仅影响本机演示数据。</section>`;
+}
+function render() {
+  document.querySelector('#dictionary-count').textContent=entries.length;
+  document.querySelector('#crumb').textContent=view==='setup'?'手势建库':'我的词典';
+  document.querySelectorAll('[data-nav]').forEach(n=>{n.classList.toggle('active',n.dataset.nav===view); if(n.classList.contains('nav-item')) n.setAttribute('aria-current',n.dataset.nav===view?'page':'false');});
+  document.querySelector('#content').innerHTML=(storageError?`<div class="inline-alert" role="alert">${esc(storageError)}</div>`:'')+(view==='dictionary'?dictionaryScreen():`
+    <div class="page-title-row"><div><span class="eyebrow">PERSONAL GESTURE DICTIONARY</span><h1>让熟悉的手势，<span>有自己的意思。</span></h1><p>一起建立专属于您的表达方式。</p></div><button class="quiet-button" data-action="help">${icon('help',18)} 如何开始</button></div>
+    ${stepper()}<div class="setup-layout"><section class="workflow-card">${saved?successScreen():step===1?meaningScreen():step===2?captureScreen():confirmScreen()}</section>${summary()}</div>`);
+}
+function selectPhrase(id) {
+  const p=PHRASES.find(p=>p.id===id); if(!p)return;
+  stopScan(); stopSpeech();
+  if(draft.text!==p.text){draft.samples=0; draft.confirmed=false;}
+  draft.text=p.text; draft.phraseId=p.id; render();
+  document.querySelector(`[data-phrase="${id}"]`)?.focus({preventScroll:true});
+}
+function tickScan() {
+  scanIndex=(scanIndex+1)%PHRASES.length;
+  document.querySelectorAll('[data-phrase]').forEach((node,i)=>node.classList.toggle('scanning',i===scanIndex));
+  notify(`当前选项：${PHRASES[scanIndex].text}。可按空格键选择。`);
+}
+function commit() {
+  if(storageError){notify(storageError);return;}
+  // Re-read before every mutation so an open tab cannot silently overwrite another tab.
+  const current=readEntries(storage); if(current.error){storageError=current.error; render();return;}
+  if(draft.editId && !current.entries.some(e=>e.id===draft.editId)){notify('原词条已被删除，请重新添加。');return;}
+  const problem=validateBinding(draft,current.entries); if(problem){notify(problem);return;}
+  const entry={id:draft.editId||crypto.randomUUID(), text:draft.text.trim(), gesture:draft.gesture,
+    phraseId:draft.phraseId, status:'demo', updatedAt:new Date().toISOString()};
+  const next=current.entries.filter(e=>e.id!==entry.id).concat(entry);
+  const error=writeEntries(storage,next); if(error){notify(error);return;}
+  entries=next; saved=entry; render(); focusHeading();
+}
+root.addEventListener('input',event=>{
+  if(event.target.id==='custom-text') {
+    draft.text=event.target.value; draft.phraseId=null; draft.confirmed=false; draft.samples=0;
+    document.querySelector('#text-count').textContent=`${draft.text.length} / 60`;
+    const summaryNode=document.querySelector('.summary-column');
+    if(summaryNode) summaryNode.outerHTML=summary();
+    document.querySelector('#next-button').disabled=!draft.text.trim();
+  }
+});
+root.addEventListener('change',event=>{
+  if(event.target.id==='confirmed') {draft.confirmed=event.target.checked;document.querySelector('#save-button').disabled=!draft.confirmed||!!storageError;}
+});
+root.addEventListener('click',event=>{
+  const b=event.target.closest('button'); if(!b||b.disabled)return;
+  if(b.dataset.nav){navigate(b.dataset.nav);return;}
+  if(b.dataset.phrase){selectPhrase(b.dataset.phrase);return;}
+  if(b.dataset.mode){stopScan();stopSpeech();mode=b.dataset.mode;render();document.querySelector(`[data-mode="${mode}"]`)?.focus();return;}
+  if(b.dataset.gesture){if(draft.gesture!==b.dataset.gesture){draft.gesture=b.dataset.gesture;draft.samples=0;draft.confirmed=false;}render();document.querySelector(`[data-gesture="${draft.gesture}"]`)?.focus();return;}
+  if(b.dataset.speak){const e=entries.find(e=>e.id===b.dataset.speak);if(e)speak(e.text);return;}
+  if(b.dataset.edit){const e=entries.find(e=>e.id===b.dataset.edit);if(!e)return;reset();draft={...blankDraft(),text:e.text,gesture:e.gesture,phraseId:PHRASES.some(p=>p.id===e.phraseId)?e.phraseId:null,editId:e.id};mode=draft.phraseId?'cards':'caregiver';render();focusHeading();return;}
+  if(b.dataset.delete){const e=entries.find(e=>e.id===b.dataset.delete);if(e)showDialog('删除这条演示词条？',`<p>「${esc(e.text)}」将从此浏览器移除，不会改变开发板。</p>`,`<button class="secondary" data-action="close-dialog">保留词条</button><button class="danger-button" data-remove="${esc(e.id)}">删除词条</button>`);return;}
+  if(b.dataset.remove){const current=readEntries(storage);if(current.error){notify(current.error);return;}const next=current.entries.filter(e=>e.id!==b.dataset.remove),error=writeEntries(storage,next);if(error){notify(error);return;}entries=next;document.querySelector('#dialog').close();render();notify('已删除本机演示词条。');return;}
+  switch(b.dataset.action){
+    case 'standalone-device':showDialog('设备控制在原面板中', '<p>这是可独立打开的设计原型。真实设备控制请使用项目中的原有控制面板。</p>');break;
+    case 'font':large=!large;document.body.classList.toggle('large-text',large);b.setAttribute('aria-pressed',large);break;
+    case 'help':showDialog('从一句话、一个手势开始',`<ol class="help-steps"><li><strong>选含义</strong><p>老人看图选择，或请照护者填写一句话。</p></li><li><strong>录手势</strong><p>选择舒服的动作。本版用三次模拟采集展示流程。</p></li><li><strong>核对并保存</strong><p>回读绑定后保存为本机演示词条。以后可在“我的词典”修改。</p></li></ol><div class="dialog-note">本版没有设备写入、摄像头采集和手势自动选择。不会将演示操作记为老人独立确认。</div>`);break;
+    case 'close-dialog':document.querySelector('#dialog').close();break;
+    case 'read':speak(step===1?(draft.text||'请选择您想用手势表达的话。可以选择喝水、休息、需要帮助，也可以暂不设置。'):draft.text);break;
+    case 'none':stopScan();showDialog('可以稍后再设置',`<p>没有合适的图卡，可以请照护者填写一句话，也可以先休息。当前内容尚未保存。</p>`,`<button class="secondary" data-action="pause-setup">暂不设置</button><button class="primary" data-action="custom">请照护者填写</button>`);break;
+    case 'pause-setup':document.querySelector('#dialog').close();reset();navigate('dictionary');break;
+    case 'custom':document.querySelector('#dialog').close();mode='caregiver';render();document.querySelector('#custom-text').focus();break;
+    case 'new':reset();render();focusHeading();break;
+    case 'next':stopScan();stopSpeech();if(step===1&&draft.text.trim()){step=2;}else if(step===2&&draft.samples===3&&!entries.some(e=>e.gesture===draft.gesture&&e.id!==draft.editId)){step=3;}render();focusHeading();break;
+    case 'back':stopScan();stopCapture();stopSpeech();draft.confirmed=false;step=Math.max(1,step-1);render();focusHeading();break;
+    case 'scan':if(scanning){stopScan();render();}else{scanning=true;render();tickScan();scanTimer=setInterval(tickScan,3500);}document.querySelector('[data-action="scan"]')?.focus();break;
+    case 'scan-pick':if(scanning&&scanIndex>=0)selectPhrase(PHRASES[scanIndex].id);break;
+    case 'capture':if(!draft.gesture||draft.samples>=3||busy)return;busy=true;render();captureTimer=setTimeout(()=>{busy=false;draft.samples++;draft.confirmed=false;captureTimer=null;render();notify(`第 ${draft.samples} 次模拟采集完成。`);document.querySelector(draft.samples===3?'[data-action="next"]':'[data-action="capture"]')?.focus({preventScroll:true});},850);break;
+    case 'recapture':stopCapture();draft.samples=0;draft.confirmed=false;render();break;
+    case 'save':commit();break;
+  }
+});
+document.addEventListener('keydown',event=>{
+  if(scanning&&event.code==='Space'&&!['INPUT','TEXTAREA'].includes(event.target.tagName)){event.preventDefault();selectPhrase(PHRASES[scanIndex].id);}
+  if(scanning&&event.code==='Escape'){stopScan();render();}
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){stopScan();stopCapture();stopSpeech();render();}});
+window.addEventListener('pagehide',()=>{stopScan();stopCapture();stopSpeech();});
+window.addEventListener('storage',event=>{if(event.key===STORAGE_KEY||event.key===null){stopScan();stopCapture();const current=readEntries(storage);entries=current.entries;storageError=current.error;draft.confirmed=false;saved=null;render();notify('演示词典已在其他页面更新，请重新核对。');}});
+render();
+</script></body></html>

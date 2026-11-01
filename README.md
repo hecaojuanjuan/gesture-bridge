@@ -1,5 +1,7 @@
 # HeadVoice（颔语）第一阶段原型
 
+2026-11-01 新增[手势建库控制面板设计](docs/gesture-dictionary-panel-design-2026-11-01.md)：图卡选意、照护者填写、模拟录入、确认绑定与本机演示词典。可下载[独立 HTML 原型](artifacts/panel-design/gesture-setup-preview.html)后在浏览器打开，或启动 `panel` 开发服务器访问 `/setup.html`；[界面截图](artifacts/panel-design/)一并保存。100 项前端测试和生产构建通过；真实采集、设备词典和播报尚未接入。
+
 当前设备使用 ESP-DL 预训练模型，在板端识别**张开手掌与 V 字**。模型权重、来源与许可证见 [分类器集成说明](headvoice/third_party/hand_gesture_recognition/INTEGRATION.md)，部署和实测见 [2026-10-31 手势测试记录](docs/hand-gesture-tests-2026-10-31.md)。张掌已产生 1 次完成事件；两轮 V 字测试尚未产生完成事件，整体准确率未通过验收。用户已暂停改进，本次保存当前阶段成果，没有新增训练或硬件操作。
 
 此前成果与设计索引见 [2026-10-31 早期 GitHub 快照](docs/github-snapshot-2026-10-31.md)，包含面板、海报、外壳和历史实验。其验证边界保留当时状态；上述手势记录补充本次分类器部署与实测结果。
