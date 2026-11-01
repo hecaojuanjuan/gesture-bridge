@@ -1,0 +1,8 @@
+{
+  "url": "https://YOUR_BRIDGE_HOST/v1/gesture",
+  "token": "REPLACE_WITH_RANDOM_DEVICE_TOKEN_32_CHARS_MIN",
+  "bindings": {
+    "open_palm": "我想喝水。",
+    "v_sign": "我想休息一下。"
+  }
+}

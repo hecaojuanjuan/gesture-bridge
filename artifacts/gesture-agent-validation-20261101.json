@@ -1,0 +1,125 @@
+{
+  "date": "2026-11-01",
+  "status": "physical_text_route_and_audible_reply_verified_gesture_trigger_pending",
+  "sdk_commit": "89020f5e04bf777ae1672b8f3d320bc6e0ef3e0c",
+  "tests": {
+    "unittest": {
+      "passed": 152,
+      "command": "python3 -m unittest discover -s tests -v",
+      "log": ".local/gesture-agent-diagnostic-regression.log"
+    },
+    "production_core": {
+      "passed": true,
+      "command": "python3 tools/test_core.py"
+    },
+    "live_http_test": "localhost with stub upstream"
+  },
+  "sources_sha256": {
+    "headvoice/core/hv_gesture_prompt.c": "41c796c89e192c24f94f414a839be18c9e8a22d9fee336505a9ecbf6a710947a",
+    "headvoice/core/hv_gesture_prompt.h": "1b6e274e6cb368ea7242e96c05fb20c33aa69c14559a48f4a121d947e2f73b11",
+    "headvoice/core/hv_gesture_reply.c": "c12bb048cfa96de05b9d073579b712427dac46cd79a99b90fda0b2f3be68abf2",
+    "headvoice/core/hv_gesture_reply.h": "249fc8de1b6d9261ab3bc66283eb69308449b39c9d3f3904e7efbe87868d26b3",
+    "headvoice/firmware/hv_gesture_agent.c": "c3f05494f12a2f0d083a3458a57d8f540719ce9b33dd1f1d8599e204d1b2fc23",
+    "headvoice/firmware/hv_gesture_agent.h": "7af144d24e1ad21cf0e174a1fd8b4a909cc8294b0308c3209aa36239a381d48f",
+    "headvoice/firmware/hv_gesture_agent_port.h": "a766a35caf27be1db1f9d96b9793db579b06e4d91c54921fd51256f26b9b850c",
+    "headvoice/firmware/hv_gesture_agent_port.inc": "5e49bce514368cf2eb2472f317e77fbdbfce2811e9d394e9181fa83a940e4298",
+    "headvoice/firmware/hv_gesture_probe.c": "c35cebefc57232261946ea21f60ee249a93bf3aa4e173c0400967f39acf73cf9",
+    "headvoice/firmware/hv_gesture_probe.h": "957afe3db5ecbf37ab95ec1f4a39695c053a69653416b26a828da65f4f5f9b3e",
+    "headvoice/firmware/hv_hand_app.c": "04b16f226ee99fd052e28213fe2f2a20aa450ed0f0d2869e137fdde2a075b44e",
+    "headvoice/firmware/hv_voice_probe.c": "62dde58c004b3d9cec97d777fd1e0ddd1500f633137b7be237b2df59254339e1",
+    "headvoice/firmware/integration.cmake": "f27807d682a4dd40b8aae29aea761ab44ef1a299ecf8ede2b6bdc20bce135072",
+    "server/gesture_agent_bridge.py": "c941d77889e49e79068de6a53b34f637658ed2dd35ea877daf799cd646c15a87",
+    "tools/build.py": "852d430a201331f6488ccb7da462edb8f09ca91efcfae5c2d23612e462eaf871",
+    "tools/gesture_agent_config.py": "e7dfe4ad971475dbbc2775d466aa1ecd7dfef3e1042cc86bfefbd087b78ef955",
+    "tools/prepare_sdk.py": "cd60c0473400b0c17d2b0f785be57fd62ab607b7a37a1a9565d368137841cf1d",
+    "tools/probe_gesture_agent.py": "c675fa3a74a8c0bbdaa9c68db18cab0266cf0ca70576f6602efa20312a4b5388"
+  },
+  "live_validation": {
+    "bridge_deployed": false,
+    "merchant_credentials_used": true,
+    "physical_device_chat_route_verified": true,
+    "firmware_flashed": true,
+    "speaker_heard": true,
+    "h5_published": false,
+    "github_pushed": false,
+    "model_restored": true,
+    "application_and_model_flash_hash_verified": true,
+    "platform_binding_verified": true,
+    "platform_agent_id": 2703,
+    "platform_agent_name": "gesture_bridge",
+    "platform_welcome_messages_empty": true,
+    "prov_rst_stack_free_min_bytes": 1960,
+    "prov_rst_overflow_reobserved": false,
+    "diagnostic_startup_panics": 3,
+    "agent_inference_verified": true,
+    "real_gesture_trigger_verified": false,
+    "hardware_playback_completion_ack_verified": false
+  },
+  "external_dependency": "Physical PID/DID route verified. User selected Mac HTTPS bridge; network alignment and local credential configuration remain.",
+  "compile_configuration": "Enabled build uses a .invalid endpoint and test-only bridge token. Do not deploy this test binary.",
+  "official_frontend_sources": [
+    {
+      "url": "https://platform.ljyd.cn/assets/AssistantList-Y9y655oE.js",
+      "sha256": "048f06e899fa3f5bce0e12011b3c5afe91f152a42233003efdf7e74185177e77"
+    },
+    {
+      "url": "https://platform.ljyd.cn/assets/agent-7cahtG5T.js",
+      "sha256": "d2f6d4be7eadf4794771d71ce640999c91a13a86d3cdea0707a02f3cf452dddd"
+    },
+    {
+      "url": "https://platform.ljyd.cn/assets/request-BnVUanJf.js",
+      "sha256": "be9b319b2d0d68c0ec059828a5fe99d4a1e90008d6202b4e093f95c0cb831d75"
+    }
+  ],
+  "historical_builds": {
+    "enabled": {
+      "passed": true,
+      "binary": ".work/gesture-agent-check/apps/build/vb701n.bin",
+      "bytes": 3604640,
+      "sha256": "73b5f44ff8cb31b9e06556893ef1ca5a85d3f26c5aced45f0444041adc89c0c0",
+      "log": ".local/gesture-agent-build.log"
+    },
+    "disabled": {
+      "passed": true,
+      "binary": ".work/gesture-agent-disabled-check/apps/build/vb701n.bin",
+      "bytes": 3601008,
+      "sha256": "a610e93cceb850b0f16beb9d4cf40dc347f3f750c2eb08e8c3fb806119a9ce1a",
+      "log": ".local/gesture-agent-disabled-build.log"
+    }
+  },
+  "historical_builds_note": "Prior enabled/disabled compile results; work directories are mutable. Current diagnostic binary is archived separately below.",
+  "diagnostic_build": {
+    "passed": true,
+    "binary": ".local/gesture-agent-device-20261101/diagnostic-local-wdt.bin",
+    "bytes": 3605232,
+    "sha256": "f5e9c921568f7ae1bf216c4d55c045fa1458e3a11a23ed8693979393e0126c59",
+    "elf_sha256": "5c4014a6af953a5b8b94e6fd57d79b177caffc856b05722d4a971133a19e632a",
+    "log": ".local/gesture-agent-probe-local-wdt-build.log",
+    "bridge_configured": false,
+    "diagnostic_cli": true,
+    "wdt_rom": false,
+    "runtime_verified": false
+  },
+  "live_validation_note": "Two real text requests returned ok:true. Agent returned 42 without answer in prompt; user heard calculation result in second test. SDK reports ENOSYS at end because hardware DRAIN unsupported; automatic gesture entry still unverified.",
+  "device_backup": {
+    "path": ".local/gesture-agent-device-20261101/flash-before.bin",
+    "bytes": 16777216,
+    "sha256": "e1cc1dcb5b6c235091fc07bc3710fc79ae545bea5fe8c71703021835ddaa32d6",
+    "preflight": ".local/gesture-agent-device-20261101/preflight.json",
+    "deployment": ".local/gesture-agent-device-20261101/diagnostic-deploy.json",
+    "startup_log": ".local/gesture-agent-device-20261101/startup-after.jsonl",
+    "latest_deployment": ".local/gesture-agent-device-20261101/diagnostic-local-wdt-deploy.json"
+  },
+  "diagnostic_rom_attempt": {
+    "passed": true,
+    "binary": ".local/gesture-agent-device-20261101/diagnostic-rom.bin",
+    "bytes": 3603936,
+    "sha256": "002a7c381a333f0e73d567816d9b233da62b77e203b68555dcd0ea610aa986b7",
+    "elf_sha256": "d3de9ba989aab127eae67c9f85a3dcdf274f33f4a2ca29ff436a6a1aa3f35578",
+    "log": ".local/gesture-agent-probe-build.log",
+    "bridge_configured": false,
+    "diagnostic_cli": true,
+    "wdt_rom": true
+  },
+  "live_route_evidence": "artifacts/gesture-agent-live-route-20261101.json"
+}

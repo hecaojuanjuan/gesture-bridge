@@ -91,6 +91,14 @@ static esp_err_t yolo11_pose_uyvy_to_rgb888(const uint8_t *input, size_t length,
 HARNESS = r'''
 #include "headvoice/firmware/hv_hand_app.c"
 
+static unsigned agent_submissions;
+esp_err_t hv_gesture_agent_init(void) { return ESP_OK; }
+void hv_gesture_agent_submit(hv_hand_gate_event_t event, uint64_t captured) {
+  assert(event != HV_HAND_GATE_EVENT_NONE && captured <= clock_ms);
+  ++agent_submissions;
+  printf("HG {\"event\":\"agent_submit\",\"kind\":%d}\n", (int)event);
+}
+
 static unsigned detected_count = 1;
 static bool detector_fault, fault_during_detector;
 static unsigned detector_calls, offered_inputs;
@@ -405,6 +413,7 @@ class HandAppIntegrationTests(unittest.TestCase):
     def test_actual_classifier_gate_and_watchdog_integration(self):
         rows = self.compile_and_run(True)
         events = [row for row in rows if row["event"] == "gesture"]
+        self.assertEqual(len([row for row in rows if row["event"] == "agent_submit"]), len(events))
         self.assertEqual([row["gesture"] for row in events], ["open_palm", "closed_fist", "closed_fist", "open_palm"])
         self.assertEqual(events[-1]["palm_count"], 2)
         self.assertEqual(events[-1]["fist_count"], 2)
@@ -448,6 +457,7 @@ class HandAppIntegrationTests(unittest.TestCase):
         self.assertFalse(ready["servo_control"])
         self.assertEqual(len(ready["model_sha256"]), 64)
         events = [row for row in rows if row["event"] == "gesture"]
+        self.assertEqual(len([row for row in rows if row["event"] == "agent_submit"]), len(events))
         self.assertEqual([row["gesture"] for row in events], ["open_palm", "v_sign", "v_sign", "open_palm", "v_sign"])
         self.assertEqual((events[-1]["palm_count"], events[-1]["v_count"]), (2, 3))
         self.assertTrue(all(row["classifier"] == "espdl_gesture11" and "fist_count" not in row for row in events))

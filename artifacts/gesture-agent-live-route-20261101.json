@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-01",
+  "status": "text_to_agent_to_physical_voice_verified",
+  "pid": 11785,
+  "did": "100000766",
+  "agent_name": "gesture_bridge",
+  "agent_config_id": 2703,
+  "app_sha256": "f5e9c921568f7ae1bf216c4d55c045fa1458e3a11a23ed8693979393e0126c59",
+  "request_math": "17 + 25; answer deliberately absent from each prompt",
+  "physical_device_text_route_verified": true,
+  "agent_inference_verified": true,
+  "audible_reply_verified": true,
+  "speech_completion_hardware_ack_verified": false,
+  "real_gesture_trigger_verified": false,
+  "automatic_bridge_deployed": false,
+  "trials": [
+    {
+      "marker": "GB8D2F07C3",
+      "start_utc": "2026-11-01T03:28:33.168819+00:00",
+      "end_utc": "2026-11-01T03:28:59.640250+00:00",
+      "http": {
+        "source": "authenticated official webpage module through Chrome UI",
+        "ok": true,
+        "status": 0,
+        "message": "OK"
+      },
+      "tts_chunks": [
+        "编号 GB8D2F07C3，",
+        "答案是42"
+      ],
+      "reprocessed_serial_evidence": {
+        "matching_agent_reply_observed": true,
+        "matching_tts_reply_observed": true,
+        "playback_started_observed": true,
+        "playback_generation_completed_observed": false,
+        "diagnostic_session_ready": true,
+        "diagnostic_session_ended": true,
+        "failure": "playback_failed",
+        "physical_audio_verified": false
+      },
+      "human_observation": "User heard sound, could not identify words.",
+      "raw_log": ".local/gesture-agent-device-20261101/route-local-wdt.jsonl",
+      "raw_sha256": "5be3d8d016df742ec29274ac4c011325b4e74ec4f45617738331c06cc2dbbb5d"
+    },
+    {
+      "marker": "GB30C7A915",
+      "start_utc": "2026-11-01T03:31:31.678311+00:00",
+      "end_utc": "2026-11-01T03:32:28.123484+00:00",
+      "http": {
+        "source": "authenticated official webpage module through Chrome UI",
+        "ok": true,
+        "status": 0,
+        "message": "OK"
+      },
+      "tts_chunks": [
+        "计算结果是42。",
+        "本次编号为GB30C7A915"
+      ],
+      "reprocessed_serial_evidence": {
+        "matching_agent_reply_observed": true,
+        "matching_tts_reply_observed": true,
+        "playback_started_observed": true,
+        "playback_generation_completed_observed": false,
+        "diagnostic_session_ready": true,
+        "diagnostic_session_ended": true,
+        "failure": "playback_failed",
+        "physical_audio_verified": false
+      },
+      "human_observation": "User confirmed: 计算结果为42 编号是...",
+      "raw_log": ".local/gesture-agent-device-20261101/route-listen-repeat.jsonl",
+      "raw_sha256": "5737680edb0d2b08c5949de605708a584369b77da607a21b170a69ce0c0da45f"
+    }
+  ],
+  "remaining": [
+    "Deploy local HTTPS bridge selected by user",
+    "Connect Mac and device on reachable network",
+    "Configure explicit test gesture mapping",
+    "Verify real gesture, hold deduplication and release/repeat",
+    "Fix local render queue drain before unsupported hardware completion result"
+  ],
+  "sdk_audio_finding": "VB701N lacks DRAIN capability; current SDK returns ENOSYS before local render queue drain. Do not report physical playback complete.",
+  "credentials_exported": false
+}

@@ -47,6 +47,27 @@ def reentrant_mqtt(source):
                    'strtok_r(NULL, delim, &context)')
 
 
+def drain_local_audio_before_unsupported(source):
+    """Do not cancel queued audio merely because hardware cannot ack playback.
+
+    ENOSYS remains ENOSYS: finishing local writes is not physical completion.
+    The existing deadline, abort and write-error handling still own the wait.
+    """
+    source = replace(source,
+        '    if ((engine->caps.flags & QM_AUDIO_DEVICE_CAP_DRAIN) == 0U) {\n'
+        '        (void)qm_mutex_unlock(&engine->lock);\n'
+        '        return -QM_ENOSYS;\n'
+        '    }\n', '')
+    return replace(source,
+        '    if (io_reserved) {\n'
+        '        ret = qm_audio_normalize_result(qm_audio_device_playback_drain(\n',
+        '    if (io_reserved) {\n'
+        '        /* Local writes must finish even without a physical drain ACK.\n'
+        '         * Keep ENOSYS: UART handoff does not prove audible completion. */\n'
+        '        ret = (engine->caps.flags & QM_AUDIO_DEVICE_CAP_DRAIN) == 0U ? -QM_ENOSYS :\n'
+        '            qm_audio_normalize_result(qm_audio_device_playback_drain(\n')
+
+
 def apply_cloud_identity(app, config_path=ROOT / ".local/cloud.json"):
     """Override only the copied app; keep credentials out of shared patches."""
     if not config_path.exists():
@@ -216,6 +237,12 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
     edit("qm_config/qm_config.h", lambda s: s +
          "\n/* HeadVoice: measured qm_agent_ctl overflow during Agora startup. */\n"
          "#define CONFIG_QM_AGENT_CONTROL_TASK_STACK_SIZE (8 * 1024)\n")
+    # With full newlib formatting enabled below, the 2048-byte provisioning
+    # task overflowed during GPIO initialization on the attached board.
+    # Preserve the reset button behavior; verify remaining stack on hardware.
+    edit("peripheral/bsp_io.c", lambda s: replace(
+        s, "#define BSP_RESET_TASK_STACK  2048",
+        "#define BSP_RESET_TASK_STACK  4096"))
     # Nano printf does not support the 64-bit timestamps in HV JSON logs.
     config_path = app / "sdkconfig"
     before = config_path.read_text(encoding="utf-8")
@@ -263,6 +290,20 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
         '    }\n#endif\n\n#if defined(CONFIG_QM_POMODORO_SUPPORT)'))
     edit("CMakeLists.txt", lambda s: s + '\ninclude("' +
          (ROOT / "headvoice/firmware/integration.cmake").as_posix() + '")\n')
+    if vision in ("hand", "face-hand"):
+        from gesture_agent_config import integrate_agent
+        edit("agent/agent_app.c", lambda s: integrate_agent(s, replace))
+        # Real VB701N EOS returned ENOSYS before pending render packets drained,
+        # letting cleanup cancel a reply's tail. Preserve unsupported completion.
+        probe_source("components/qm_audio/src/engine/qm_audio_engine.c",
+                     drain_local_audio_before_unsupported)
+        # A configured bridge sends a device credential to a new HTTPS host.
+        # Keep the SDK's CA bundle and require hostname verification there.
+        probe_source("platform/mcu/esp32s3/hal/net/qm_tls.c", lambda s: replace(
+            s, '    tls_handle->cfg.skip_common_name = true;',
+            '#if defined(HV_GESTURE_AGENT_CONFIG_HEADER)\n'
+            '    tls_handle->cfg.skip_common_name = false;\n'
+            '#else\n    tls_handle->cfg.skip_common_name = true;\n#endif'))
     # A native hand build reuses this existing data partition for a different,
     # explicitly deployed model. Never put the old COCO payload in flash_args.
     edit("pose/private/coco_pose/CMakeLists.txt", lambda s: replace(

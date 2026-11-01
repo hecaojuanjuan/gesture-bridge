@@ -7,6 +7,20 @@ set(HEADVOICE_VISION coco CACHE STRING "Vision backend: coco, face, hand or face
 set(HEADVOICE_FACE_SELFTEST 0 CACHE STRING "Run an isolated official face fixture before camera inference")
 set(HEADVOICE_HAND_WEIGHTS_FILE "" CACHE FILEPATH "Explicit trained hand classifier header; empty keeps detection-only")
 set(HEADVOICE_HAND_NATIVE_PARTITION "" CACHE STRING "Existing data partition containing the pinned ESP-DL hand gesture model; empty disables native classifier")
+set(HEADVOICE_GESTURE_AGENT_HEADER "" CACHE FILEPATH "Private gesture prompt bridge configuration")
+set(HEADVOICE_GESTURE_AGENT_PROBE 0 CACHE BOOL "Explicit credential-free diagnostic session CLI")
+if(HEADVOICE_GESTURE_AGENT_PROBE)
+  if(NOT HEADVOICE_VISION MATCHES "^(hand|face-hand)$")
+    message(FATAL_ERROR "Gesture agent probe requires a hand backend")
+  endif()
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE HV_GESTURE_AGENT_DIAGNOSTICS=1)
+endif()
+if(HEADVOICE_GESTURE_AGENT_HEADER)
+  if(NOT HEADVOICE_VISION MATCHES "^(hand|face-hand)$" OR NOT EXISTS "${HEADVOICE_GESTURE_AGENT_HEADER}")
+    message(FATAL_ERROR "Gesture agent requires a hand backend and a generated configuration header")
+  endif()
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE HV_GESTURE_AGENT_CONFIG_HEADER="${HEADVOICE_GESTURE_AGENT_HEADER}")
+endif()
 if(NOT HEADVOICE_VISION MATCHES "^(coco|face|hand|face-hand)$")
   message(FATAL_ERROR "HEADVOICE_VISION must be coco, face, hand or face-hand")
 endif()
@@ -62,6 +76,10 @@ target_sources(${COMPONENT_LIB} PRIVATE "${headvoice_root}/firmware/hv_camera_pr
 if(HEADVOICE_VISION MATCHES "^(hand|face-hand)$")
   target_sources(${COMPONENT_LIB} PRIVATE
     "${headvoice_root}/firmware/hv_hand_app.c"
+    "${headvoice_root}/firmware/hv_gesture_agent.c"
+    "${headvoice_root}/firmware/hv_gesture_probe.c"
+    "${headvoice_root}/core/hv_gesture_prompt.c"
+    "${headvoice_root}/core/hv_gesture_reply.c"
     "${headvoice_root}/firmware/hv_hand_detect.cpp"
     "${headvoice_root}/core/hv_hand_classifier.c"
     "${headvoice_root}/core/hv_hand_gate.c")

@@ -38,6 +38,7 @@
 #define HAND_SECOND_COUNT_JSON "\"fist_count\":%u,"
 #endif
 #include "hv_hand_gate.h"
+#include "hv_gesture_agent.h"
 #include "hv_panel.h"
 #include "hv_settings.h"
 #include "yolo11_pose.h"
@@ -408,6 +409,7 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
     bool confirmed = classified && state->gate.visible == state->gate.latched &&
                      is_target(state->gate.visible);
     if (event != HV_HAND_GATE_EVENT_NONE) {
+      hv_gesture_agent_submit(event, captured);
       if (event == HV_HAND_GATE_EVENT_OPEN_PALM) ++state->palmCount;
       else if (event == HV_HAND_GATE_EVENT_CLOSED_FIST) ++state->fistCount;
       else if (event == HV_HAND_GATE_EVENT_V_SIGN) ++state->vCount;
@@ -491,6 +493,7 @@ esp_err_t headvoice_start(void)
   if (ret != ESP_OK) return ret;
   ret = hv_hand_detect_init();
   if (ret != ESP_OK) return ret;
+  if (hv_gesture_agent_init() != ESP_OK) ESP_LOGW(TAG, "Gesture agent unavailable");
 #if HV_CENTERING
   ret = hv_face_pose_init();
   if (ret != ESP_OK) return ret;

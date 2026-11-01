@@ -43,6 +43,10 @@ if __name__ == "__main__":
     parser.add_argument("action", choices=["build", "flash", "monitor"],
                         default="build", nargs="?")
     parser.add_argument("--port")
+    parser.add_argument("--gesture-agent-config", type=Path,
+                        help="Private HTTPS bridge config with explicit fixed gesture meanings")
+    parser.add_argument("--gesture-agent-probe", action="store_true",
+                        help="Explicit diagnostic hg_agent session CLI; no bridge credential required")
     parser.add_argument("--baud", type=int, choices=[115200, 230400, 460800, 921600],
                         help="Flash baud rate; reduce it if the USB link has packet errors")
     parser.add_argument("--stage", choices=[1, 2, 3], type=int, default=3)
@@ -67,6 +71,13 @@ if __name__ == "__main__":
         parser.error("--vision face/hand requires headvoice without --gimbal")
     if vision in ("hand", "face-hand") and args.action == "build" and args.stage != 2:
         parser.error("--vision hand currently requires --stage 2")
+    if args.gesture_agent_config and (args.action != "build" or vision not in ("hand", "face-hand") or
+                                     not args.work_name or not args.gesture_agent_config.is_file()):
+        parser.error("--gesture-agent-config requires an isolated hand build and an existing config")
+    if args.gesture_agent_probe and (args.action != "build" or args.mode != "headvoice" or
+                                    vision not in ("hand", "face-hand") or not args.work_name or
+                                    args.work_name in ("headvoice", "baseline")):
+        parser.error("--gesture-agent-probe requires an isolated hand build")
     if args.hand_weights and (args.action != "build" or vision not in ("hand", "face-hand") or not args.hand_weights.is_file()):
         parser.error("--hand-weights requires a hand build and an existing generated model header")
     if args.hand_native_partition and (
@@ -113,7 +124,13 @@ if __name__ == "__main__":
     if args.action == "build":
         command += ["-DCMAKE_NINJA_FORCE_RESPONSE_FILE=ON"]
     if args.mode == "headvoice" and args.action == "build":
+        header = ""
+        if args.gesture_agent_config:
+            from gesture_agent_config import write_config
+            header = str(write_config(args.gesture_agent_config, app / "main/hv_config/gesture_agent.h"))
         command += [f"-DHEADVOICE_STAGE={args.stage}",
+                    f"-DHEADVOICE_GESTURE_AGENT_HEADER={header}",
+                    f"-DHEADVOICE_GESTURE_AGENT_PROBE={int(args.gesture_agent_probe)}",
                     f"-DHEADVOICE_ROTATE_CW90={int(args.rotate_cw90)}",
                     f"-DHEADVOICE_INVERT_TILT={int(args.invert_tilt)}",
                     f"-DHEADVOICE_GIMBAL={int(args.gimbal)}",

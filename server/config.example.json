@@ -1,0 +1,10 @@
+{
+  "environment": "prod",
+  "devices": [
+    {
+      "token_env": "GESTURE_DEVICE_TOKEN",
+      "pid": 11785,
+      "did": "REPLACE_WITH_PHYSICAL_DEVICE_DID"
+    }
+  ]
+}

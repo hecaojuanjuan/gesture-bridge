@@ -81,6 +81,11 @@ static void voice_command(char * buffer, int size, int argc, char ** argv)
       control ? "true" : "false", stack_free,
       (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
       (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+    TaskHandle_t reset = xTaskGetHandle("prov_rst");
+    qm_cli_printf(
+      "HVVOICERESET {\"reset_task_found\":%s,\"reset_stack_free_min_bytes\":%u}\r\n",
+      reset ? "true" : "false",
+      reset ? (unsigned)uxTaskGetStackHighWaterMark(reset) : 0);
     return;
   }
   if (argc == 2 && strcmp(argv[1], "net") == 0) {
