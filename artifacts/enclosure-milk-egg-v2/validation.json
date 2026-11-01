@@ -1,0 +1,70 @@
+{
+  "unit": "millimeter",
+  "assembled_height_mm": 45,
+  "parts": [
+    {
+      "name": "milk_egg_body",
+      "size_mm": [
+        168.0,
+        128.0,
+        41.0
+      ],
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_bodies": 1,
+      "volume_mm3": 146150.57385420124
+    },
+    {
+      "name": "milk_egg_lid",
+      "size_mm": [
+        163.2,
+        123.20000000000002,
+        4.0
+      ],
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_bodies": 1,
+      "volume_mm3": 39372.87846515468
+    },
+    {
+      "name": "optional_carrier_A",
+      "size_mm": [
+        46.0,
+        43.0,
+        4.199999809265137
+      ],
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_bodies": 1,
+      "volume_mm3": 4755.673411291711
+    },
+    {
+      "name": "optional_carrier_B",
+      "size_mm": [
+        46.0,
+        43.0,
+        4.199999809265137
+      ],
+      "watertight": true,
+      "winding_consistent": true,
+      "connected_bodies": 1,
+      "volume_mm3": 4755.673411291711
+    }
+  ],
+  "compatibility_boolean_checks_mm3": {
+    "original_body_material_removed": 3.2989107919774224e-05,
+    "original_lid_material_removed": 0.0,
+    "new_material_inside_original_body_envelope": 9.039816177725596e-13,
+    "assembled_body_lid_overlap": 4.72559254067475e-14
+  },
+  "independent_trimesh_import_passed": true,
+  "fit_verified": false,
+  "hardware_tested": false,
+  "notes": [
+    "Original interior, mounting slots and holes preserved.",
+    "Outer bulge adds approximately 4 mm per side.",
+    "Side, rear and speaker access cuts extend through skin.",
+    "Color metadata does not select printer filaments.",
+    "Gimbal sweep and real hardware fit remain unmeasured."
+  ]
+}

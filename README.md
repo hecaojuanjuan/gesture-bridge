@@ -1,4 +1,8 @@
-# HeadVoice（颔语）第一阶段原型
+# Gesture Bridge 第一阶段原型
+
+日常使用先看[Gesture Bridge 使用说明](docs/device-user-guide.md)：上电后做手势、看灯板反馈，打开小程序联网并进入控制面板，无需电脑网页调试。最近一次已部署的手势固件上电自动识别；该版不含舵机自动居中。换网、串口、按键和版本核对见[维护说明](docs/device-maintenance-guide.md)。
+
+[保存 Gesture Bridge 用户操作图](artifacts/user-guide/gesture-bridge-user-guide-v3.png)，仅保留 A 手势操作与 B 小程序联网两栏，灯色说明已与固件逻辑核对。
 
 2026-11-01 新增[手势 → prompt → agent → 语音链路实现](docs/gesture-agent-chain.md)：完成事件接固定词典、异步 HTTPS 中转、灵机聊天请求与 Agora 播放状态处理。141 项主机回归及 ESP32-S3 编译通过；需配置并部署中转后验证物理设备路由。未配置时保持原识别行为，本轮未烧录，真实云端回应与喇叭出声未验收。
 

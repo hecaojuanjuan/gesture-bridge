@@ -1,0 +1,61 @@
+{
+  "crown": "Ellipsoidal dome with a horizontal tangent at the pole",
+  "unit": "millimeter",
+  "overall_outer_mm": [
+    224,
+    180,
+    230
+  ],
+  "lower_shell_top_z_mm": 42.0,
+  "existing_case_bottom_z_mm": 2.4,
+  "existing_case_top_z_mm": 47.4,
+  "wall_nominal_radial_mm": 2.8,
+  "seam_radial_clearance_mm": 0.35,
+  "seam_vertical_clearance_mm": 0.25,
+  "tongue_depth_below_split_mm": 5.5,
+  "source": "artifacts/enclosure-v1/gesture-bridge-enclosure-v1.3mf",
+  "parts": [
+    {
+      "name": "lower_protective_shell",
+      "size_mm": [
+        216.0622968566378,
+        173.11924518764172,
+        42.0
+      ],
+      "watertight": true,
+      "connected_bodies": 1,
+      "volume_mm3": 124726.30422604596
+    },
+    {
+      "name": "upper_removable_cover",
+      "size_mm": [
+        224.0,
+        180.0,
+        193.5
+      ],
+      "watertight": true,
+      "connected_bodies": 1,
+      "volume_mm3": 390681.6817662132
+    }
+  ],
+  "boolean_overlap_mm3": {
+    "lower_vs_original_case": -9.149836807295654e-14,
+    "upper_vs_original_case": 0.0,
+    "upper_vs_lower": 0.0,
+    "inflated_case_envelope": -1.6132928326584306e-16,
+    "storage_proxy_108x92x44": 0.0
+  },
+  "independent_3mf_import_passed": true,
+  "physical_fit_verified": false,
+  "full_motion_verified": false,
+  "rgb_board_position_verified": false,
+  "support_required_upper_dome": true,
+  "support_settings_embedded": false,
+  "notes": [
+    "Original case is not part of the printable output.",
+    "Cap is removed for operation; no lock or seal is provided.",
+    "Wide front light window is provisional, not a custom LED fit.",
+    "Surface colors require slicer filament assignment.",
+    "2.8 mm inset is radial, not exact normal wall thickness."
+  ]
+}
