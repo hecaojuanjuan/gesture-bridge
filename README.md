@@ -1,4 +1,8 @@
-# HeadVoice（颔语）第一阶段原型
+# Gesture Bridge 第一阶段原型
+
+日常使用先看[Gesture Bridge 使用说明](docs/device-user-guide.md)：上电后做手势、看灯板反馈，打开小程序联网并进入控制面板，无需电脑网页调试。最近一次已部署的手势固件上电自动识别；该版不含舵机自动居中。换网、串口、按键和版本核对见[维护说明](docs/device-maintenance-guide.md)。
+
+[保存 Gesture Bridge 用户操作图](artifacts/user-guide/gesture-bridge-user-guide-v3.png)，仅保留 A 手势操作与 B 小程序联网两栏，灯色说明已与固件逻辑核对。
 
 2026-11-01 当前入口：[USB 手势表达工作台](docs/usb-gesture-workbench.md)负责真实设备控制，另保留图卡建库和本机演示词典，三个入口使用统一导航。通过 USB 写入并回读“张掌＝我想喝水”，观察真实手势、Agent 回复和播放状态；图卡演示词条不会自动同步到设备。词义保存在开发板 NVS，修改后无需重新编译；USB 配置仍需配合设备联网与 Mac 中转。单次识别及语音重连修复已上板；新增 `-7` 细分原因诊断已编译、未烧录。测试及实机边界见工作台说明，下方保留此前阶段记录。
 

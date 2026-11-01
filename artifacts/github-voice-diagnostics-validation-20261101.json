@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-01",
+  "purpose": "Publish current USB workbench, dictionary, single-shot behavior, session restart fix and detailed voice start diagnostics",
+  "local_feature_commit": "26f1fcb7e472f9de10e5ee9702821b1dc32c1aec",
+  "merged_remote_commit": "d14f066e8c65b171ff389993042b813f9de4de0a",
+  "remote_history_preserved": true,
+  "merge_conflicts": false,
+  "validation": {
+    "python_unittest_reported_tests": 169,
+    "python_unittest_exit": 0,
+    "python_known_limit": "Existing test_centering_integration catches the C compile failure for unused pan_before and returns; that C check is not counted as verified.",
+    "panel_tests_passed": 120,
+    "production_core_passed": true,
+    "diff_check_passed": true,
+    "panel_build_passed_in_preceding_diagnosis": true,
+    "firmware_build_passed_in_preceding_diagnosis": true,
+    "merged_code_matches_validated_diagnosis": true
+  },
+  "diagnostic_firmware": {
+    "application_sha256": "d40395ed65b5463e415400ef553220a7c6eaf7883b8a64fcb6bd91a9abfca493",
+    "flashed": false
+  },
+  "source_sha256": {
+    "headvoice/firmware/hv_gesture_agent_port.h": "5f5a3210d1b4c1a8a1db23aa9d20aa64102f0f697a034da00cc3eb57e5bf6d33",
+    "headvoice/firmware/hv_gesture_agent_port.inc": "3a0e56c2c4796a21b6a893ca3e29ab7f395215d12e6258ca21e491e43fd0d138",
+    "headvoice/firmware/hv_gesture_agent.c": "4cf9bb11dd4f2dc38f543a9e726323502f4814031876a2c74a03cfbc5f1ca6c9",
+    "headvoice/firmware/hv_gesture_probe.c": "263c24a71c2a9e5f1e0c5b24259c1e268f9850f95345e2a6b3e24ceeb39e0ebc",
+    "panel/src/agent.mjs": "87497f58fabf00c198b26473909ab2629dfc55b1902fbb213ca12332d8f869af"
+  },
+  "excluded_local_paths": [
+    ".local/",
+    ".work/",
+    ".tools/",
+    "vendor/"
+  ],
+  "credential_scan": "No actual local secrets or private keys found in 57 candidate files; four UI images visually reviewed.",
+  "hardware_boundary": "No hardware operations in this publish step. Earlier two-session readiness checks do not verify a submitted request or speaker output."
+}

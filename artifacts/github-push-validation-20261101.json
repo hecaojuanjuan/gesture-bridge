@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-01",
+  "repository": "hecaojuanjuan/gesture-bridge",
+  "branch": "main",
+  "source_snapshot": "b684f06c67ecbab9e9f304046f8e0c75cce4b2f1",
+  "remote_parent": "3af8c7f2834b9187bfc20c18834ffe71afa0dbbc",
+  "scope": "Committed snapshot only; concurrent uncommitted edits remain in the original working tree. Remote enclosure revisions and user guides preserved.",
+  "validation": {
+    "python_unittest": {
+      "passed": 156,
+      "failed": 0,
+      "command": "python -m unittest discover -s tests -v",
+      "environment": "Isolated checkout, existing training Python, pinned SDK available at expected sibling path; local loopback HTTP test allowed."
+    },
+    "production_core": {
+      "passed": true,
+      "command": "python3 tools/test_core.py"
+    },
+    "diff_check_against_remote": true,
+    "removed_remote_files": [],
+    "credential_scan": "No known local cloud secret, private keys, GitHub tokens or cloud API tokens found in the 33 incoming files; credential literal matches were placeholders or test fixtures."
+  },
+  "sources_sha256": {
+    "headvoice/core/hv_gesture_prompt.c": "41c796c89e192c24f94f414a839be18c9e8a22d9fee336505a9ecbf6a710947a",
+    "headvoice/core/hv_gesture_prompt.h": "1b6e274e6cb368ea7242e96c05fb20c33aa69c14559a48f4a121d947e2f73b11",
+    "headvoice/core/hv_gesture_reply.c": "c12bb048cfa96de05b9d073579b712427dac46cd79a99b90fda0b2f3be68abf2",
+    "headvoice/core/hv_gesture_reply.h": "249fc8de1b6d9261ab3bc66283eb69308449b39c9d3f3904e7efbe87868d26b3",
+    "headvoice/firmware/hv_gesture_agent.c": "24a882b38f79d8a25318af4e29ebca0795ec63f35fc99751d22741f80b7dd7ab",
+    "headvoice/firmware/hv_gesture_agent.h": "7af144d24e1ad21cf0e174a1fd8b4a909cc8294b0308c3209aa36239a381d48f",
+    "headvoice/firmware/hv_gesture_agent_port.h": "21b6e2b126d03e8dbfe646571ad9370b8731b29ab7c84c6fd027fb12159761dd",
+    "headvoice/firmware/hv_gesture_agent_port.inc": "276d1d06665281b4df2fef8c679e2fd105a6c77a68fb105d1ccf1c3d0cad987e",
+    "headvoice/firmware/hv_gesture_probe.c": "c73e4178baed43fcf4283324ae9822254ecf50527b9caa8582ed116ad1567b82",
+    "headvoice/firmware/hv_gesture_probe.h": "957afe3db5ecbf37ab95ec1f4a39695c053a69653416b26a828da65f4f5f9b3e",
+    "headvoice/firmware/hv_hand_app.c": "04b16f226ee99fd052e28213fe2f2a20aa450ed0f0d2869e137fdde2a075b44e",
+    "headvoice/firmware/hv_voice_probe.c": "62dde58c004b3d9cec97d777fd1e0ddd1500f633137b7be237b2df59254339e1",
+    "headvoice/firmware/integration.cmake": "f27807d682a4dd40b8aae29aea761ab44ef1a299ecf8ede2b6bdc20bce135072",
+    "server/gesture_agent_bridge.py": "c941d77889e49e79068de6a53b34f637658ed2dd35ea877daf799cd646c15a87",
+    "tools/build.py": "852d430a201331f6488ccb7da462edb8f09ca91efcfae5c2d23612e462eaf871",
+    "tools/gesture_agent_config.py": "e7dfe4ad971475dbbc2775d466aa1ecd7dfef3e1042cc86bfefbd087b78ef955",
+    "tools/prepare_sdk.py": "43d85cbe98a1f38f2eafedf2e0ed739c3c9ee44d57ae02b3bbc836f05fe971bd",
+    "tools/probe_gesture_agent.py": "62a5efcb7b10a0ec2bb6b0dedb41eb49b5bfc29c1d6abff1c018d3ea34e9789f"
+  },
+  "historical_validation_note": "gesture-agent-validation-20261101.json contains earlier source hashes and build/device evidence; this report records the source hashes and host tests of the publication snapshot. Earlier firmware builds were not repeated.",
+  "sources_changed_since_historical_validation": [
+    "headvoice/firmware/hv_gesture_agent.c",
+    "headvoice/firmware/hv_gesture_agent_port.h",
+    "headvoice/firmware/hv_gesture_agent_port.inc",
+    "headvoice/firmware/hv_gesture_probe.c",
+    "tools/prepare_sdk.py",
+    "tools/probe_gesture_agent.py"
+  ],
+  "not_performed": [
+    "firmware build",
+    "device flashing",
+    "real gesture-triggered agent acceptance",
+    "new hardware voice verification"
+  ]
+}
