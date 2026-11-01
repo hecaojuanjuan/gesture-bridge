@@ -59,6 +59,12 @@ if __name__ == "__main__":
                         help="Generated hv_hand_weights.h for hand builds; omitted means detection-only, never fake classifications")
     parser.add_argument("--hand-native-partition",
                         help="Build the pinned 11-class ESP-DL classifier; read its model from an existing data partition (build only, no model write)")
+    parser.add_argument("--hand-yolo-partition",
+                        help="Build a camera + YOLOv10 INT8 test app reading the model from this existing data partition")
+    parser.add_argument("--hand-espdet-model", type=Path,
+                        help="Build a camera + ESPDet-Pico gesture test app using this quantized model")
+    parser.add_argument("--hand-espdet-partition",
+                        help="Existing data partition for --hand-espdet-model")
     parser.add_argument("--wdt-rom", choices=["on", "off"],
                         help="Explicit watchdog implementation for an isolated comparison build; omitted keeps the SDK default")
     args = parser.parse_args()
@@ -74,6 +80,21 @@ if __name__ == "__main__":
             args.hand_weights or not args.work_name or args.work_name in ("headvoice", "baseline") or
             not re.fullmatch(r"[a-zA-Z0-9_][a-zA-Z0-9_-]{0,14}", args.hand_native_partition)):
         parser.error("--hand-native-partition requires an isolated hand build, a valid partition label, and no --hand-weights")
+    if args.hand_yolo_partition and (
+            args.action != "build" or args.mode != "headvoice" or vision != "coco" or
+            args.stage != 2 or args.hand_native_partition or not args.work_name or
+            args.work_name in ("headvoice", "baseline") or
+            not re.fullmatch(r"[a-zA-Z0-9_][a-zA-Z0-9_-]{0,14}", args.hand_yolo_partition)):
+        parser.error("--hand-yolo-partition requires an isolated stage-2 coco build and a valid partition label")
+    if args.hand_espdet_model and (
+            args.action != "build" or args.mode != "headvoice" or vision != "coco" or
+            args.stage != 2 or args.hand_yolo_partition or args.hand_native_partition or
+            not args.hand_espdet_model.is_file() or not args.hand_espdet_partition or
+            not args.work_name or args.work_name in ("headvoice", "baseline") or
+            not re.fullmatch(r"[a-zA-Z0-9_][a-zA-Z0-9_-]{0,14}", args.hand_espdet_partition)):
+        parser.error("--hand-espdet-model requires an existing model, isolated stage-2 coco build, and valid partition")
+    if args.hand_espdet_partition and not args.hand_espdet_model:
+        parser.error("--hand-espdet-partition requires --hand-espdet-model")
     if args.face_selftest and (args.action != "build" or args.mode != "headvoice" or
                               vision != "face" or args.stage != 2 or
                               not args.work_name or args.work_name == "headvoice"):
@@ -106,7 +127,7 @@ if __name__ == "__main__":
     if args.action == "flash":
         cache = app / "build/CMakeCache.txt"
         cached = cache.read_text(encoding="utf-8") if cache.exists() else ""
-        if re.search(r"^HEADVOICE_HAND_NATIVE_PARTITION:[^=\r\n]+=.+$", cached, re.MULTILINE):
+        if re.search(r"^HEADVOICE_HAND_(?:NATIVE|YOLO|ESPDET)_PARTITION:[^=\r\n]+=.+$", cached, re.MULTILINE):
             parser.error("Native hand firmware needs an explicit application/model deployment after backing up the selected model partition; full SDK flash would overwrite model assets")
     python, env = environment()
     command = [str(python), str(SDK / "esp-idf/tools/idf.py")]
@@ -120,6 +141,9 @@ if __name__ == "__main__":
                     f"-DHEADVOICE_VISION={vision}",
                     f"-DHEADVOICE_HAND_WEIGHTS_FILE={args.hand_weights.resolve() if args.hand_weights else ''}",
                     f"-DHEADVOICE_HAND_NATIVE_PARTITION={args.hand_native_partition or ''}",
+                    f"-DHEADVOICE_HAND_YOLO_PARTITION={args.hand_yolo_partition or ''}",
+                    f"-DHEADVOICE_HAND_ESPDET_MODEL={args.hand_espdet_model.resolve() if args.hand_espdet_model else ''}",
+                    f"-DHEADVOICE_HAND_ESPDET_PARTITION={args.hand_espdet_partition or ''}",
                     f"-DHEADVOICE_FACE_SELFTEST={int(args.face_selftest)}"]
     if args.port:
         command += ["-p", args.port]

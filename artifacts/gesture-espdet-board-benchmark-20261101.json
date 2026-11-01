@@ -1,0 +1,42 @@
+{
+  "board": "ESP32-S3 XJWB03, 8 MB PSRAM, 16 MB flash",
+  "tested_at_utc": "2026-11-01T05:21:33.855734+00:00",
+  "model": {
+    "file": "artifacts/gesture-espdet-pico-7-s3-int8-20261101.espdl",
+    "bytes": 501952,
+    "sha256": "4c1005d8fd73021c9b70007211dfb825cbd4c4f983bb8e64ae712fcdcf88ecca",
+    "partition": "coco_pose",
+    "flash_offset": "0x810000",
+    "ready_on_device": true
+  },
+  "application": {
+    "file": ".work/espdet-gesture-test/apps/build/vb701n.bin",
+    "bytes": 1875424,
+    "sha256": "303e385022b8b0d9279f2001dadf0fa023e3958af9eac1268cf2ec6c19b93fc1",
+    "flash_offset": "0x20000",
+    "flash_write_verified": true,
+    "backup_file": ".local/espdet-application-before-benchmark-20261101.bin",
+    "backup_bytes": 4128768,
+    "backup_sha256": "cf6c41005f42d805e316910d664118d4ff4961da38b88a1ecdbe8a7295f6a60e"
+  },
+  "benchmark": {
+    "input": "synthetic_rgb_320x240_gradient",
+    "warmup_iterations": 3,
+    "measured_iterations": 20,
+    "preprocess_median_ms": 6.746,
+    "model_median_ms": 134.669,
+    "model_p95_ms": 134.679,
+    "postprocess_median_ms": 0.58,
+    "pipeline_mean_ms": 141.999,
+    "pipeline_median_ms": 141.999,
+    "pipeline_p95_ms": 142.017,
+    "pipeline_min_ms": 141.984,
+    "pipeline_max_ms": 142.023,
+    "pipeline_fps_equivalent": 7.04,
+    "mean_detections": 0.0,
+    "live_camera_valid_frames": 0,
+    "gesture_accuracy_tested": false
+  },
+  "raw_serial_log": ".local/espdet-gestures/benchmark-reset-serial-20261101.jsonl",
+  "scope_note": "Synthetic RGB timing includes ESP-DL preprocessing, model inference, and postprocessing. It excludes camera UYVY conversion. The camera returned zero-byte frames, so no live gesture latency or recognition accuracy was measured."
+}

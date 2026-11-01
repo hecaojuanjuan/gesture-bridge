@@ -77,6 +77,10 @@ if ($LASTEXITCODE -eq 0) {
 
 端口改变时先重新枚举。每次导出一张低分辨率 PNG，覆盖同名文件；脚本检查数据块顺序和整帧校验和后才保存。图像保存在 Git 忽略的 `.local` 中。原始预览为 120×160 RGB565，脚本依据固件旋转配置显示；当前装配启用顺时针 90°，PNG 为 160×120。导出占用串口带宽，性能采样时不要同时拍照。
 
+要在本机 Web View 中持续查看 320×240 摄像头画面，先运行支持 `hv_camera jpeg` 的固件并关闭其他串口程序，再执行 `& '.\.tools\espressif\python_env\idf5.4_py3.12_env\Scripts\python.exe' -u tools/camera_webview.py --port COM5`，打开 `http://127.0.0.1:8765/`。服务只监听本机地址，并在每帧校验通过后更新画面；按 `Ctrl+C` 停止。
+
+手势样本采集页运行 `python tools/webcam_hand_capture.py`，打开 `http://127.0.0.1:8766/`，在“画面来源”中选电脑或开发板摄像头。先选手势标签，直接在实时画面上框住完整手部，松开时自动截图、标注和保存；无手画面使用单独按钮。开发板选项需要上面的 8765 预览服务持续收到新帧；停更画面不能保存。原始 JPEG、标注和来源存入 `.local/hand-dataset-webcam/samples.sqlite3`，同时导出图片和 `manifest.json` 供训练使用。切换摄像头会自动开始新会话，验证和测试集仍需独立录制。
+
 当前装配构建命令为 `& $py tools/build.py headvoice build --stage 2 --rotate-cw90`。后续构建其他阶段时也要显式传入当前装配所需的旋转选项。两种构建副本均关闭 nano printf，以正确输出 64 位时间戳和结构化诊断；官方 SDK 原件保持不变。
 
 更换 PID 后，新设备需要重新通过小程序 BLE 配网并绑定账号。串口输入 `hv_provision status` 可核对 PID；输入 `hv_provision restart` 会调用官方复位配网函数，清除已保存的 Wi-Fi、配网环境及本地绑定标记，然后重启进入 BLE 配网。它不会请求删除旧账号设备或整片擦除 Flash。手机在配套小程序内发现蓝牙设备并下发 2.4 GHz Wi-Fi 信息，通常不需要先在系统蓝牙设置里手动配对。

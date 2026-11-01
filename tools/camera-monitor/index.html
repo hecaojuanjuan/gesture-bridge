@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f2f4f1">
+  <title>XJWB03 摄像头预览</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f2f4f1;
+      --paper: #ffffff;
+      --ink: #1d2824;
+      --muted: #69746f;
+      --line: #dce3de;
+      --green: #176f59;
+      --green-dark: #105744;
+      --green-soft: #e7f2ec;
+      --amber: #a75b14;
+      --red: #a33c35;
+      --screen: #141917;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+
+    .topbar {
+      min-height: 76px;
+      padding: 14px 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .identity { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      background: var(--green-dark);
+      color: #fff;
+      border-radius: 5px;
+      font: 700 10px/1 ui-monospace, Consolas, monospace;
+    }
+    .identity h1 { margin: 0; font-size: 17px; font-weight: 650; }
+    .eyebrow, .panel-title, .metric-label, .foot-label {
+      margin: 0;
+      color: var(--muted);
+      font: 600 10px/1.4 ui-monospace, Consolas, monospace;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .eyebrow { margin-bottom: 3px; }
+
+    .connection-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #a6afaa;
+    }
+    .connection-badge.online { color: var(--green-dark); }
+    .connection-badge.online .connection-dot { background: #278768; }
+    .connection-badge.error { color: var(--red); }
+    .connection-badge.error .connection-dot { background: var(--red); }
+
+    .workspace {
+      min-height: calc(100vh - 76px);
+      display: grid;
+      grid-template-columns: 284px minmax(0, 1fr);
+    }
+
+    .controls {
+      padding: 24px 20px;
+      background: var(--paper);
+      border-right: 1px solid var(--line);
+    }
+    .control-section { padding: 0 0 22px; margin-bottom: 21px; border-bottom: 1px solid var(--line); }
+    .panel-title { margin-bottom: 13px; }
+    .button {
+      min-height: 40px;
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cdd7d0;
+      border-radius: 4px;
+      background: #fff;
+      color: var(--ink);
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .button:hover:not(:disabled) { border-color: #8ea99b; background: #f7faf7; }
+    .button.primary {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+    .button.primary:hover:not(:disabled) { border-color: var(--green-dark); background: var(--green-dark); }
+    .button + .button { margin-top: 8px; }
+    .helper {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .progress-wrap { margin-top: 13px; }
+    .progress-line { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 11px; }
+    progress {
+      width: 100%;
+      height: 5px;
+      margin-top: 7px;
+      border: 0;
+      border-radius: 4px;
+      overflow: hidden;
+      accent-color: var(--green);
+    }
+    progress::-webkit-progress-bar { background: #e4e9e5; }
+    progress::-webkit-progress-value { background: var(--green); }
+
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 15px 10px; }
+    .metric { min-width: 0; }
+    .metric-label { display: block; margin-bottom: 5px; font-size: 9px; }
+    .metric-value {
+      display: block;
+      overflow-wrap: anywhere;
+      color: var(--ink);
+      font: 600 13px/1.35 ui-monospace, Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-box {
+      padding: 11px 12px;
+      border-left: 3px solid #94a19a;
+      background: #f4f6f4;
+      color: #4f5c56;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .status-box.good { border-color: #2b8a69; background: var(--green-soft); color: var(--green-dark); }
+    .status-box.warn { border-color: #bd771f; background: #fff4e5; color: #784719; }
+    .status-box.bad { border-color: var(--red); background: #fbefed; color: #7e302b; }
+
+    .device-log { margin-top: 17px; color: var(--muted); font-size: 11px; }
+    .device-log summary { cursor: pointer; }
+    .device-log ul { margin: 9px 0 0; padding-left: 16px; }
+    .device-log li { margin: 4px 0; overflow-wrap: anywhere; font-family: ui-monospace, Consolas, monospace; }
+
+    .preview-panel { min-width: 0; padding: 22px 26px 18px; }
+    .preview-head {
+      max-width: 1120px;
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .preview-head h2 { margin: 0; font-size: 20px; font-weight: 650; }
+    .zoom-group { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); }
+    .zoom-button {
+      min-width: 47px;
+      min-height: 30px;
+      padding: 5px 8px;
+      border: 0;
+      border-radius: 3px;
+      background: transparent;
+      color: var(--muted);
+      font: 600 11px/1 ui-monospace, Consolas, monospace;
+    }
+    .zoom-button[aria-pressed="true"] { background: var(--green-soft); color: var(--green-dark); }
+
+    .viewport {
+      width: min(100%, 1120px);
+      height: clamp(300px, 68vh, 720px);
+      margin: 0 auto;
+      overflow: auto;
+      background: var(--screen);
+      border: 1px solid #28322d;
+      scrollbar-color: #718078 #222925;
+    }
+    .canvas-stage {
+      min-width: 100%;
+      min-height: 100%;
+      width: 100%;
+      height: 100%;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+    }
+    #frameCanvas { display: block; image-rendering: pixelated; flex: none; }
+    .empty-stage {
+      min-height: 250px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      color: #c4cec8;
+      text-align: center;
+    }
+    .empty-stage strong { font-size: 14px; font-weight: 600; }
+    .empty-stage span:last-child { max-width: 360px; color: #89958e; font-size: 12px; line-height: 1.5; }
+    .target-mark {
+      position: relative;
+      width: 50px;
+      height: 38px;
+      margin-bottom: 4px;
+      border: 1px solid #607068;
+      border-radius: 5px;
+    }
+    .target-mark::before {
+      content: "";
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      top: 11px;
+      left: 17px;
+      border: 2px solid #93a49a;
+      border-radius: 50%;
+    }
+    .target-mark::after {
+      content: "";
+      position: absolute;
+      width: 13px;
+      height: 4px;
+      top: -5px;
+      left: 17px;
+      border: 1px solid #607068;
+      border-bottom: 0;
+      border-radius: 3px 3px 0 0;
+    }
+    .viewer-footer {
+      width: min(100%, 1120px);
+      min-height: 39px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font: 600 10px/1.4 ui-monospace, Consolas, monospace;
+    }
+
+    @media (max-width: 860px) {
+      .workspace { grid-template-columns: 1fr; }
+      .controls { padding: 18px 20px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .control-section { display: grid; grid-template-columns: 1fr 1fr; column-gap: 10px; padding-bottom: 16px; margin-bottom: 15px; }
+      .control-section .panel-title { grid-column: 1 / -1; }
+      .control-section .helper { grid-column: 1 / -1; }
+      .control-section .metrics, .control-section .progress-wrap { grid-column: 1 / -1; }
+      .control-section .button + .button { margin-top: 0; }
+      .control-section .button:nth-of-type(2) { margin-top: 0; }
+      .preview-panel { padding: 20px; }
+      .viewport { height: min(64vh, 650px); min-height: 290px; }
+    }
+
+    @media (max-width: 520px) {
+      .topbar { min-height: 68px; padding: 11px 14px; }
+      .identity h1 { font-size: 15px; }
+      .brand-mark { width: 36px; height: 36px; }
+      .connection-badge { font-size: 11px; }
+      .controls { padding: 16px 14px; }
+      .control-section { grid-template-columns: 1fr; }
+      .control-section .panel-title, .control-section .helper { grid-column: auto; }
+      .control-section .button + .button { margin-top: 8px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .preview-panel { padding: 17px 12px 12px; }
+      .preview-head { align-items: start; flex-direction: column; }
+      .preview-head h2 { font-size: 18px; }
+      .zoom-button { min-width: 42px; }
+      .viewport { height: 54vh; min-height: 260px; }
+      .canvas-stage { padding: 14px; }
+      .viewer-footer { padding: 0 2px; font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="identity">
+      <div class="brand-mark" aria-hidden="true">CAM</div>
+      <div>
+        <p class="eyebrow">XJWB03 · USB SERIAL</p>
+        <h1>摄像头预览</h1>
+      </div>
+    </div>
+    <div id="connectionBadge" class="connection-badge" role="status">
+      <span class="connection-dot" aria-hidden="true"></span>
+      <span id="connectionLabel">未连接</span>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="controls" aria-label="摄像头控制">
+      <section class="control-section">
+        <h2 class="panel-title">串口连接</h2>
+        <button id="connectButton" class="button primary" type="button">连接开发板</button>
+        <button id="disconnectButton" class="button" type="button" disabled>断开连接</button>
+        <p id="connectionDetail" class="helper">选择开发板对应的 USB 串口；请先关闭其他串口监视器。</p>
+      </section>
+
+      <section class="control-section">
+        <h2 class="panel-title">图像采集</h2>
+        <button id="previewButton" class="button primary" type="button" disabled>开始预览</button>
+        <button id="downloadButton" class="button" type="button" disabled>保存当前帧</button>
+        <div id="progressWrap" class="progress-wrap" hidden>
+          <div class="progress-line"><span>接收帧数据</span><span id="progressText">0%</span></div>
+          <progress id="frameProgress" max="100" value="0">0%</progress>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <h2 class="panel-title">帧数据</h2>
+        <div class="metrics">
+          <div class="metric"><span class="metric-label">分辨率</span><strong id="resolutionValue" class="metric-value">--</strong></div>
+          <div class="metric"><span class="metric-label">已收帧</span><strong id="frameCountValue" class="metric-value">0</strong></div>
+          <div class="metric"><span class="metric-label">更新频率</span><strong id="rateValue" class="metric-value">--</strong></div>
+          <div class="metric"><span class="metric-label">帧校验</span><strong id="checksumValue" class="metric-value">--</strong></div>
+        </div>
+      </section>
+
+      <div id="statusBox" class="status-box" role="status" aria-live="polite">准备连接开发板。</div>
+      <details class="device-log">
+        <summary>最近串口响应</summary>
+        <ul id="deviceLog"><li>暂无响应</li></ul>
+      </details>
+    </aside>
+
+    <section class="preview-panel" aria-label="摄像头画面">
+      <div class="preview-head">
+        <div>
+          <p class="eyebrow">单帧快照 · 115200 8N1</p>
+          <h2>图像画面</h2>
+        </div>
+        <div class="zoom-group" role="group" aria-label="画面缩放">
+          <button class="zoom-button" type="button" data-zoom="fit" aria-pressed="true">适配</button>
+          <button class="zoom-button" type="button" data-zoom="1" aria-pressed="false">1×</button>
+          <button class="zoom-button" type="button" data-zoom="2" aria-pressed="false">2×</button>
+          <button class="zoom-button" type="button" data-zoom="4" aria-pressed="false">4×</button>
+        </div>
+      </div>
+
+      <div id="viewport" class="viewport">
+        <div id="canvasStage" class="canvas-stage">
+          <div id="emptyStage" class="empty-stage">
+            <span class="target-mark" aria-hidden="true"></span>
+            <strong id="emptyTitle">等待图像</strong>
+            <span id="emptyText">连接开发板后开始预览。</span>
+          </div>
+          <canvas id="frameCanvas" hidden aria-label="开发板摄像头捕获画面"></canvas>
+        </div>
+      </div>
+      <div class="viewer-footer">
+        <span id="frameState">NO FRAME</span>
+        <span id="frameTime">--:--:--</span>
+      </div>
+    </section>
+  </main>
+
+  <script defer src="./camera-protocol.js"></script>
+  <script defer src="./camera-monitor.js"></script>
+</body>
+</html>

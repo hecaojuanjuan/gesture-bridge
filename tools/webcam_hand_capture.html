@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>手势训练图采集</title>
+<style>
+body{margin:0;background:#17201b;color:#f3f5f3;font:16px system-ui,"Microsoft YaHei",sans-serif}
+main{max-width:800px;margin:auto;padding:20px}h1{font-size:22px}
+#live{position:relative;width:min(100%,640px);aspect-ratio:4/3;background:#080c09}
+#live video,#live img,#live canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#live video{object-fit:cover;transform:scaleX(-1)}#live img{object-fit:contain}
+#overlay{touch-action:none;cursor:crosshair}
+#predictOverlay{pointer-events:none}
+[hidden]{display:none!important}
+section{margin:14px 0}button,input,select{font:inherit;padding:8px;margin:3px}
+button{cursor:pointer}#status{color:#b8d6c1}small{color:#b8d6c1}
+#archive{border-top:1px solid #526857;margin-top:28px;padding-top:12px}
+#samples{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.sample{background:#243329;padding:8px;border-radius:8px;overflow:hidden}
+.sample a{display:block;position:relative;aspect-ratio:4/3}
+.sample img{width:100%;height:100%;display:block}
+.sample .mark{position:absolute;border:2px solid #38ff69;box-sizing:border-box;pointer-events:none}
+.sample p{margin:7px 0 0;font-size:13px;overflow-wrap:anywhere}
+</style>
+<main>
+<h1>手势样本采集</h1>
+<p>先选择手势，再直接在实时画面上框住整只手；松开时自动截图并保存。框和标签会显示在画面上，原图保持干净。</p>
+<section>
+  <label>画面来源 <select id="source"><option value="pc-webcam">电脑摄像头</option><option value="BF3901-camera">开发板摄像头</option></select></label>
+  <label>手势标签 <select id="label"><option value="open_palm">张掌</option><option value="v_sign">V 字／两指</option><option value="ok_sign">OK</option><option value="six_sign">6</option><option value="thumbs_up">点赞</option><option value="closed_fist">握拳</option><option value="one_finger">一指</option><option value="other">其他手势</option></select></label>
+</section>
+<div id="live">
+  <video id="video" autoplay playsinline muted></video>
+  <img id="board" alt="等待开发板画面" hidden>
+  <canvas id="predictOverlay" width="320" height="240" aria-hidden="true"></canvas>
+  <canvas id="overlay" width="320" height="240" aria-label="在实时画面上拖动，标注并保存手部"></canvas>
+</div>
+<p id="recognitionStatus">等待识别画面…</p>
+<section>
+  <button id="empty">保存当前无手画面</button>
+  <button id="new">新会话</button>
+  <label>数据集 <select id="split"><option>train</option><option>val</option><option>test</option></select></label>
+  <label>会话 <input id="session" size="21" pattern="[A-Za-z0-9_-]+"></label>
+</section>
+<p id="status">正在申请摄像头权限…</p>
+<small>本机保存 320 × 240 JPEG、手框坐标和摄像头来源；图像也写入 SQLite。验证集和测试集请在独立会话中拍摄。</small>
+<section id="archive">
+  <h2>已录入样本</h2>
+  <p id="sampleStatus">正在读取…</p>
+  <div id="samples"></div>
+  <button id="more" hidden>加载更早样本</button>
+</section>
+</main>
+<script>
+const video=document.querySelector('#video'),board=document.querySelector('#board');
+const overlay=document.querySelector('#overlay'),source=document.querySelector('#source');
+const label=document.querySelector('#label'),split=document.querySelector('#split');
+const session=document.querySelector('#session'),status=document.querySelector('#status');
+const frame=document.createElement('canvas');frame.width=320;frame.height=240;
+const labelNames={open_palm:'张掌',v_sign:'V 字／两指',ok_sign:'OK',six_sign:'6',middle_finger:'一指',thumbs_up:'点赞',closed_fist:'握拳',one_finger:'一指',other:'其他手势',no_hand:'无手'};
+let stream=null,boardCount=0,boardTime=0,start=null,box=null,saving=false,saved=0;
+let predicting=false,lastPredictedBoardCount=0;
+const predictOverlay=document.querySelector('#predictOverlay'),recognitionStatus=document.querySelector('#recognitionStatus');
+const samples=document.querySelector('#samples'),sampleStatus=document.querySelector('#sampleStatus');
+const more=document.querySelector('#more');let nextBefore=null,sampleRequest=0;
+
+function showSample(row){
+  const card=document.createElement('article');card.className='sample';
+  const link=document.createElement('a');link.href='/samples/'+row.id+'.jpg';link.target='_blank';link.rel='noopener';
+  const img=document.createElement('img');img.src=link.href;img.loading='lazy';img.alt='样本 '+row.id;
+  link.append(img);
+  if(row.box){
+    const mark=document.createElement('span');mark.className='mark';
+    mark.style.left=(row.box[0]/320*100)+'%';mark.style.top=(row.box[1]/240*100)+'%';
+    mark.style.width=((row.box[2]-row.box[0])/320*100)+'%';
+    mark.style.height=((row.box[3]-row.box[1])/240*100)+'%';link.append(mark);
+  }
+  const title=document.createElement('p');title.textContent='#'+row.id+' · '+(labelNames[row.label]||row.label)+' · '+(row.source==='pc-webcam'?'电脑':'开发板');
+  const detail=document.createElement('p');detail.textContent=row.split+' · '+new Date(row.saved_utc).toLocaleString();
+  card.append(link,title,detail);samples.append(card);
+}
+
+async function loadSamples(reset=false){
+  const request=++sampleRequest;
+  if(reset){nextBefore=null;samples.replaceChildren()}
+  more.disabled=true;
+  try{
+    const url='/samples'+(nextBefore?'?before='+nextBefore:'');
+    const response=await fetch(url,{cache:'no-store'});
+    if(!response.ok)throw Error('读取失败');
+    const data=await response.json();if(request!==sampleRequest)return;
+    data.samples.forEach(showSample);nextBefore=data.next_before;
+    more.hidden=!nextBefore;
+    sampleStatus.textContent='共 '+data.total+' 张，当前显示 '+samples.children.length+' 张';
+  }catch(error){if(request===sampleRequest)sampleStatus.textContent='样本读取失败：'+error.message}
+  finally{if(request===sampleRequest)more.disabled=false}
+}
+more.onclick=()=>loadSamples();
+
+function newSession(){
+  session.value=(source.value==='pc-webcam'?'webcam_':'board_')+
+    new Date().toISOString().replace(/[-:.]/g,'').slice(0,15)+'_'+Math.random().toString(36).slice(2,6);
+}
+newSession();
+document.querySelector('#new').onclick=newSession;
+
+async function startWebcam(){
+  if(stream)return;
+  status.textContent='正在申请电脑摄像头权限…';
+  try{
+    const opened=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
+    if(source.value==='pc-webcam'){
+      stream=opened;video.srcObject=stream;
+      status.textContent='电脑摄像头已连接。选择标签后直接在画面上框选。';
+    }else opened.getTracks().forEach(track=>track.stop());
+  }catch(error){if(source.value==='pc-webcam')status.textContent='无法打开电脑摄像头：'+error.message}
+}
+
+async function refreshBoard(){
+  if(source.value!=='BF3901-camera')return;
+  try{
+    const response=await fetch('/board/status',{cache:'no-store',signal:AbortSignal.timeout(5000)});
+    if(source.value!=='BF3901-camera')return;
+    if(!response.ok)throw Error('开发板预览服务未运行');
+    const state=await response.json();
+    if(source.value!=='BF3901-camera')return;
+    if(state.error)throw Error(state.error);
+    if(!state.count||Date.now()/1000-state.updated>15)throw Error('开发板画面暂时停更');
+    if(state.count!==boardCount&&!start&&!saving){
+      boardCount=state.count;boardTime=state.updated;board.src='/board/frame.jpg?count='+boardCount;
+    }
+    if(!saving)status.textContent='开发板摄像头已连接 · 已收到 '+boardCount+' 帧';
+  }catch(error){
+    if(source.value==='BF3901-camera'&&!saving)status.textContent='开发板画面不可用：'+error.message;
+  }
+}
+source.onchange=()=>{
+  start=null;box=null;drawBox(null);newSession();
+  drawPrediction(null);recognitionStatus.textContent='等待识别画面…';lastPredictedBoardCount=0;
+  const useBoard=source.value==='BF3901-camera';
+  video.hidden=useBoard;board.hidden=!useBoard;
+  status.textContent=useBoard?'正在连接开发板摄像头…':'正在连接电脑摄像头…';
+  if(useBoard){
+    boardCount=0;boardTime=0;
+    if(stream){stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null}
+    refreshBoard();
+  }else startWebcam();
+};
+
+function point(event){
+  const r=overlay.getBoundingClientRect();
+  return [
+    Math.max(0,Math.min(320,Math.round((event.clientX-r.left)*320/r.width))),
+    Math.max(0,Math.min(240,Math.round((event.clientY-r.top)*240/r.height)))
+  ];
+}
+function rectangle(a,b){return [Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])]}
+function drawBox(rect){
+  const ctx=overlay.getContext('2d');ctx.clearRect(0,0,320,240);
+  if(!rect)return;
+  const name=labelNames[label.value];
+  ctx.strokeStyle='#38ff69';ctx.lineWidth=2;
+  ctx.strokeRect(rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]);
+  ctx.font='bold 14px system-ui';const width=ctx.measureText(name).width+12;
+  const y=Math.max(0,rect[1]-21);ctx.fillStyle='#16391f';ctx.fillRect(rect[0],y,width,20);
+  ctx.fillStyle='white';ctx.fillText(name,rect[0]+6,y+15);
+}
+label.onchange=()=>{box=null;drawBox(null)};
+
+function snapshot(){
+  const ctx=frame.getContext('2d');
+  if(source.value==='BF3901-camera'){
+    if(!board.complete||!board.naturalWidth||Date.now()/1000-boardTime>15)
+      throw Error('开发板画面未就绪或已停更');
+    ctx.drawImage(board,0,0,320,240);
+  }else{
+    if(!video.videoWidth)throw Error('电脑摄像头尚未就绪');
+    const w=video.videoWidth,h=video.videoHeight,sw=Math.min(w,h*4/3),sh=sw*3/4;
+    ctx.save();ctx.translate(320,0);ctx.scale(-1,1);
+    ctx.drawImage(video,(w-sw)/2,(h-sh)/2,sw,sh,0,0,320,240);
+    ctx.restore();
+  }
+  return frame.toDataURL('image/jpeg',.9);
+}
+function drawPrediction(result){
+  const ctx=predictOverlay.getContext('2d');ctx.clearRect(0,0,320,240);
+  if(!result?.box)return;
+  const [x1,y1,x2,y2]=result.box,name=labelNames[result.label];
+  ctx.strokeStyle='#ff6b47';ctx.lineWidth=2;ctx.strokeRect(x1,y1,x2-x1,y2-y1);
+  ctx.font='bold 13px system-ui';const text=name+' '+Math.round(result.score*100)+'%';
+  const width=ctx.measureText(text).width+10,y=Math.max(0,y1-20);
+  ctx.fillStyle='#70321d';ctx.fillRect(x1,y,width,19);
+  ctx.fillStyle='white';ctx.fillText(text,x1+5,y+14);
+}
+async function refreshPrediction(){
+  if(predicting||start||saving)return;
+  if(source.value==='BF3901-camera'&&boardCount===lastPredictedBoardCount)return;
+  let image;
+  try{image=snapshot()}catch{return}
+  predicting=true;
+  const currentSource=source.value,currentBoardCount=boardCount;
+  try{
+    const response=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image}),signal:AbortSignal.timeout(15000)});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.error||'推理失败');
+    if(currentSource!==source.value)return;
+    drawPrediction(result);
+    recognitionStatus.textContent=result.label?'识别：'+labelNames[result.label]+' · '+Math.round(result.score*100)+'%':'识别：未匹配目标手势';
+    if(currentSource==='BF3901-camera')lastPredictedBoardCount=currentBoardCount;
+  }catch(error){if(currentSource===source.value)recognitionStatus.textContent='识别暂不可用：'+error.message}
+  finally{predicting=false}
+}
+async function save(image,rect,selectedLabel){
+  if(saving)return;
+  saving=true;
+  source.disabled=true;label.disabled=true;split.disabled=true;session.disabled=true;
+  status.textContent='正在保存图像和标注…';
+  const payload={image,box:rect,label:selectedLabel,source:source.value,split:split.value,session:session.value};
+  try{
+    const response=await fetch('/sample',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.error||'保存失败');
+    saved++;status.textContent='已保存 '+saved+' 张；'+(labelNames[selectedLabel]||'无手')+'；数据库编号 '+result.id;
+    loadSamples(true);
+  }catch(error){status.textContent='保存失败：'+error.message}
+  finally{
+    saving=false;source.disabled=false;label.disabled=false;split.disabled=false;session.disabled=false;
+  }
+}
+overlay.onpointerdown=event=>{
+  if(saving)return;
+  start=point(event);box=null;overlay.setPointerCapture(event.pointerId);drawBox(null);
+};
+overlay.onpointermove=event=>{if(start)drawBox(rectangle(start,point(event)))};
+overlay.onpointerup=event=>{
+  if(!start||saving)return;
+  box=rectangle(start,point(event));start=null;
+  if(box[2]-box[0]<8||box[3]-box[1]<8){
+    box=null;drawBox(null);status.textContent='手框太小，请重新框选';return;
+  }
+  drawBox(box);
+  try{save(snapshot(),box,label.value)}
+  catch(error){status.textContent=error.message}
+};
+overlay.onpointercancel=()=>{start=null;box=null;drawBox(null)};
+document.querySelector('#empty').onclick=()=>{
+  if(saving)return;
+  box=null;drawBox(null);
+  try{save(snapshot(),null,'no_hand')}
+  catch(error){status.textContent=error.message}
+};
+startWebcam();loadSamples(true);setInterval(refreshBoard,2000);setInterval(refreshPrediction,1200);
+</script></html>

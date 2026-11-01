@@ -211,6 +211,10 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
         '            QM_LOGW(LOG_TAG, "wifi disconnected");\n'
         '            ljyd_cloud_on_network_down();\n'
         '            /* qm_wifi owns reconnect backoff and explicit stop. */\n'))
+    # GPIO initialization exhausts the vendor reset task's 2048-byte stack.
+    edit("peripheral/bsp_io.c", lambda s: replace(
+        s, "#define BSP_RESET_TASK_STACK  2048",
+        "#define BSP_RESET_TASK_STACK  4096"))
     # Agora startup overflowed the SDK's 3072-byte control task on this board.
     # Keep the override in the copied app, including baseline comparisons.
     edit("qm_config/qm_config.h", lambda s: s +
@@ -261,13 +265,27 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
         '    if (headvoice_start() != ESP_OK) {\n'
         '        QM_LOGE("main", "HeadVoice unavailable; see diagnostics");\n'
         '    }\n#endif\n\n#if defined(CONFIG_QM_POMODORO_SUPPORT)'))
+    edit("main.c", lambda s: replace(
+        s,
+        '    if (bsp_io_init() != QM_EOK) {\n'
+        '        QM_LOGE("main", "io init failed");\n'
+        '        return;\n'
+        '    }',
+        '    if (bsp_io_init() != QM_EOK) {\n'
+        '        QM_LOGE("main", "io init failed");\n'
+        '        return;\n'
+        '    }\n'
+        '#if defined(HV_YOLO_TEST) || defined(HV_ESPDET_TEST)\n'
+        '    if (headvoice_start() != ESP_OK) QM_LOGE("main", "Gesture test unavailable");\n'
+        '    return;\n'
+        '#endif'))
     edit("CMakeLists.txt", lambda s: s + '\ninclude("' +
          (ROOT / "headvoice/firmware/integration.cmake").as_posix() + '")\n')
     # A native hand build reuses this existing data partition for a different,
     # explicitly deployed model. Never put the old COCO payload in flash_args.
     edit("pose/private/coco_pose/CMakeLists.txt", lambda s: replace(
         s, '        esptool_py_flash_to_partition(flash "coco_pose" ${packed_model})',
-        '        if(NOT DEFINED HEADVOICE_HAND_NATIVE_PARTITION OR HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "")\n'
+        '        if((NOT DEFINED HEADVOICE_HAND_NATIVE_PARTITION OR HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "") AND (NOT DEFINED HEADVOICE_HAND_YOLO_PARTITION OR HEADVOICE_HAND_YOLO_PARTITION STREQUAL "") AND (NOT DEFINED HEADVOICE_HAND_ESPDET_PARTITION OR HEADVOICE_HAND_ESPDET_PARTITION STREQUAL ""))\n'
         '            esptool_py_flash_to_partition(flash "coco_pose" ${packed_model})\n'
         '        endif()'))
     if vision in ("face", "hand"):

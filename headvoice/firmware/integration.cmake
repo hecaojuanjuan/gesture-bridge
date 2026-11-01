@@ -7,6 +7,9 @@ set(HEADVOICE_VISION coco CACHE STRING "Vision backend: coco, face or hand")
 set(HEADVOICE_FACE_SELFTEST 0 CACHE STRING "Run an isolated official face fixture before camera inference")
 set(HEADVOICE_HAND_WEIGHTS_FILE "" CACHE FILEPATH "Explicit trained hand classifier header; empty keeps detection-only")
 set(HEADVOICE_HAND_NATIVE_PARTITION "" CACHE STRING "Existing data partition containing the pinned ESP-DL hand gesture model; empty disables native classifier")
+set(HEADVOICE_HAND_YOLO_PARTITION "" CACHE STRING "Existing data partition containing the YOLOv10 hand model for isolated camera testing")
+set(HEADVOICE_HAND_ESPDET_MODEL "" CACHE FILEPATH "Quantized ESPDet gesture model for isolated camera testing")
+set(HEADVOICE_HAND_ESPDET_PARTITION "" CACHE STRING "Existing data partition for the ESPDet gesture model")
 if(NOT HEADVOICE_VISION MATCHES "^(coco|face|hand)$")
   message(FATAL_ERROR "HEADVOICE_VISION must be coco, face or hand")
 endif()
@@ -51,7 +54,56 @@ if(NOT QM_POSE_SUPPORT OR NOT LJYD_PLAYBACK_SUPPORT)
   message(FATAL_ERROR "HeadVoice requires the upstream pose and audio components")
 endif()
 target_sources(${COMPONENT_LIB} PRIVATE "${headvoice_root}/firmware/hv_camera_preview.c")
-if(HEADVOICE_VISION STREQUAL "hand")
+if(HEADVOICE_HAND_ESPDET_MODEL)
+  if(NOT HEADVOICE_STAGE STREQUAL "2" OR NOT HEADVOICE_VISION STREQUAL "coco" OR
+     NOT HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "" OR HEADVOICE_HAND_WEIGHTS_FILE OR
+     NOT HEADVOICE_HAND_YOLO_PARTITION STREQUAL "" OR
+     NOT HEADVOICE_HAND_ESPDET_PARTITION MATCHES "^[a-zA-Z0-9_][a-zA-Z0-9_-]*$")
+    message(FATAL_ERROR "ESPDet test app requires stage 2, coco build, model, and partition")
+  endif()
+  if(NOT EXISTS "${HEADVOICE_HAND_ESPDET_MODEL}")
+    message(FATAL_ERROR "ESPDet model file is missing")
+  endif()
+  file(SIZE "${HEADVOICE_HAND_ESPDET_MODEL}" hv_espdet_model_bytes)
+  file(SHA256 "${HEADVOICE_HAND_ESPDET_MODEL}" hv_espdet_model_sha)
+  partition_table_get_partition_info(hv_espdet_size
+    "--partition-name ${HEADVOICE_HAND_ESPDET_PARTITION}" "size")
+  partition_table_get_partition_info(hv_espdet_type
+    "--partition-name ${HEADVOICE_HAND_ESPDET_PARTITION}" "type")
+  if(NOT hv_espdet_type EQUAL 1 OR NOT hv_espdet_size OR
+     hv_espdet_size LESS hv_espdet_model_bytes)
+    message(FATAL_ERROR "ESPDet model partition is missing or too small")
+  endif()
+  target_sources(${COMPONENT_LIB} PRIVATE "${headvoice_root}/firmware/hv_espdet_app.cpp")
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    HV_ESPDET_PARTITION="${HEADVOICE_HAND_ESPDET_PARTITION}"
+    HV_ESPDET_MODEL_BYTES=${hv_espdet_model_bytes}
+    HV_ESPDET_MODEL_SHA="${hv_espdet_model_sha}"
+    HV_ESPDET_TEST=1)
+  foreach(hv_espdet_dep IN ITEMS esp-dl esp_partition mbedtls esp_timer spi_flash)
+    idf_component_get_property(hv_espdet_dep_lib ${hv_espdet_dep} COMPONENT_LIB)
+    target_link_libraries(${COMPONENT_LIB} PUBLIC ${hv_espdet_dep_lib})
+  endforeach()
+elseif(NOT HEADVOICE_HAND_YOLO_PARTITION STREQUAL "")
+  if(NOT HEADVOICE_STAGE STREQUAL "2" OR NOT HEADVOICE_VISION STREQUAL "coco" OR
+     NOT HEADVOICE_HAND_NATIVE_PARTITION STREQUAL "" OR HEADVOICE_HAND_WEIGHTS_FILE)
+    message(FATAL_ERROR "YOLO test app requires stage 2, coco build, and no other hand classifier")
+  endif()
+  partition_table_get_partition_info(hv_yolo_size
+    "--partition-name ${HEADVOICE_HAND_YOLO_PARTITION}" "size")
+  partition_table_get_partition_info(hv_yolo_type
+    "--partition-name ${HEADVOICE_HAND_YOLO_PARTITION}" "type")
+  if(NOT hv_yolo_type EQUAL 1 OR NOT hv_yolo_size OR hv_yolo_size LESS 2530192)
+    message(FATAL_ERROR "YOLO model partition is missing or too small")
+  endif()
+  target_sources(${COMPONENT_LIB} PRIVATE "${headvoice_root}/firmware/hv_yolo_app.cpp")
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE
+    HV_YOLO_PARTITION="${HEADVOICE_HAND_YOLO_PARTITION}" HV_YOLO_TEST=1)
+  foreach(hv_yolo_dep IN ITEMS esp-dl esp_partition mbedtls esp_timer spi_flash)
+    idf_component_get_property(hv_yolo_dep_lib ${hv_yolo_dep} COMPONENT_LIB)
+    target_link_libraries(${COMPONENT_LIB} PUBLIC ${hv_yolo_dep_lib})
+  endforeach()
+elseif(HEADVOICE_VISION STREQUAL "hand")
   target_sources(${COMPONENT_LIB} PRIVATE
     "${headvoice_root}/firmware/hv_hand_app.c"
     "${headvoice_root}/firmware/hv_hand_detect.cpp"
