@@ -37,6 +37,8 @@ class Evidence:
         self.tts_matched = False
         self.generation = None
         self.complete = False
+        self.completion_unsupported = False
+        self._pending_playback_enosys = False
         self.failure = None
         self.ready = False
         self.ended = False
@@ -44,7 +46,8 @@ class Evidence:
 
     def fail(self, reason):
         if self.failure is None:
-            self.failure = reason
+            self.failure = "playback_failed" if self._pending_playback_enosys else reason
+        self._pending_playback_enosys = False
 
     def refresh_reply_matches(self):
         marker = r"(?<![a-z0-9])" + re.escape(self.marker) + r"(?![a-z0-9])"
@@ -72,7 +75,8 @@ class Evidence:
         # Do not retain or print unrelated ASR, credentials or raw logs.
         if "ESP-ROM:" in line or "stack overflow" in line or "Guru Meditation" in line:
             self.fail("device_restarted_or_panicked")
-        if "agora disconnected" in line and not self.complete and not self.ended:
+        if ("agora disconnected" in line and not self.complete and
+                not self.completion_unsupported and not self.ended):
             self.fail("session_disconnected")
         record = re.search(r'HG_PROBE (\{[^\r\n]*\})', line)
         if record:
@@ -85,7 +89,16 @@ class Evidence:
                 state = status.get("state")
                 if state == "ready" and status.get("code") == 0:
                     self.ready = True
+                elif (state == "playback_completion_unsupported" and status.get("code") == -6
+                      and self.ready and not self.ended):
+                    # Only the owned firmware probe can distinguish a drained
+                    # local queue without hardware completion ACK from a real
+                    # failure. Raw SDK ENOSYS alone is insufficient evidence.
+                    self.completion_unsupported = True
+                    self._pending_playback_enosys = False
                 elif state == "ended" and status.get("code") == 0:
+                    if self._pending_playback_enosys:
+                        self.fail("playback_failed")
                     self.ended = True
                 elif state in ("failed", "cleanup_failed", "unavailable", "busy"):
                     self.fail("probe_" + state)
@@ -112,7 +125,14 @@ class Evidence:
                 self.generation = generation
             elif self.generation == generation:
                 if state == "failed":
-                    self.fail("playback_failed")
+                    code = re.search(r"\bcode=(-?\d+)\b", line)
+                    if code and int(code[1]) == -6:
+                        # The structured probe record follows this SDK line.
+                        # Do not abort the observer before it can arrive.
+                        if not self.completion_unsupported:
+                            self._pending_playback_enosys = True
+                    else:
+                        self.fail("playback_failed")
                 else:
                     self.complete = True
 
@@ -124,9 +144,12 @@ class Evidence:
             # Text notices have no generation ID. These are independent facts,
             # even though the diagnostic session reserves an idle transaction.
             "playback_generation_completed_observed": self.complete,
+            "playback_completion_unsupported_observed": self.completion_unsupported,
             "diagnostic_session_ready": self.ready,
             "diagnostic_session_ended": self.ended,
-            "failure": self.failure,
+            # Preserve legacy raw-log failure evidence if no structured
+            # unsupported record resolved it before observation stopped.
+            "failure": self.failure or ("playback_failed" if self._pending_playback_enosys else None),
             "physical_audio_verified": False,
         }
 

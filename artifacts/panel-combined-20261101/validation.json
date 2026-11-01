@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-01",
+  "scope": "Preserve the current USB workbench and restore the illustrated setup/dictionary with consistent navigation",
+  "routes": ["index.html", "setup.html#setup", "setup.html#dictionary"],
+  "frontend_tests": {"passed": 118, "failed": 0, "command": "npm --prefix panel test", "includes_concurrent_workbench_changes": true},
+  "production_build": "passed",
+  "package": {
+    "path": "artifacts/headvoice-panel.zip",
+    "bytes": 41067,
+    "sha256": "17b18515a332e8482263682b1e3b692d14072964032bdc244015b39cf370b3d4",
+    "zip_integrity": "passed",
+    "both_page_entries": true
+  },
+  "browser": {
+    "engine": "Codex in-app browser",
+    "desktop": {"width": 1440, "height": 1000},
+    "mobile": {"width": 390, "height": 844},
+    "checks_passed": [
+      "Current USB workbench layout and navigation render while disconnected",
+      "Setup phrase selection, three simulated samples, confirmation gate and local demo save",
+      "Dictionary deep link and refresh restore the saved demo entry",
+      "Browser back/forward updates setup/dictionary view, title and navigation",
+      "Duplicate gesture binding prevents simulated capture",
+      "Changing view during simulated capture cancels the pending sample",
+      "Editing a dictionary entry returns to setup",
+      "Mobile large-text setup, capture, dictionary and workbench have no horizontal overflow",
+      "Expanded workbench diagnostics have no mobile horizontal overflow"
+    ],
+    "console_warnings_or_errors": [],
+    "screenshots": ["setup-desktop.jpg", "dictionary-desktop.jpg", "setup-mobile-large.jpg", "device-desktop.jpg"]
+  },
+  "boundaries": {
+    "setup_capture": "simulated",
+    "setup_dictionary": "browser-local demo only",
+    "device_dictionary": "existing USB write/readback flow; no automatic import from demo entries",
+    "hardware_tested_this_task": false,
+    "firmware_changed_this_task": false,
+    "platform_uploaded_or_published": false
+  }
+}

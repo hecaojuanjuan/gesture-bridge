@@ -76,6 +76,13 @@ void hv_gesture_agent_port_notice(int32_t id, const qm_agent_event_notice_t *not
     }
     portENTER_CRITICAL(&s_gesture_guard);
     bool close = false;
+#if defined(HV_GESTURE_AGENT_CONFIG_HEADER)
+    bool forward_text = id == QM_AGENT_EVENT_TTS && s_gesture_armed &&
+        atomic_load(&s_gesture_owned) && !atomic_load(&s_gesture_handoff) &&
+        !atomic_load(&s_gesture_cancelled) && !s_gesture_reply.failed &&
+        !s_gesture_reply.complete && !s_gesture_completion_unsupported;
+    unsigned text_sequence = forward_text ? hv_gesture_agent_active_sequence() : 0;
+#endif
     if (s_gesture_armed && !atomic_load(&s_gesture_cancelled) &&
         !s_gesture_completion_unsupported) {
         /* With the isolated queue-drain fix, this exact terminal condition
@@ -93,6 +100,12 @@ void hv_gesture_agent_port_notice(int32_t id, const qm_agent_event_notice_t *not
         }
     }
     portEXIT_CRITICAL(&s_gesture_guard);
+#if defined(HV_GESTURE_AGENT_CONFIG_HEADER)
+    /* JSON/serial output must never run with interrupts disabled. Only TTS is
+     * forwarded, avoiding duplicate AGENT_TEXT and unrelated microphone chat. */
+    if (text_sequence) hv_gesture_agent_text(text_sequence, notice->data.text.text,
+                                           notice->data.text.truncated);
+#endif
     if (close) {
         qm_agent_event_t *boundary = qm_malloc(sizeof(*boundary));
         int ret = -QM_ENOMEM;
@@ -111,14 +124,48 @@ void hv_gesture_agent_port_notice(int32_t id, const qm_agent_event_notice_t *not
     }
 }
 
-int hv_gesture_agent_port_begin(void)
+/* Call only with the lifecycle mutex held. Order matches the original gate. */
+static const char *gesture_start_blocker(void)
 {
-    if (!s_gesture_lifecycle) return -QM_EINIT;
-    if (xSemaphoreTakeRecursive(s_gesture_lifecycle, 0) != pdTRUE) return -QM_EBUSY;
-    int ret = -QM_EBUSY;
-    if (s_agent && s_cloud_connected && !s_agent_started && !s_waiting_tts_complete &&
-        !atomic_load(&s_gesture_resource) &&
-        !atomic_load(&s_gesture_owned)) {
+    if (!s_agent) return "no_session";
+    if (!s_cloud_connected) return "cloud_disconnected";
+    if (s_agent_started) return "voice_session_active";
+    if (s_waiting_tts_complete) return "tts_pending";
+    if (atomic_load(&s_gesture_resource)) return "resource_active";
+    if (atomic_load(&s_gesture_owned)) return "gesture_session_active";
+    return NULL;
+}
+
+static int gesture_start_lock(const char **detail)
+{
+    if (!s_gesture_lifecycle) {
+        if (detail) *detail = "not_initialized";
+        return -QM_EINIT;
+    }
+    if (xSemaphoreTakeRecursive(s_gesture_lifecycle, 0) != pdTRUE) {
+        if (detail) *detail = "lifecycle_busy";
+        return -QM_EBUSY;
+    }
+    return QM_EOK;
+}
+
+int hv_gesture_agent_port_status(const char **detail)
+{
+    int ret = gesture_start_lock(detail);
+    if (ret != QM_EOK) return ret;
+    const char *reason = gesture_start_blocker();
+    if (detail) *detail = reason ? reason : "ready";
+    xSemaphoreGiveRecursive(s_gesture_lifecycle);
+    return reason ? -QM_EBUSY : QM_EOK;
+}
+
+int hv_gesture_agent_port_begin_detail(const char **detail)
+{
+    int ret = gesture_start_lock(detail);
+    if (ret != QM_EOK) return ret;
+    const char *reason = gesture_start_blocker();
+    ret = -QM_EBUSY;
+    if (!reason) {
         atomic_store(&s_gesture_cancelled, false);
         atomic_store(&s_gesture_handoff, false);
         atomic_store(&s_gesture_remote, false);
@@ -134,9 +181,18 @@ int hv_gesture_agent_port_begin(void)
             atomic_store(&s_gesture_owned, false);
             qm_agent_set_upload_enabled(s_agent, QM_TRUE);
         }
+        reason = ret == QM_EOK ? "ready" : "start_failed";
     }
+    /* Copy to the caller while locked: another request/status query cannot
+     * overwrite this failure's reason after the mutex is released. */
+    if (detail) *detail = reason;
     xSemaphoreGiveRecursive(s_gesture_lifecycle);
     return ret;
+}
+
+int hv_gesture_agent_port_begin(void)
+{
+    return hv_gesture_agent_port_begin_detail(NULL);
 }
 
 int hv_gesture_agent_port_ready(void)
@@ -147,6 +203,19 @@ int hv_gesture_agent_port_ready(void)
         qm_agent_get_state(s_agent) == QM_AGENT_STATE_RUNNING &&
         !qm_agent_audio_engine_stream_active(s_agent) &&
         dialog != QM_AGENT_DIALOG_STATE_THINKING && dialog != QM_AGENT_DIALOG_STATE_SPEAKING;
+}
+
+const char *hv_gesture_agent_port_ready_detail(void)
+{
+    if (atomic_load(&s_gesture_cancelled)) return "cancelled";
+    if (!s_agent) return "no_session";
+    if (!atomic_load(&s_gesture_remote)) return "waiting_remote";
+    if (qm_agent_get_state(s_agent) != QM_AGENT_STATE_RUNNING) return "waiting_running";
+    if (qm_agent_audio_engine_stream_active(s_agent)) return "audio_active";
+    int dialog = atomic_load(&s_gesture_dialog);
+    if (dialog == QM_AGENT_DIALOG_STATE_THINKING) return "thinking";
+    if (dialog == QM_AGENT_DIALOG_STATE_SPEAKING) return "speaking";
+    return "ready";
 }
 
 int hv_gesture_agent_port_arm(void)

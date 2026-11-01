@@ -7,7 +7,8 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 let storage;
 try { storage=window.localStorage; } catch { storage={getItem(){throw Error();},setItem(){throw Error();}}; }
 let {entries,error:storageError}=readEntries(storage);
-let draft=blankDraft(), view='setup', step=1, mode='cards', large=false, busy=false, saved=null;
+const routeView=()=>window.location.hash==='#dictionary'?'dictionary':'setup';
+let draft=blankDraft(), view=routeView(), step=1, mode='cards', large=false, busy=false, saved=null;
 let scanning=false, scanIndex=-1, scanTimer=null, captureTimer=null, toastTimer=null;
 const gesture=()=>GESTURES.find(g=>g.id===draft.gesture);
 const phrase=()=>PHRASES.find(p=>p.id===draft.phraseId);
@@ -18,16 +19,16 @@ root.innerHTML=`
     <a class="brand" href="./setup.html"><span class="brand-emblem">颔</span><span>颔语<small>GESTURE BRIDGE</small></span></a>
     <div class="nav-caption">我的沟通空间</div>
     <nav aria-label="主导航">
-      <button class="nav-item active" data-nav="setup">${icon('plus')}<span>手势建库</span><i></i></button>
-      <button class="nav-item" data-nav="dictionary">${icon('book')}<span>我的词典</span><b id="dictionary-count">0</b></button>
+      <a class="nav-item" href="#setup" data-nav="setup">${icon('plus')}<span>手势建库</span><i></i></a>
+      <a class="nav-item" href="#dictionary" data-nav="dictionary">${icon('book')}<span>我的词典</span><b id="dictionary-count">0</b></a>
       <a class="nav-item" href="./index.html">${icon('monitor')}<span>设备控制</span>${icon('arrow',16)}</a>
     </nav>
     <div class="sidebar-bottom"><div class="gentle-note"><span class="note-symbol">“</span><p>每一个小动作，<br>都有想说的话。</p><span class="little-line"></span></div>
     <button class="help-link" data-action="help">${icon('help',19)} 建库使用说明</button>
-    <div class="sidebar-foot">HEADVOICE <span>设计预览 · v1</span></div></div>
+    <div class="sidebar-foot">GESTURE BRIDGE <span>图卡建库 · 设计预览</span></div></div>
   </aside>
   <div class="app-body">
-    <header class="topbar"><div class="breadcrumb">控制面板 <span>/</span> <strong id="crumb">手势建库</strong></div><div class="top-actions"><span class="demo-tag"><i></i>交互原型</span><button class="size-toggle" data-action="font" aria-pressed="false" aria-label="切换大字模式">A<span>大字</span></button><span class="profile-dot" aria-label="个人词典">${icon('person',19)}</span></div></header>
+    <header class="topbar"><div class="breadcrumb">控制面板 <span>/</span> <strong id="crumb">手势建库</strong></div><div class="top-actions"><span class="demo-tag"><i></i>本机演示</span><button class="size-toggle" data-action="font" aria-pressed="false" aria-label="切换大字模式">A<span>大字</span></button><span class="profile-dot" aria-label="个人词典">${icon('person',19)}</span></div></header>
     <main id="content" tabindex="-1"></main>
     <footer class="page-footer"><span>颔语 · 让表达更简单</span><span>${icon('shield',14)} 演示数据仅保存在此浏览器</span></footer>
   </div>
@@ -55,9 +56,14 @@ function showDialog(title, body, actions='') {
   document.querySelector('#dialog').showModal();
 }
 function focusHeading() { document.querySelector('#screen-title')?.focus({preventScroll:true}); }
-function reset() { stopScan(); stopCapture(); stopSpeech(); draft=blankDraft(); step=1; mode='cards'; saved=null; view='setup'; }
-function navigate(next) {
-  stopScan(); stopCapture(); stopSpeech(); view=next; render(); focusHeading();
+function reset() { stopScan(); stopCapture(); stopSpeech(); draft=blankDraft(); step=1; mode='cards'; saved=null; }
+function navigate(next, updateHistory=true) {
+  stopScan(); stopCapture(); stopSpeech();
+  clearTimeout(toastTimer); document.querySelector('#toast').hidden=true;
+  document.querySelector('#dialog').close();
+  view=next==='dictionary'?'dictionary':'setup';
+  if(updateHistory && window.location.hash!==`#${view}`) window.history.pushState(null,'',`#${view}`);
+  render(); focusHeading();
 }
 function stepper() {
   return `<ol class="steps" aria-label="建库进度">${['选择含义','录入手势','确认绑定'].map((label,i)=>`<li class="${step===i+1?'current':step>i+1?'done':''}" ${step===i+1?'aria-current="step"':''}><span class="step-number">${step>i+1?icon('check',16):`0${i+1}`}</span><span>${label}</span>${i<2?'<span class="step-line"></span>':''}</li>`).join('')}</ol>`;
@@ -109,11 +115,13 @@ function dictionaryScreen() {
     <section class="dictionary-footnote">${icon('shield',18)} 已绑定的手势不会自动换成别的意思。修改需重新核对；删除仅影响本机演示数据。</section>`;
 }
 function render() {
+  document.title=`颔语 · ${view==='setup'?'手势建库':'我的词典'}`;
   document.querySelector('#dictionary-count').textContent=entries.length;
   document.querySelector('#crumb').textContent=view==='setup'?'手势建库':'我的词典';
   document.querySelectorAll('[data-nav]').forEach(n=>{n.classList.toggle('active',n.dataset.nav===view); if(n.classList.contains('nav-item')) n.setAttribute('aria-current',n.dataset.nav===view?'page':'false');});
   document.querySelector('#content').innerHTML=(storageError?`<div class="inline-alert" role="alert">${esc(storageError)}</div>`:'')+(view==='dictionary'?dictionaryScreen():`
     <div class="page-title-row"><div><span class="eyebrow">PERSONAL GESTURE DICTIONARY</span><h1>让熟悉的手势，<span>有自己的意思。</span></h1><p>一起建立专属于您的表达方式。</p></div><button class="quiet-button" data-action="help">${icon('help',18)} 如何开始</button></div>
+    <div class="preview-context"><span>${icon('book',17)} 图卡建库体验 · 模拟录入，词条保存在此浏览器。</span><a href="./index.html">前往设备控制 ${icon('arrow',16)}</a></div>
     ${stepper()}<div class="setup-layout"><section class="workflow-card">${saved?successScreen():step===1?meaningScreen():step===2?captureScreen():confirmScreen()}</section>${summary()}</div>`);
 }
 function selectPhrase(id) {
@@ -153,13 +161,17 @@ root.addEventListener('change',event=>{
   if(event.target.id==='confirmed') {draft.confirmed=event.target.checked;document.querySelector('#save-button').disabled=!draft.confirmed||!!storageError;}
 });
 root.addEventListener('click',event=>{
-  const b=event.target.closest('button'); if(!b||b.disabled)return;
-  if(b.dataset.nav){navigate(b.dataset.nav);return;}
+  if(event.target.closest('.skip-link')){event.preventDefault();document.querySelector('#content').focus();return;}
+  const b=event.target.closest('button, a[data-nav]'); if(!b||b.disabled)return;
+  if(b.dataset.nav){
+    if(b.tagName==='A'&&(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey))return;
+    event.preventDefault();navigate(b.dataset.nav);return;
+  }
   if(b.dataset.phrase){selectPhrase(b.dataset.phrase);return;}
   if(b.dataset.mode){stopScan();stopSpeech();mode=b.dataset.mode;render();document.querySelector(`[data-mode="${mode}"]`)?.focus();return;}
   if(b.dataset.gesture){if(draft.gesture!==b.dataset.gesture){draft.gesture=b.dataset.gesture;draft.samples=0;draft.confirmed=false;}render();document.querySelector(`[data-gesture="${draft.gesture}"]`)?.focus();return;}
   if(b.dataset.speak){const e=entries.find(e=>e.id===b.dataset.speak);if(e)speak(e.text);return;}
-  if(b.dataset.edit){const e=entries.find(e=>e.id===b.dataset.edit);if(!e)return;reset();draft={...blankDraft(),text:e.text,gesture:e.gesture,phraseId:PHRASES.some(p=>p.id===e.phraseId)?e.phraseId:null,editId:e.id};mode=draft.phraseId?'cards':'caregiver';render();focusHeading();return;}
+  if(b.dataset.edit){const e=entries.find(e=>e.id===b.dataset.edit);if(!e)return;reset();draft={...blankDraft(),text:e.text,gesture:e.gesture,phraseId:PHRASES.some(p=>p.id===e.phraseId)?e.phraseId:null,editId:e.id};mode=draft.phraseId?'cards':'caregiver';navigate('setup');return;}
   if(b.dataset.delete){const e=entries.find(e=>e.id===b.dataset.delete);if(e)showDialog('删除这条演示词条？',`<p>「${esc(e.text)}」将从此浏览器移除，不会改变开发板。</p>`,`<button class="secondary" data-action="close-dialog">保留词条</button><button class="danger-button" data-remove="${esc(e.id)}">删除词条</button>`);return;}
   if(b.dataset.remove){const current=readEntries(storage);if(current.error){notify(current.error);return;}const next=current.entries.filter(e=>e.id!==b.dataset.remove),error=writeEntries(storage,next);if(error){notify(error);return;}entries=next;document.querySelector('#dialog').close();render();notify('已删除本机演示词条。');return;}
   switch(b.dataset.action){
@@ -170,7 +182,7 @@ root.addEventListener('click',event=>{
     case 'none':stopScan();showDialog('可以稍后再设置',`<p>没有合适的图卡，可以请照护者填写一句话，也可以先休息。当前内容尚未保存。</p>`,`<button class="secondary" data-action="pause-setup">暂不设置</button><button class="primary" data-action="custom">请照护者填写</button>`);break;
     case 'pause-setup':document.querySelector('#dialog').close();reset();navigate('dictionary');break;
     case 'custom':document.querySelector('#dialog').close();mode='caregiver';render();document.querySelector('#custom-text').focus();break;
-    case 'new':reset();render();focusHeading();break;
+    case 'new':reset();navigate('setup');break;
     case 'next':stopScan();stopSpeech();if(step===1&&draft.text.trim()){step=2;}else if(step===2&&draft.samples===3&&!entries.some(e=>e.gesture===draft.gesture&&e.id!==draft.editId)){step=3;}render();focusHeading();break;
     case 'back':stopScan();stopCapture();stopSpeech();draft.confirmed=false;step=Math.max(1,step-1);render();focusHeading();break;
     case 'scan':if(scanning){stopScan();render();}else{scanning=true;render();tickScan();scanTimer=setInterval(tickScan,3500);}document.querySelector('[data-action="scan"]')?.focus();break;
@@ -186,5 +198,6 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopScan();stopCapture();stopSpeech();render();}});
 window.addEventListener('pagehide',()=>{stopScan();stopCapture();stopSpeech();});
+window.addEventListener('hashchange',()=>{const next=routeView();if(next!==view)navigate(next,false);});
 window.addEventListener('storage',event=>{if(event.key===STORAGE_KEY||event.key===null){stopScan();stopCapture();const current=readEntries(storage);entries=current.entries;storageError=current.error;draft.confirmed=false;saved=null;render();notify('演示词典已在其他页面更新，请重新核对。');}});
 render();

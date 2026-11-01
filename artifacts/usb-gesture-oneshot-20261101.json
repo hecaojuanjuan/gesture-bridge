@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-01",
+  "status": "deployed_user_browser_acceptance_pending_wifi_panic_observed",
+  "application_sha256": "c0dfdcdc046595b28d3097b7b14a5297123ee611f405a1a2f78be037830132ff",
+  "application_bytes": 3611936,
+  "deployment_evidence": ".local/water-demo-oneshot-deploy-20261101/deployment.json",
+  "previous_iteration": "artifacts/usb-gesture-workbench-20261101.json",
+  "single_shot": {
+    "confirmed_targets": [
+      "open_palm",
+      "v_sign"
+    ],
+    "pauses_models": true,
+    "manual_rearm_command": "hg_dict ID arm",
+    "failure_auto_rearm": false,
+    "browser_reconnect_auto_rearm": false,
+    "first_round_after_device_boot": "armed"
+  },
+  "session_fix": {
+    "root_cause": "Agora CONNECTED deduplication flag survives stop/start and suppresses the second CONNECTED notice",
+    "isolated_sdk_overlay": true,
+    "vendor_modified": false,
+    "actual_c_original_reproduction": true,
+    "actual_c_two_round_regression": true,
+    "hardware_repeat_verified": false
+  },
+  "tests": {
+    "python_unique_tests": 169,
+    "python_run_note": "168 passed in sandbox; local HTTP bind was denied, then the 8-test HTTP suite passed outside sandbox",
+    "panel_node_tests": 113,
+    "panel_production_build": true,
+    "production_core": true,
+    "firmware_build": true
+  },
+  "sources_sha256": {
+    "headvoice/firmware/headvoice_app.h": "17c37c5dc5b465d6d8c1be80d816cd3b77fabab11967dab4aebe3407a9b1a55e",
+    "headvoice/firmware/hv_hand_app.c": "eb50d700808e9bb61944999b17bfffdd0f4b7c699596f602a6ee0ffd74b62181",
+    "headvoice/firmware/hv_gesture_agent.c": "cfd9f882005a167c202f6de3ec99910b289bf428eb6dc5a4dd36d74d69abc064",
+    "headvoice/firmware/hv_gesture_agent_port.h": "49e08fe2c19f01bc22cde9a601d95f1637a6c94ea88f462a6f5c921242679c11",
+    "headvoice/firmware/hv_gesture_agent_port.inc": "3c331af9c870ac40df68cfc13de904382b6e8aa85d2d4794fc1ba54c4aa5ef2f",
+    "tools/prepare_sdk.py": "3a46449348c0989a6321311ef527dc50071ec677293449aeac4f8620f7eb9c0b",
+    "panel/src/main.js": "2ae2108332e9b2e205fea485417089f2f5e446cf5b11e4ab21adf1f4dc6e87a1",
+    "panel/src/agent.mjs": "3d8cc81a022bfc22c4cf072ee5b004cca644c70438dd54365d1161bd6e6a4bf5",
+    "panel/src/hand.mjs": "70f9420a3314f7952ccb1b330d041051443a047e3131a3166a526c6980a29b4c",
+    "panel/src/serial.js": "c96990e79b9c55fae61a63c5dbf8d77c1924a270caf963579497f21cafdd4924"
+  },
+  "hardware": {
+    "deployment_verified": true,
+    "single_shot_physical_verified": false,
+    "water_reply_text_observed": false,
+    "water_speaker_confirmed_by_user": false,
+    "protected_regions_unchanged": [
+      "native model",
+      "partition table",
+      "provisioned NVS",
+      "OTA metadata"
+    ],
+    "dictionary_persisted_readback": true,
+    "open_palm_binding": "我想喝水",
+    "scan_supported_readback": true,
+    "scan_armed_readback": true,
+    "scan_generation_readback": 1,
+    "startup_observations": 35,
+    "startup_capture_seconds": 20,
+    "startup_complete_panic_count": 1,
+    "startup_boot_markers": 2,
+    "panic_cause_verified": false,
+    "panic_stack": [
+      "esf_buf_alloc",
+      "ic_ebuf_alloc",
+      "ieee80211_output_process",
+      "ppTask"
+    ],
+    "panic_phase": "Wi-Fi connected; before gesture confirmation or Agent request",
+    "startup_raw_log": ".local/water-demo-oneshot-startup-20261101.jsonl",
+    "startup_raw_sha256": "3201f0785f983bcb7c922225b4e9a97b38187c8c42e2cc696b3ca71c416aac6f"
+  },
+  "h5_uploaded": false,
+  "github_pushed": false,
+  "handoff": "User will test the web panel. Serial port released; no further browser interaction by agent."
+}

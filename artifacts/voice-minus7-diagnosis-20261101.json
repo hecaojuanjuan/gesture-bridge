@@ -1,0 +1,79 @@
+{
+  "date": "2026-11-01",
+  "status": "session_recovery_verified_original_rejection_branch_unknown",
+  "original_failure": {
+    "source": "Live Chrome USB workbench observed in this investigation",
+    "request_id": 5,
+    "state": "unavailable",
+    "code": -7,
+    "meaning": "-QM_EBUSY from local begin gate or qm_agent_start",
+    "prompt_submitted": false,
+    "exact_gate_recorded": false
+  },
+  "serial_capture_boundary": "Both host serial opens were followed by a boot marker. The original failing RAM state was not preserved. No explicit reset/flash/provision command was sent.",
+  "observed_network": {
+    "captures": 2,
+    "auth_expire_reason": 2,
+    "auth_expire_count_each": 2,
+    "automatic_reconnect": true,
+    "wifi_got_ip": true,
+    "cloud_connected": true,
+    "cloud_event_app_ms": [
+      25152,
+      24769
+    ],
+    "user_report": "没有操作，设备自己恢复了",
+    "original_failure_network_cause_proven": false
+  },
+  "session_check": {
+    "firmware": "c0dfdcdc046595b28d3097b7b14a5297123ee611f405a1a2f78be037830132ff",
+    "rounds": 2,
+    "ready_rounds": 2,
+    "ended_code_zero_rounds": 2,
+    "abort_expected_code": -9,
+    "text_submitted": false,
+    "microphone_upload_enabled_by_probe": false,
+    "physical_speaker_verified": false
+  },
+  "diagnostic_patch": {
+    "built": true,
+    "flashed": false,
+    "application_sha256": "d40395ed65b5463e415400ef553220a7c6eaf7883b8a64fcb6bd91a9abfca493",
+    "python_targeted_tests": 29,
+    "panel_agent_tests": 11,
+    "panel_build": true,
+    "new_cli": "hg_agent status",
+    "details": [
+      "not_initialized",
+      "lifecycle_busy",
+      "no_session",
+      "cloud_disconnected",
+      "voice_session_active",
+      "tts_pending",
+      "resource_active",
+      "gesture_session_active",
+      "start_failed"
+    ],
+    "preserves_original_error_codes": true,
+    "captures_first_blocking_gate_at_failure": true
+  },
+  "limitations": [
+    "Original request 5 exact cause remains unknown",
+    "No prompt, Agent text response or physical audio tested",
+    "Short capture without panic does not establish long-term stability",
+    "New diagnostics are compiled only and not on the board"
+  ],
+  "evidence": [
+    {
+      "path": ".local/voice-minus7-readonly-02-20261101.jsonl",
+      "sha256": "0d211f00c2656208be5b9b7ec75990354b299b6ba79847bcc1233d68367ae105"
+    },
+    {
+      "path": ".local/voice-minus7-session-20261101.jsonl",
+      "sha256": "a1f96c16d303b751a07249eea0c41d400e5ee3782c09ed3f153b19da8ff12122"
+    }
+  ],
+  "browser_usb_restored_observed": true,
+  "h5_uploaded": false,
+  "github_pushed": false
+}

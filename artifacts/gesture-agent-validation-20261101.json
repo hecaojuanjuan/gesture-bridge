@@ -1,12 +1,12 @@
 {
   "date": "2026-11-01",
-  "status": "physical_text_route_and_audible_reply_verified_gesture_trigger_pending",
+  "status": "single_gesture_chain_accepted_by_user_repeat_session_timeout",
   "sdk_commit": "89020f5e04bf777ae1672b8f3d320bc6e0ef3e0c",
   "tests": {
     "unittest": {
-      "passed": 152,
-      "command": "python3 -m unittest discover -s tests -v",
-      "log": ".local/gesture-agent-diagnostic-regression.log"
+      "passed": 164,
+      "command": "python3 -m unittest discover -s tests",
+      "log": ".local/mac-gesture-age1000-tests.log"
     },
     "production_core": {
       "passed": true,
@@ -19,23 +19,24 @@
     "headvoice/core/hv_gesture_prompt.h": "1b6e274e6cb368ea7242e96c05fb20c33aa69c14559a48f4a121d947e2f73b11",
     "headvoice/core/hv_gesture_reply.c": "c12bb048cfa96de05b9d073579b712427dac46cd79a99b90fda0b2f3be68abf2",
     "headvoice/core/hv_gesture_reply.h": "249fc8de1b6d9261ab3bc66283eb69308449b39c9d3f3904e7efbe87868d26b3",
-    "headvoice/firmware/hv_gesture_agent.c": "c3f05494f12a2f0d083a3458a57d8f540719ce9b33dd1f1d8599e204d1b2fc23",
+    "headvoice/firmware/hv_gesture_agent.c": "24a882b38f79d8a25318af4e29ebca0795ec63f35fc99751d22741f80b7dd7ab",
     "headvoice/firmware/hv_gesture_agent.h": "7af144d24e1ad21cf0e174a1fd8b4a909cc8294b0308c3209aa36239a381d48f",
-    "headvoice/firmware/hv_gesture_agent_port.h": "a766a35caf27be1db1f9d96b9793db579b06e4d91c54921fd51256f26b9b850c",
-    "headvoice/firmware/hv_gesture_agent_port.inc": "5e49bce514368cf2eb2472f317e77fbdbfce2811e9d394e9181fa83a940e4298",
-    "headvoice/firmware/hv_gesture_probe.c": "c35cebefc57232261946ea21f60ee249a93bf3aa4e173c0400967f39acf73cf9",
+    "headvoice/firmware/hv_gesture_agent_port.h": "21b6e2b126d03e8dbfe646571ad9370b8731b29ab7c84c6fd027fb12159761dd",
+    "headvoice/firmware/hv_gesture_agent_port.inc": "276d1d06665281b4df2fef8c679e2fd105a6c77a68fb105d1ccf1c3d0cad987e",
+    "headvoice/firmware/hv_gesture_probe.c": "c73e4178baed43fcf4283324ae9822254ecf50527b9caa8582ed116ad1567b82",
     "headvoice/firmware/hv_gesture_probe.h": "957afe3db5ecbf37ab95ec1f4a39695c053a69653416b26a828da65f4f5f9b3e",
     "headvoice/firmware/hv_hand_app.c": "04b16f226ee99fd052e28213fe2f2a20aa450ed0f0d2869e137fdde2a075b44e",
     "headvoice/firmware/hv_voice_probe.c": "62dde58c004b3d9cec97d777fd1e0ddd1500f633137b7be237b2df59254339e1",
     "headvoice/firmware/integration.cmake": "f27807d682a4dd40b8aae29aea761ab44ef1a299ecf8ede2b6bdc20bce135072",
-    "server/gesture_agent_bridge.py": "c941d77889e49e79068de6a53b34f637658ed2dd35ea877daf799cd646c15a87",
+    "server/gesture_agent_bridge.py": "0271b7148dacb8371c93bd8717200c5be70fb78f1f2628465332edaa0db47e32",
     "tools/build.py": "852d430a201331f6488ccb7da462edb8f09ca91efcfae5c2d23612e462eaf871",
-    "tools/gesture_agent_config.py": "e7dfe4ad971475dbbc2775d466aa1ecd7dfef3e1042cc86bfefbd087b78ef955",
-    "tools/prepare_sdk.py": "cd60c0473400b0c17d2b0f785be57fd62ab607b7a37a1a9565d368137841cf1d",
-    "tools/probe_gesture_agent.py": "c675fa3a74a8c0bbdaa9c68db18cab0266cf0ca70576f6602efa20312a4b5388"
+    "tools/gesture_agent_config.py": "ed0cdba9fed8b777ce382792b0eb340f4f8d60dc92e089e765fb6e59fac14228",
+    "tools/prepare_sdk.py": "43d85cbe98a1f38f2eafedf2e0ed739c3c9ee44d57ae02b3bbc836f05fe971bd",
+    "tools/probe_gesture_agent.py": "0d3bd6724a4f4b77523c20794491220ac9503a42d6f8392be4606fa5935e0f53",
+    "headvoice/core/hv_hand_gate.h": "598dc76c748e39302b97dad87801e50a28763964fcb57c65e5c5eb9c6c6cd3e9"
   },
   "live_validation": {
-    "bridge_deployed": false,
+    "bridge_deployed": true,
     "merchant_credentials_used": true,
     "physical_device_chat_route_verified": true,
     "firmware_flashed": true,
@@ -52,11 +53,14 @@
     "prov_rst_overflow_reobserved": false,
     "diagnostic_startup_panics": 3,
     "agent_inference_verified": true,
-    "real_gesture_trigger_verified": false,
-    "hardware_playback_completion_ack_verified": false
+    "real_gesture_trigger_verified": true,
+    "hardware_playback_completion_ack_verified": false,
+    "merchant_credential_mac_memory_only_authorized": true,
+    "automatic_agent_spoken_reply_verified": true,
+    "repeat_session_verified": false
   },
-  "external_dependency": "Physical PID/DID route verified. User selected Mac HTTPS bridge; network alignment and local credential configuration remain.",
-  "compile_configuration": "Enabled build uses a .invalid endpoint and test-only bridge token. Do not deploy this test binary.",
+  "external_dependency": "Mac bridge is running with one-run in-memory credentials. User accepted single-chain stage and requested panel acceptance; repeat session timeout remains recorded.",
+  "compile_configuration": "Current Mac build: explicit LAN HTTP opt-in, private bridge token, open_palm mapped to 19 + 28. No merchant token in firmware.",
   "official_frontend_sources": [
     {
       "url": "https://platform.ljyd.cn/assets/AssistantList-Y9y655oE.js",
@@ -98,7 +102,8 @@
     "bridge_configured": false,
     "diagnostic_cli": true,
     "wdt_rom": false,
-    "runtime_verified": false
+    "runtime_verified": true,
+    "runtime_verification_scope": "Previous diagnostic app: owned text session, model observations and user-heard response; not long-duration stability."
   },
   "live_validation_note": "Two real text requests returned ok:true. Agent returned 42 without answer in prompt; user heard calculation result in second test. SDK reports ENOSYS at end because hardware DRAIN unsupported; automatic gesture entry still unverified.",
   "device_backup": {
@@ -108,7 +113,7 @@
     "preflight": ".local/gesture-agent-device-20261101/preflight.json",
     "deployment": ".local/gesture-agent-device-20261101/diagnostic-deploy.json",
     "startup_log": ".local/gesture-agent-device-20261101/startup-after.jsonl",
-    "latest_deployment": ".local/gesture-agent-device-20261101/diagnostic-local-wdt-deploy.json"
+    "latest_deployment": ".local/gesture-agent-device-20261101/mac-http-age1000-deploy.json"
   },
   "diagnostic_rom_attempt": {
     "passed": true,
@@ -121,5 +126,49 @@
     "diagnostic_cli": true,
     "wdt_rom": true
   },
-  "live_route_evidence": "artifacts/gesture-agent-live-route-20261101.json"
+  "live_route_evidence": "artifacts/gesture-agent-live-route-20261101.json",
+  "mac_http_build": {
+    "passed": true,
+    "binary": ".local/gesture-agent-device-20261101/mac-http-age1000.bin",
+    "bytes": 3607872,
+    "sha256": "3576e07c3af9fcf8412264ea6eb04ef4537e7a5a9ceaa5bf2803d9f61f0f7088",
+    "elf_sha256": "80555bfa254627485ed0ca9f5a1f646e2aeee2313c3ae5ca7508ebc4cf5d3382",
+    "log": ".local/mac-gesture-age1000-build.log",
+    "bridge_configured": true,
+    "diagnostic_cli": true,
+    "wdt_rom": false,
+    "local_audio_drain_fix": true,
+    "application_flash_verified": true,
+    "gesture_worker_ready_observed": true,
+    "automatic_gesture_reply_verified": false,
+    "frame_age_limit_ms": 1000
+  },
+  "mac_network": {
+    "mac_ip": "10.37.185.13",
+    "board_ip": null,
+    "after_application_restart": "Hotspot restarted; new firmware associated and connected to cloud. User then re-added miniapp device successfully.",
+    "log": ".local/gesture-agent-device-20261101/mac-age1000-gesture-01.jsonl",
+    "reprovision_log": ".local/gesture-agent-device-20261101/mac-reprovision.jsonl"
+  },
+  "mac_http_build_600ms": {
+    "passed": true,
+    "binary": ".local/gesture-agent-device-20261101/mac-http.bin",
+    "bytes": 3607872,
+    "sha256": "15432f2562e8ffb51ae39f4d87fa162a176e5693a426d409bae9713bde9f62df",
+    "elf_sha256": "6c772264b6ecbf01588669a1b26d561e0500f845614e04543e1a9b53ce9b4bc4",
+    "log": ".local/mac-gesture-agent-build-authorized.log",
+    "bridge_configured": true,
+    "diagnostic_cli": true,
+    "wdt_rom": false,
+    "local_audio_drain_fix": true,
+    "application_flash_verified": true,
+    "gesture_worker_ready_observed": true,
+    "automatic_gesture_reply_verified": false
+  },
+  "last_gesture_trial": {
+    "evidence": "artifacts/gesture-agent-stage-acceptance-20261101.json",
+    "first_chain_passed": true,
+    "second_session_timed_out": true,
+    "accepted_by_user": "single-chain phase"
+  }
 }

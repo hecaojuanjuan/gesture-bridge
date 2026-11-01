@@ -319,3 +319,28 @@ test('unknown JPEG request sources fail before any command is sent',async t=>{
   await assert.rejects(connection.snapshot({source:'unexpected'}),/不支持/);
   assert.deepEqual(f.output,[]);await connection.close();
 });
+
+test('one USB reader routes split real dictionary and agent lines without inferring raw HG events',async t=>{
+  const f=fixture(t),dictionary=[],agent=[],hand=[];
+  const connection=await connectSerial(()=>{},()=>{},{onDictionary:r=>dictionary.push(r),onAgent:r=>agent.push(r),onHand:r=>hand.push(r)});
+  t.after(()=>connection.close());
+  const boot='0123456789abcdef';
+  const report={v:1,boot,id:17,ok:true,code:'ok',persisted:true,max_age_ms:1000,bindings:{open_palm:'我想喝水',v_sign:''}};
+  const state={v:1,boot,id:1,state:'connecting',code:0};
+  const reply={...state,state:'reply',text:'用户想喝水了。',truncated:false};
+  const wire='HGD '+JSON.stringify(report)+'\nHG_AGENT '+JSON.stringify(state)+'\nHG_AGENT '+JSON.stringify(reply)+'\n';
+  const bytes=encode(wire);for(let i=0;i<bytes.length;i+=7)f.input.enqueue(bytes.slice(i,i+7));
+  f.input.enqueue(encode('HG_AGENT {"v":1,"id":1,"state":"accepted","code":0}\nHG {"event":"gesture","gesture":"open_palm"}\n'));
+  await setImmediate();assert.deepEqual(dictionary,[report]);assert.deepEqual(agent,[state,reply]);assert.deepEqual(hand,[]);
+});
+test('dictionary wire uses the shared writer queue and rejects injection or odd hex',async t=>{
+  const f=fixture(t),connection=await connectSerial(()=>{},()=>{});t.after(()=>connection.close());
+  await connection.dictionary('10 get');await connection.dictionary('11 set open_palm e68891e683b3e5969de6b0b4');await connection.dictionary('12 set v_sign -');
+  assert.deepEqual(f.output,['hg_dict 10 get\r\n','hg_dict 11 set open_palm e68891e683b3e5969de6b0b4\r\n','hg_dict 12 set v_sign -\r\n']);
+  for(const wire of ['1 get\nhv_panel 2 test','1 set open_palm abc','0 get','1 set other ff','1 set open_palm '+ 'ff'.repeat(181)])await assert.rejects(connection.dictionary(wire),/无效/);
+});
+
+test('explicit next-round command uses hg_dict arm on the same serial writer',async t=>{
+  const f=fixture(t),connection=await connectSerial(()=>{},()=>{});t.after(()=>connection.close());
+  await connection.dictionary('23 arm');assert.deepEqual(f.output,['hg_dict 23 arm\r\n']);
+});

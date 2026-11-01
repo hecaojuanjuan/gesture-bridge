@@ -47,7 +47,12 @@ static int xTaskCreate(void (*fn)(void*),const char *name,unsigned stack,void *a
 struct qm_cli_command { const char *name, *help; void (*function)(char*,int,int,char**); };
 static int qm_cli_register_command(const struct qm_cli_command *c) { assert(c && c->function); return register_result; }
 #define qm_cli_printf printf
-int hv_gesture_agent_port_begin(void) { ++starts; return begin_result; }
+int hv_gesture_agent_port_begin_detail(const char **detail) {
+  ++starts; *detail=begin_result ? "cloud_disconnected" : "ready"; return begin_result;
+}
+int hv_gesture_agent_port_status(const char **detail) {
+  *detail=begin_result ? "cloud_disconnected" : "ready"; return begin_result;
+}
 int hv_gesture_agent_port_ready(void) { ++ready_calls; return ready_result; }
 int hv_gesture_agent_port_arm(void) { ++arms; arm_ms=now_ms; return 0; }
 int hv_gesture_agent_port_poll(void) { return poll_result; }
@@ -64,6 +69,10 @@ static void run(void) { assert(pending_task); pending_task(NULL); assert(!s_prob
 int main(void) {
   register_result=-1; assert(hv_gesture_probe_init()==ESP_FAIL);
   register_result=0; assert(hv_gesture_probe_init()==ESP_OK);
+  char *status[]={"hg_agent","status"};
+  probe_command(NULL,0,2,status);
+  begin_result=-QM_EBUSY; probe_command(NULL,0,2,status); begin_result=0;
+  assert(!starts && !ends && !arms && !spawned && !s_probe_busy && !s_probe_abort);
   command("probe","bad"); assert(!spawned);
   command("probe","GB12345678"); assert(spawned==1 && s_probe_busy);
   command("probe","GB87654321"); assert(spawned==1);
@@ -113,6 +122,13 @@ class DiagnosticFirmwareTests(unittest.TestCase):
             self.assertEqual(states.count("playback_completion_unsupported"), 1)
             self.assertIn("not_owned", states)
             self.assertIn("cleanup_failed", states)
+            unavailable = [record for record in records if record["state"] == "unavailable"]
+            self.assertEqual([(record["code"], record.get("detail")) for record in unavailable],
+                             [(-9, "cancelled"), (-7, "cloud_disconnected"), (-5, None)])
+            status = [json.loads(line[len("HG_AGENT_STATUS "):]) for line in result.stdout.splitlines()
+                      if line.startswith("HG_AGENT_STATUS ")]
+            self.assertEqual(status, [{"v": 1, "code": 0, "detail": "ready"},
+                                      {"v": 1, "code": -7, "detail": "cloud_disconnected"}])
 
 
 if __name__ == "__main__": unittest.main()

@@ -1,0 +1,61 @@
+{
+  "date": "2026-11-01",
+  "status": "deployed_usb_dictionary_verified_gesture_reply_pending",
+  "application_sha256": "65f556df850a117947d1f48d36742abacc5fa7cf47e7a262968a32d0a38918cb",
+  "application_bytes": 3610544,
+  "configured_default_bindings": {
+    "open_palm": "我想喝水",
+    "v_sign": ""
+  },
+  "tests": {
+    "python_unittest": 165,
+    "production_core": true,
+    "panel_node_tests": 100,
+    "panel_build": true,
+    "firmware_build": true
+  },
+  "sources_sha256": {
+    "headvoice/core/hv_gesture_prompt.c": "ba0d6506ba5de72fa633eada1035e4b46deca503e0bc39a5859043bba5c285c4",
+    "headvoice/firmware/hv_gesture_agent.c": "3990140d63d4d83f9669e28da4d56eb0f7c2052247c3b9633bf60d54a04f2630",
+    "headvoice/firmware/hv_gesture_agent.h": "22d00f4c08663a72b7f40475c9b3c600db406f75b6e9a25b11642dd851d3d738",
+    "headvoice/firmware/hv_gesture_agent_port.h": "32200ed9feb18887a4fbc4c95e31235623e686bdda9059b9f0bb243fff1f45cd",
+    "headvoice/firmware/hv_gesture_agent_port.inc": "e1748e62519022dac98c9dd2eef91c292ccfbba88c2b07997f586aabae914e35",
+    "tools/prepare_sdk.py": "a65f54c4b7bcf7dd6a20de05ce1688f584225f09c886fad97693acf63480667f",
+    "panel/src/main.js": "eb397400537fd2d67a20b98dc9ebc93ac90068421b2578d9fa9c4174867727e1",
+    "panel/src/serial.js": "fb0d725b00ee6f2655af1558dd8cce5191a97e81e0af138f0cb31df9fcfc7d0d",
+    "panel/src/agent.mjs": "3666a20f301cc8582c0f19812b8ad550cbc6b2c19bcd7dd9aa47a26f1fc649a9",
+    "panel/src/hand.mjs": "0075a3c02a4fad614eab616c2de7ebb2a5241eca4ce823796d4fe814affc3e55",
+    "panel/src/style.css": "e67fcdecf7f531f7a27a1280810c69c003ac4862673f0dbcb2b5bab2f308ed9f",
+    "panel/index.html": "df81bdb4dea19594b65b20094b276af5bcc5a94d4f20719c291711ca64984c55",
+    "panel/setup.html": "5e51383594523ca725d8e027c40aabc6732efc2083704d20dead10925dd29319"
+  },
+  "deployment_evidence": ".local/water-demo-deploy-20261101/deployment.json",
+  "browser": {
+    "new_workbench_visible": true,
+    "usb_connected": true,
+    "dictionary_save_readback_verified": true,
+    "agent_reply_observed": false,
+    "speaker_heard_by_user": false,
+    "jpeg_320x240_received": true,
+    "panic_reset_observed": true,
+    "panic_cause_verified": false,
+    "palm_completions_observed": 2,
+    "last_agent_failure": {
+      "request_id": 2,
+      "code": -2,
+      "meaning": "timeout",
+      "phase_observed": false
+    },
+    "user_palm_fully_in_frame": true,
+    "user_palm_candidate_after_framing_adjustment": true
+  },
+  "h5_uploaded": false,
+  "github_pushed": false,
+  "deployment_verified": true,
+  "protected_regions_unchanged": [
+    "native model",
+    "partition table",
+    "provisioned NVS",
+    "OTA metadata"
+  ]
+}

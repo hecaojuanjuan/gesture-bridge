@@ -95,6 +95,11 @@ static unsigned agent_submissions;
 esp_err_t hv_gesture_agent_init(void) { return ESP_OK; }
 void hv_gesture_agent_submit(hv_hand_gate_event_t event, uint64_t captured) {
   assert(event != HV_HAND_GATE_EVENT_NONE && captured <= clock_ms);
+  if (HV_HAND_SINGLE_SHOT) {
+    headvoice_scan_status_t scan; headvoice_scan_status(&scan);
+    assert(scan.supported && !scan.armed);
+    assert(!headvoice_scan_arm()); /* Completion-to-agent handoff is exclusive. */
+  }
   ++agent_submissions;
   printf("HG {\"event\":\"agent_submit\",\"kind\":%d}\n", (int)event);
 }
@@ -174,8 +179,8 @@ int main(void)
   frame(&state, 3400, 0, 0); assert(dark());
   frame(&state, 3700, 0, 0);
   assert(state.fistCount == 1 && displayed_rgb[2] == 32 && !displayed_rgb[1]);
-  feedback_tick(4300); assert(displayed_rgb[2] == 32);
-  feedback_tick(4301); assert(dark()); /* No inference call is needed to expire light. */
+  feedback_tick(3700 + HV_HAND_GATE_MAX_AGE_MS); assert(displayed_rgb[2] == 32);
+  feedback_tick(3700 + HV_HAND_GATE_MAX_AGE_MS + 1); assert(dark()); /* No inference call is needed to expire light. */
   assert(state.gate.latched == HV_HAND_GATE_CLOSED_FIST);
 
   frame(&state, 4600, 0, 0); assert(dark()); /* Cross-gap frame cannot revive a window. */
@@ -204,11 +209,11 @@ int main(void)
   assert(state.palmCount == 1);
   frame(&state, 9300, 0, 2);
   assert(state.palmCount == 2 && displayed_rgb[1] == 32);
-  frame(&state, 9600, 600, 2); assert(dark()); /* 710ms total age rejects classification. */
+  frame(&state, 9600, HV_HAND_GATE_MAX_AGE_MS + 1 - 110, 2); assert(dark()); /* 1001ms total age rejects classification. */
   detected_count = 2;
-  frame(&state, 10300, 0, 2); assert(dark());
+  frame(&state, 10900, 0, 2); assert(dark());
   detector_fault = true;
-  frame(&state, 10600, 0, 2); assert(dark());
+  frame(&state, 11200, 0, 2); assert(dark());
   assert(state.palmCount == 2 && state.fistCount == 2);
   heap_caps_free(s_gray); heap_caps_free(s_classifierWork);
 #endif
@@ -245,7 +250,7 @@ static void before_commit(void) {
   if (--guard_countdown) return;
   guard_hook = NULL;
   if (commit_fault) ++s_epoch;
-  if (commit_expired) clock_ms += 601;
+  if (commit_expired) clock_ms += HV_HAND_GATE_MAX_AGE_MS + 1;
 }
 hv_hand_native_status_t hv_hand_native_classifier_analyze_rgb888(
     const uint8_t *rgb, size_t bytes, uint16_t width, uint16_t height,
@@ -298,7 +303,7 @@ int main(int argc, char **argv) {
     assert(state.vCount == 1 && displayed_rgb[2] == 32 && !displayed_rgb[1]);
     frame(&state, 3400, 0, 0); assert(state.vCount == 1);
     feedback_tick(4000); assert(displayed_rgb[2] == 32);
-    feedback_tick(4001); assert(dark());
+    feedback_tick(4001); assert(displayed_rgb[2] == 32); /* 601ms remains fresh. */
     frame(&state, 4100, 0, 0); assert(state.vCount == 1);
 
     /* All non-target classes stay OTHER, including model no_hand with hands=1. */
@@ -314,12 +319,12 @@ int main(int argc, char **argv) {
     hold(&state, 7000, 0); assert(state.vCount == 2 && displayed_rgb[2] == 32);
 
     /* Native compute exceeding the lease is rejected AFTER inference. */
-    native_top = HV_HAND_NATIVE_CLASS_FIVE; native_delay = 510;
+    native_top = HV_HAND_NATIVE_CLASS_FIVE; native_delay = HV_HAND_GATE_MAX_AGE_MS + 1 - 110;
     frame(&state, 7900, 0, 0); assert(dark() && state.palmCount == 1);
     native_delay = 30;
     /* Already stale input never calls the classifier at all. */
     unsigned calls = native_calls;
-    frame(&state, 8600, 600, 0); assert(native_calls == calls && dark());
+    frame(&state, 8600, HV_HAND_GATE_MAX_AGE_MS + 1 - 110, 0); assert(native_calls == calls && dark());
     native_fault = true;
     frame(&state, 9500, 0, 0); assert(dark() && s_epoch == 1);
     native_fault = false;
@@ -367,9 +372,48 @@ int main(int argc, char **argv) {
     native_top = HV_HAND_NATIVE_CLASS_TWO;
     hold(&state, 16900, 3);
     assert(state.palmCount == 2 && state.vCount == 3 && state.fistCount == 0);
+    feedback_tick(17500 + HV_HAND_GATE_MAX_AGE_MS); assert(displayed_rgb[2] == 32);
+    feedback_tick(17500 + HV_HAND_GATE_MAX_AGE_MS + 1); assert(dark());
   }
   for (unsigned i = 0; i < RAW_COUNT; ++i) heap_caps_free(s_frames[i].data);
   assert(offered_inputs == detector_calls && !guard_hook);
+  return 0;
+}
+'''
+
+SINGLE_SHOT_HARNESS = NATIVE_HARNESS.split("int main(int argc", 1)[0] + r'''
+int main(int argc, char **argv) {
+  (void)argc; (void)argv;
+  assert(headvoice_start()==ESP_OK);
+  assert(dark());
+  headvoice_scan_status_t scan; headvoice_scan_status(&scan);
+  assert(scan.supported && scan.armed && scan.generation==1);
+  assert(headvoice_scan_arm()); headvoice_scan_status(&scan); assert(scan.generation==1);
+  hand_inference_state_t state; inference_state_init(&state);
+  hold(&state,1000,0);
+  headvoice_scan_status(&scan);
+  assert(!scan.armed && scan.palm_count==1 && !strcmp(scan.last_gesture,"open_palm"));
+  assert(agent_submissions==1);
+  unsigned detect_before=detector_calls,native_before=native_calls,preview_before=offered_inputs;
+  native_top=HV_HAND_NATIVE_CLASS_TWO;
+  for(uint64_t t=1900;t<=4000;t+=300) frame(&state,t,0,0);
+  assert(detector_calls==detect_before && native_calls==native_before && offered_inputs>preview_before);
+  assert(agent_submissions==1 && state.palmCount==1 && state.vCount==0);
+  conversion_result=ESP_FAIL; frame(&state,4300,0,0); conversion_result=ESP_OK;
+  assert(detector_calls==detect_before && native_calls==native_before);
+  clock_ms=4500; assert(headvoice_scan_arm()); headvoice_scan_status(&scan);
+  assert(scan.armed && scan.generation==2 && scan.palm_count==1);
+  frame(&state,4400,100,0); /* Buffered frame predating explicit arm is ignored. */
+  assert(detector_calls==detect_before);
+  hold(&state,4600,0); headvoice_scan_status(&scan);
+  assert(!scan.armed && scan.generation==2 && scan.palm_count==1 && scan.v_count==1);
+  assert(!strcmp(scan.last_gesture,"v_sign") && agent_submissions==2);
+  for(uint64_t t=5500;t<=6400;t+=300) frame(&state,t,0,0);
+  assert(agent_submissions==2 && state.vCount==1);
+  clock_ms=6600; assert(headvoice_scan_arm());
+  hold(&state,6700,0); headvoice_scan_status(&scan);
+  assert(!scan.armed && scan.generation==3 && scan.v_count==2 && agent_submissions==3);
+  for(unsigned i=0;i<RAW_COUNT;i++) heap_caps_free(s_frames[i].data);
   return 0;
 }
 '''
@@ -424,7 +468,7 @@ class HandAppIntegrationTests(unittest.TestCase):
         self.assertTrue(uncertain["classification_valid"])
         self.assertFalse(uncertain["confirmed"])
         self.assertEqual(uncertain["gate_visible"], "unknown")
-        self.assertTrue(all(row["valid"] is False for row in observations if row["captured_ms"] in (8400, 9600, 10300, 10600)))
+        self.assertTrue(all(row["valid"] is False for row in observations if row["captured_ms"] in (8400, 9600, 10900, 11200)))
 
     def compile_and_run_native(self, scenario):
         with tempfile.TemporaryDirectory(prefix="hand-native-app-test-") as temp:
@@ -435,11 +479,12 @@ class HandAppIntegrationTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text('#include "stubs.h"\n', encoding="utf-8")
             harness = directory/"harness.c"
-            harness.write_text(NATIVE_HARNESS, encoding="utf-8")
+            harness.write_text(SINGLE_SHOT_HARNESS if scenario == "oneshot" else NATIVE_HARNESS, encoding="utf-8")
             binary = directory/"app-native-test"
             subprocess.run([
                 shutil.which("cc") or "clang", "-std=c11", "-O1", "-Wall", "-Wextra", "-Werror", "-UNDEBUG",
                 "-DHV_STAGE=2", "-DHV_HAND_NATIVE_CLASSIFIER=1", '-DHV_HAND_NATIVE_PARTITION="test_native_model"',
+                *(["-DHV_HAND_SINGLE_SHOT=1"] if scenario == "oneshot" else []),
                 "-I", str(directory), "-I", str(ROOT), "-I", str(ROOT/"headvoice/core"),
                 "-I", str(ROOT/"headvoice/firmware"), str(harness),
                 # No legacy classifier linked: native path must be self-contained.
@@ -448,6 +493,15 @@ class HandAppIntegrationTests(unittest.TestCase):
             completed = subprocess.run([str(binary), scenario], capture_output=True, text=True)
             self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout[-3000:])
             return [json.loads(line[3:]) for line in completed.stdout.splitlines() if line.startswith("HG ")]
+
+    def test_single_shot_stops_both_models_keeps_preview_and_requires_explicit_arm(self):
+        rows = self.compile_and_run_native("oneshot")
+        events = [row for row in rows if row.get("event") == "gesture"]
+        self.assertEqual([row["gesture"] for row in events], ["open_palm", "v_sign", "v_sign"])
+        self.assertEqual([row["scan_generation"] for row in events], [1, 2, 3])
+        self.assertTrue(all(row["scan_armed"] is False for row in events))
+        observations = [row for row in rows if row.get("event") == "observation"]
+        self.assertFalse(any(1900 <= row["captured_ms"] <= 4500 for row in observations))
 
     def test_native_official_names_gate_lifecycle_and_eleven_scores(self):
         rows = self.compile_and_run_native("ready")
@@ -485,7 +539,7 @@ class HandAppIntegrationTests(unittest.TestCase):
                 self.assertFalse(at[stamp]["classification_valid"])
                 self.assertFalse(at[stamp]["confirmed"])
                 self.assertEqual(at[stamp]["gate_visible"], "unknown")
-        self.assertGreater(at[13100]["age_ms"], 600)
+        self.assertGreater(at[13100]["age_ms"], 1000)
         self.assertEqual(at[16600]["gate_latched"], "v_sign")
         for stamp in (14000, 14300, 14600, 14900):
             with self.subTest(invalid_model_output=stamp):

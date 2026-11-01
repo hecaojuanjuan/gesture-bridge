@@ -151,10 +151,11 @@ int main(void)
   puts("PASS silence expires display/progress without unlocking or inventing events");
 
   reset();
-  send(HV_HAND_GATE_OPEN_PALM, 1000, 1600, true, 1, .8f, .6f);
+  assert(HV_HAND_GATE_MAX_AGE_MS == 1000);
+  send(HV_HAND_GATE_OPEN_PALM, 1000, 1000 + HV_HAND_GATE_MAX_AGE_MS, true, 1, .8f, .6f);
   assert(gate.candidate == HV_HAND_GATE_OPEN_PALM); /* Inclusive age/score/margin boundary. */
-  send(HV_HAND_GATE_OPEN_PALM, 1400, 2001, true, 1, .9f, .1f);
-  assert(gate.candidate == HV_HAND_GATE_UNKNOWN); /* 601ms is stale. */
+  send(HV_HAND_GATE_OPEN_PALM, 1400, 1400 + HV_HAND_GATE_MAX_AGE_MS + 1, true, 1, .9f, .1f);
+  assert(gate.candidate == HV_HAND_GATE_UNKNOWN); /* 1001ms is stale. */
   send(HV_HAND_GATE_OPEN_PALM, 3001, 3000, true, 1, .9f, .1f);
   assert(gate.visible == HV_HAND_GATE_UNKNOWN);
   send(HV_HAND_GATE_OPEN_PALM, 3100, 3200, true, 1, NAN, .1f);
@@ -200,25 +201,25 @@ int main(void)
   assert(!v_events && gate.candidate == HV_HAND_GATE_UNKNOWN);
   send(HV_HAND_GATE_V_SIGN, 1900, 2000, true, 1, .79f, .1f);
   send(HV_HAND_GATE_V_SIGN, 2200, 2300, true, 1, .9f, .71f);
-  send(HV_HAND_GATE_V_SIGN, 2500, 3101, true, 1, .9f, .1f);
+  send(HV_HAND_GATE_V_SIGN, 2500, 2500 + HV_HAND_GATE_MAX_AGE_MS + 1, true, 1, .9f, .1f);
   assert(!v_events && gate.candidate == HV_HAND_GATE_UNKNOWN);
-  sample(HV_HAND_GATE_V_SIGN, 3200); /* First post-gap frame only advances capture. */
-  v_sign(3300);
+  sample(HV_HAND_GATE_V_SIGN, 3600); /* First post-gap frame only advances capture. */
+  v_sign(3700);
   assert(v_events == 1 && gate.latched == HV_HAND_GATE_V_SIGN);
   puts("PASS V sign shares multi-hand, score, margin and freshness rejection rules");
 
   hv_hand_gate_invalidate(&gate);
   assert(gate.visible == HV_HAND_GATE_UNKNOWN && gate.latched == HV_HAND_GATE_V_SIGN);
-  v_sign(4100);
+  v_sign(4500);
   assert(v_events == 1);
-  sample(HV_HAND_GATE_OTHER, 4900);
-  sample(HV_HAND_GATE_OTHER, 5400);
+  sample(HV_HAND_GATE_OTHER, 5300);
+  sample(HV_HAND_GATE_OTHER, 5800);
   assert(gate.latched == HV_HAND_GATE_UNKNOWN);
-  v_sign(5600);
+  v_sign(6000);
   assert(v_events == 2);
-  sample(HV_HAND_GATE_NO_HAND, 6400);
-  sample(HV_HAND_GATE_NO_HAND, 6900);
-  v_sign(7100);
+  sample(HV_HAND_GATE_NO_HAND, 6800);
+  sample(HV_HAND_GATE_NO_HAND, 7300);
+  v_sign(7500);
   assert(v_events == 3 && !fist_events && !palm_events);
   puts("PASS V sign survives epoch invalidation and requires reliable release before repetition");
   reset();

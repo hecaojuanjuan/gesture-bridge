@@ -1,20 +1,47 @@
 """Validate local gesture settings and emit a private build-only C header."""
 import json
+import ipaddress
 from pathlib import Path
 from urllib.parse import urlsplit
 
 
+LOCAL_HTTP_NETWORKS = tuple(ipaddress.ip_network(network) for network in
+                            ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8"))
+
+
+def is_local_http_address(host):
+    try:
+        address = ipaddress.IPv4Address(host)
+    except ipaddress.AddressValueError:
+        return False
+    return any(address in network for network in LOCAL_HTTP_NETWORKS)
+
+
 def write_config(source, destination):
     config = json.loads(Path(source).read_text(encoding="utf-8"))
-    if not isinstance(config, dict) or set(config) != {"url", "token", "bindings"}:
-        raise ValueError("Gesture agent config needs url, token and bindings")
+    required = {"url", "token", "bindings"}
+    if (not isinstance(config, dict) or not required <= set(config) or
+            set(config) - required - {"allow_insecure_local_http"}):
+        raise ValueError("Gesture agent config needs url, token and bindings; allow_insecure_local_http is optional")
+    allow_http = config.get("allow_insecure_local_http", False)
+    if type(allow_http) is not bool:
+        raise ValueError("allow_insecure_local_http must be a boolean")
     url, token, bindings = config["url"], config["token"], config["bindings"]
     if not isinstance(url, str) or any(ord(c) < 33 or ord(c) > 126 for c in url):
-        raise ValueError("Bridge URL must be an ASCII HTTPS URL")
+        raise ValueError("Bridge URL must be an ASCII URL")
     parsed = urlsplit(url)
-    if (parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or
+    local_http = (parsed.scheme == "http" and allow_http and
+                  is_local_http_address(parsed.hostname))
+    if ((parsed.scheme != "https" and not local_http) or
+            not parsed.hostname or parsed.username or parsed.password or
             parsed.query or parsed.fragment or parsed.path != "/v1/gesture" or len(url) > 255):
-        raise ValueError("Bridge URL must be https://host[:port]/v1/gesture")
+        raise ValueError("Bridge URL must be HTTPS; explicit local HTTP requires an RFC1918 or loopback IPv4 address")
+    try:
+        port = parsed.port
+    except ValueError:
+        raise ValueError("Bridge URL port must be 1..65535") from None
+    if port is not None and not 1 <= port <= 65535:
+        raise ValueError("Bridge URL port must be 1..65535")
     if (not isinstance(token, str) or not 32 <= len(token) <= 128 or
             any(ord(c) < 33 or ord(c) > 126 for c in token)):
         raise ValueError("Bridge token must be 32..128 printable ASCII characters")
@@ -31,7 +58,8 @@ def write_config(source, destination):
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("/* Generated private configuration. Do not commit. */\n" +
                       "\n".join(f"#define {key} {json.dumps(value, ensure_ascii=False)}"
-                                for key, value in values.items()) + "\n", encoding="utf-8")
+                                for key, value in values.items()) +
+                      f"\n#define HV_GESTURE_ALLOW_INSECURE_LOCAL_HTTP {int(local_http)}\n", encoding="utf-8")
     output.chmod(0o600)
     return output.resolve()
 

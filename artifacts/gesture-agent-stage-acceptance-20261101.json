@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-01",
+  "status": "single_gesture_chain_accepted_by_user_repeat_session_timeout",
+  "application_sha256": "3576e07c3af9fcf8412264ea6eb04ef4537e7a5a9ceaa5bf2803d9f61f0f7088",
+  "frame_age_limit_ms": 1000,
+  "prompt_binding": "open_palm: 请计算19加28，只用一句中文回答计算结果，不要复述问题。",
+  "answer_absent_from_input": true,
+  "first_event": {
+    "gesture_utc": "2026-11-01T04:24:02.689893+00:00",
+    "accepted_utc": "2026-11-01T04:24:07.949721+00:00",
+    "tts": "19加28等于47。",
+    "playback_started_utc": "2026-11-01T04:24:09.454413+00:00",
+    "outcome": "playback_completion_unsupported",
+    "hardware_completion_ack": false
+  },
+  "second_event": {
+    "gesture_detected": true,
+    "request_id": 2,
+    "state": "failed",
+    "code": -2,
+    "phase": "session readiness before prompt submission"
+  },
+  "human_observation": [
+    "刚刚突然触发语音了 19+28=47",
+    "就听到了一次 这一部分先设置成验收"
+  ],
+  "user_accepted_scope": "One real gesture to agent-generated spoken calculation response; user moved on to control panel acceptance. Repeat was not accepted as passing.",
+  "known_limitations": [
+    "Second session startup timed out",
+    "At least one initial 87-byte Opus packet rejected with QM_EBUSY before playback operation ready",
+    "VB701N lacks hardware playback completion acknowledgement",
+    "Recognition sensitive to framing and overexposure"
+  ],
+  "raw_log": ".local/gesture-agent-device-20261101/mac-age1000-gesture-02.jsonl",
+  "raw_sha256": "9daad3039cc0c6615533d0f1764afa8d6bd29f4e261808f50ce794f288127dbb",
+  "merchant_credential_storage": "Mac process memory only; explicit user permission",
+  "bridge_requires_running_mac": true
+}

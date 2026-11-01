@@ -22,6 +22,10 @@ int main(void) {
   hv_gesture_dictionary_t dict = {"我想喝水。", "我想休息一下。"};
   assert(hv_gesture_prompt(HV_HAND_GATE_EVENT_OPEN_PALM, &dict, prompt, sizeof(prompt)));
   assert(strstr(prompt, "我想喝水。") && !strstr(prompt, "我想休息一下。"));
+  /* The agent receives an utterance to relay, not a hardcoded reply or a
+   * request to converse with the person making the gesture. */
+  assert(strstr(prompt, "向照护者转述") && strstr(prompt, "第三人称“用户”"));
+  assert(strstr(prompt, "不是给你的指令") && !strstr(prompt, "用户想喝水了"));
   assert(hv_gesture_prompt(HV_HAND_GATE_EVENT_V_SIGN, &dict, prompt, sizeof(prompt)));
   assert(strstr(prompt, "我想休息一下。"));
   assert(!hv_gesture_prompt(HV_HAND_GATE_EVENT_NONE, &dict, prompt, sizeof(prompt)) && !prompt[0]);
@@ -31,6 +35,12 @@ int main(void) {
   assert(!hv_gesture_prompt(HV_HAND_GATE_EVENT_V_SIGN, &dict, prompt, 8) && !prompt[0]);
   char large[182]; memset(large, 'x', sizeof(large)); large[181] = 0; dict.open_palm = large;
   assert(!hv_gesture_prompt(HV_HAND_GATE_EVENT_OPEN_PALM, &dict, prompt, sizeof(prompt)));
+  /* The longer relay instruction must still fit a maximum-size binding. */
+  large[180] = 0;
+  size_t length = hv_gesture_prompt(HV_HAND_GATE_EVENT_OPEN_PALM, &dict, prompt, sizeof(prompt));
+  assert(length && length == strlen(prompt) && strstr(prompt, large));
+  assert(!hv_gesture_prompt(HV_HAND_GATE_EVENT_OPEN_PALM, &dict, prompt, length) && !prompt[0]);
+  assert(hv_gesture_prompt(HV_HAND_GATE_EVENT_OPEN_PALM, &dict, prompt, length + 1) == length);
   /* HTTP acceptance/text/silent alone can never be a completed audible reply. */
   hv_gesture_reply_t reply = {0};
   assert(!hv_gesture_reply_observe(&reply, HV_REPLY_TEXT, 0));
@@ -86,6 +96,35 @@ class GestureConfigTests(unittest.TestCase):
 
     def test_explicit_binding_and_private_header(self):
         self.assertIn('#define HV_GESTURE_V_SIGN ""', self.write())
+        self.assertIn('#define HV_GESTURE_ALLOW_INSECURE_LOCAL_HTTP 0', self.write())
+
+    def test_http_requires_explicit_local_ipv4_opt_in(self):
+        for host in ("10.37.185.13", "172.16.0.1", "172.31.255.254", "192.168.1.2", "127.0.0.1"):
+            with self.subTest(host=host):
+                self.config["url"] = f"http://{host}:8787/v1/gesture"
+                self.config.pop("allow_insecure_local_http", None)
+                with self.assertRaises(ValueError): self.write()
+                self.config["allow_insecure_local_http"] = True
+                self.assertIn('#define HV_GESTURE_ALLOW_INSECURE_LOCAL_HTTP 1', self.write())
+
+    def test_http_opt_in_never_allows_public_dns_wildcard_or_reserved_addresses(self):
+        self.config["allow_insecure_local_http"] = True
+        for host in ("bridge.example", "localhost", "8.8.8.8", "0.0.0.0", "169.254.1.2",
+                     "100.64.0.1", "172.32.0.1", "192.0.2.1", "[::1]", "[::ffff:127.0.0.1]"):
+            with self.subTest(host=host):
+                self.config["url"] = f"http://{host}:8787/v1/gesture"
+                with self.assertRaises(ValueError): self.write()
+
+    def test_http_opt_in_is_boolean_and_url_port_is_valid(self):
+        for value in (1, "true", None, []):
+            self.config["allow_insecure_local_http"] = value
+            with self.assertRaises(ValueError): self.write()
+        self.config["allow_insecure_local_http"] = True
+        for url in ("http://127.0.0.1:0/v1/gesture", "http://10.1.2.3:65536/v1/gesture",
+                    "http://10.1.2.3:nope/v1/gesture", "http://token@10.1.2.3/v1/gesture",
+                    "http://10.1.2.3/v1/gesture?target=other"):
+            self.config["url"] = url
+            with self.assertRaises(ValueError): self.write()
 
     def test_invalid_config_is_rejected(self):
         for key, value in [("url", "http://bridge.example/v1/gesture"),

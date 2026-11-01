@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import sys
 import queue
+import threading
 import unittest
 from contextlib import redirect_stdout
 from unittest.mock import patch
@@ -138,6 +139,94 @@ class ProbeTests(unittest.TestCase):
         self.assertFalse(result["matching_tts_reply_observed"])
         self.assertTrue(result["playback_generation_completed_observed"])
         self.assertNotIn("matching_generation_completed_observed", result)
+
+    def test_structured_unsupported_is_not_hardware_completion_or_failure(self):
+        evidence = Evidence("GB12345678", require_ready=True)
+        evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678","state":"ready","code":0}')
+        evidence.feed("tts playback started generation=7")
+        evidence.feed("tts final=1 text=编号 GB12345678，答案是42。")
+        evidence.feed("tts playback failed generation=7 code=-6")
+        self.assertIsNone(evidence.failure)  # Keep observing for the owned terminal record.
+        evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678",'
+                      '"state":"playback_completion_unsupported","code":-6}')
+        evidence.feed("agora disconnected")  # Expected session cleanup after the terminal record.
+        evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678","state":"ended","code":0}')
+        result = evidence.result()
+        self.assertTrue(result["matching_tts_reply_observed"])
+        self.assertTrue(result["playback_completion_unsupported_observed"])
+        self.assertFalse(result["playback_generation_completed_observed"])
+        self.assertFalse(result["physical_audio_verified"])
+        self.assertIsNone(result["failure"])
+
+    def test_raw_enosys_requires_matching_ready_probe_and_exact_status_code(self):
+        for invalid in (
+            {"v": 1, "marker": "GB87654321", "code": -6},
+            {"v": 1, "marker": "GB12345678", "code": -8},
+            {"v": 2, "marker": "GB12345678", "code": -6},
+        ):
+            with self.subTest(invalid=invalid):
+                evidence = Evidence("GB12345678")
+                evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678","state":"ready","code":0}')
+                evidence.feed("tts playback started generation=7")
+                evidence.feed("tts playback failed generation=7 code=-6")
+                evidence.feed("HG_PROBE " + json.dumps(dict(invalid, state="playback_completion_unsupported")))
+                evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678","state":"ended","code":0}')
+                self.assertFalse(evidence.result()["playback_completion_unsupported_observed"])
+                self.assertEqual(evidence.result()["failure"], "playback_failed")
+        evidence = Evidence("GB12345678")
+        evidence.feed("tts playback started generation=7")
+        evidence.feed("tts playback failed generation=7 code=-6")
+        # An old raw-only log remains a playback failure, including without an ended record.
+        self.assertEqual(evidence.result()["failure"], "playback_failed")
+        evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678",'
+                      '"state":"playback_completion_unsupported","code":-6}')
+        self.assertFalse(evidence.result()["playback_completion_unsupported_observed"])
+        self.assertEqual(evidence.result()["failure"], "playback_failed")
+
+    def test_unsupported_cannot_hide_other_errors_or_stale_generations(self):
+        for raw_error in ("tts playback failed generation=7 code=-8",
+                          "tts playback failed generation=7",
+                          "tts playback started generation=8"):
+            with self.subTest(raw_error=raw_error):
+                evidence = Evidence("GB12345678")
+                evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678","state":"ready","code":0}')
+                evidence.feed("tts playback started generation=7")
+                evidence.feed(raw_error)
+                failure = evidence.failure
+                self.assertIsNotNone(failure)
+                evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678",'
+                              '"state":"playback_completion_unsupported","code":-6}')
+                self.assertEqual(evidence.result()["failure"], failure)
+                self.assertFalse(evidence.complete)
+        evidence = Evidence("GB12345678")
+        evidence.feed('HG_PROBE {"v":1,"marker":"GB12345678","state":"ready","code":0}')
+        evidence.feed("tts playback started generation=7")
+        evidence.feed("tts playback failed generation=6 code=-6")
+        self.assertIsNone(evidence.result()["failure"])
+        self.assertFalse(evidence.result()["playback_completion_unsupported_observed"])
+
+    def test_probe_waits_for_structured_unsupported_without_premature_abort(self):
+        serial = FakeSerial()
+        def finish():
+            serial.enqueue('HG_PROBE {"v":1,"marker":"GB12345678",'
+                           '"state":"playback_completion_unsupported","code":-6}')
+            serial.enqueue("agora disconnected")
+            serial.enqueue('HG_PROBE {"v":1,"marker":"GB12345678","state":"ended","code":0}')
+        terminal = threading.Timer(0.06, finish)
+        def send(*_):
+            serial.enqueue("tts playback started generation=7")
+            serial.enqueue("tts playback failed generation=7 code=-6")
+            terminal.start()
+        try:
+            result = run_probe(send, Device("unused", 1, "2"), "GB12345678", serial,
+                               seconds=0.3, ready_seconds=0.1, cleanup_seconds=0.03)
+        finally:
+            terminal.join()
+        self.assertEqual(serial.commands, ["hg_agent probe GB12345678"])
+        self.assertTrue(result["diagnostic_session_ended"])
+        self.assertTrue(result["playback_completion_unsupported_observed"])
+        self.assertFalse(result["playback_generation_completed_observed"])
+        self.assertIsNone(result["failure"])
 
     def test_unrelated_ready_and_greeting_cannot_unlock_request(self):
         serial = FakeSerial(ready_marker="GB87654321")

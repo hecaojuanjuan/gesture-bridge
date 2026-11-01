@@ -66,24 +66,24 @@ export function handCompletionCounts(raw) {
   return {palm:h.palm_count,second,secondLabel:native ? 'V字' : '握拳'};
 }
 
-export function handFresh(h,elapsed=0) {
-  return !!h && Number.isFinite(elapsed) && elapsed>=0 && h.age_ms+elapsed<=HAND_MAX_AGE_MS;
+export function handFresh(h,elapsed=0,maxAge=HAND_MAX_AGE_MS) {
+  return !!h && Number.isFinite(elapsed) && elapsed>=0 && Number.isFinite(maxAge) && maxAge>0 && h.age_ms+elapsed<=maxAge;
 }
-export function handCandidate(h,elapsed=0) {
-  if (!handFresh(h,elapsed) || !h.classifier_ready || !h.valid || h.classification_valid!==true) return '—';
+export function handCandidate(h,elapsed=0,maxAge=HAND_MAX_AGE_MS) {
+  if (!handFresh(h,elapsed,maxAge) || !h.classifier_ready || !h.valid || h.classification_valid!==true) return '—';
   if (h.classifier==='espdl_gesture11') return ({one:'单指（非目标）',two:'V字',three:'三指（非目标）',
     four:'四指（非目标）',five:'张掌',like:'点赞（非目标）',ok:'OK（非目标）',
     no_gesture:'其他手型（非目标）',call:'电话手势（非目标）',dislike:'倒拇指（非目标）',
     no_hand:'模型判无手（非目标）'})[h.gesture] ?? '—';
   return ({open_palm:'张掌',closed_fist:'握拳',other:'其他'})[h.gesture] ?? '—';
 }
-export function handState(h,elapsed=0) {
+export function handState(h,elapsed=0,maxAge=HAND_MAX_AGE_MS) {
   if (!h) return '等待手部诊断观测';
   const native=h.classifier==='espdl_gesture11';
   const classifier=h.classifier_ready
     ? native ? '11 类分类器已加载；目标为张掌和V字，原始候选不代表动作完成' : '分类器已加载；原始候选不代表动作完成'
     : `分类器未加载，尚不能识别${native ? '张掌或V字' : '张掌或握拳'}`;
-  if (!handFresh(h,elapsed)) return `观测已过期：设备帧龄与本页停留合计超过 600 ms；${classifier}`;
+  if (!handFresh(h,elapsed,maxAge)) return `观测已过期：设备帧龄与本页停留合计超过 ${maxAge} ms；${classifier}`;
   const detection=h.hands===0 ? '本帧未检出手' : h.hands!==1 ? `本帧有 ${h.hands} 个候选，不作单手分类`
     : h.valid ? '本帧检测到有效单手' : '本帧单手候选未通过有效性检查';
   return `${detection}；${classifier}`;
@@ -127,5 +127,74 @@ export class HandStream {
     // only as an ordering guard, never as replacement data for this observation.
     if (counts) this.lastCounts=counts;
     return {accepted:true};
+  }
+}
+
+// Capture only known hand telemetry. Never export arbitrary serial lines,
+// device/cloud configuration, text replies, image pixels or unknown fields.
+const HAND_EXPORT_FIELDS=['v','event','seq','captured_ms','age_ms','epoch','width','height','hands','box',
+  'detect_score','valid','classifier','classifier_ready','gesture','scores','classification_valid',
+  'classifier_status','confirmed','gate_visible','gate_latched','candidate_samples','palm_count','fist_count',
+  'v_count','infer_ms','conversion_ms','detect_ms','classifier_ms'];
+export function handScores(h) {
+  if(!h?.scores?.length || !h.scores.every(score) || !h.scores.some(n=>n>0)) return null;
+  const labels=h.classifier==='espdl_gesture11'?GESTURE11_LABELS:LEGACY_CLASSES;
+  if(h.scores.length!==labels.length)return null;
+  const ranked=h.scores.map((value,index)=>({label:labels[index],score:value})).sort((a,b)=>b.score-a.score);
+  return {top:ranked[0],second:ranked[1],margin:ranked[0].score-ranked[1].score,top3:ranked.slice(0,3)};
+}
+export function handProgress(h,elapsed=0,maxAge=HAND_MAX_AGE_MS) {
+  if(!h)return '等待观测；单帧候选不等于手势完成。';
+  if(!handFresh(h,elapsed,maxAge))return '最近观测已过期，不能据此判断当前保持状态；累计值只代表设备已报告的历史完成次数。';
+  if(!h.classifier_ready)return '设备报告分类器未就绪，尚不能确认手势。';
+  if(h.classification_valid!==true)return '设备未报告本帧分类有效；请结合检测、帧龄与分类状态查看，不能只凭画面推断原因。';
+  const target=h.classifier==='espdl_gesture11'?{five:'open_palm',two:'v_sign'}[h.gesture]:{open_palm:'open_palm',closed_fist:'closed_fist'}[h.gesture];
+  if(!target)return `原始分类 ${h.gesture} 不是当前目标手势，本帧不会触发表达。`;
+  if(h.confirmed===true)return '设备报告处于已确认状态；持续保持不会重复计数。新增完成以设备累计变化为准。';
+  if(h.gate_latched===target)return '设备仍保留此手势的锁存状态，不能将它当作新的完成；请结合后续移开手与累计变化观察。';
+  return `当前只是单帧候选；设备尚未报告确认${h.candidate_samples!==undefined?`，候选样本数 ${h.candidate_samples}`:''}。持续保持与连续输入是否满足，需结合后续观测判断。`;
+}
+export class HandDiagnostics {
+  constructor(limit=200){this.limit=Math.max(1,Math.min(200,Math.floor(limit)||200));this.reset(0);}
+  reset(session){this.session=session;this.boot=null;this.records=[];this.segment=0;}
+  confirm(bootId){
+    if(!integer(bootId,4294967295))return false;
+    if(this.boot!==null&&this.boot!==bootId){this.records=[];this.segment=0;}
+    this.boot=bootId;return true;
+  }
+  receive(raw,receivedAt,duringCamera=false){
+    const h=parseHand(raw);
+    if(!h||this.boot===null||!Number.isFinite(receivedAt)||receivedAt<0)return null;
+    const previous=this.records.at(-1);
+    const continuous=previous&&previous.hand.epoch===h.epoch&&previous.hand.seq<h.seq&&
+      previous.hand.captured_ms<h.captured_ms&&previous.received_ms<=receivedAt;
+    if(previous&&!continuous)++this.segment;
+    const hand=Object.fromEntries(HAND_EXPORT_FIELDS.filter(key=>h[key]!==undefined)
+      .map(key=>[key,Array.isArray(h[key])?[...h[key]]:h[key]]));
+    const record={type:'hand_observation',session:this.session,hp_boot:this.boot,segment:this.segment,
+      received_ms:receivedAt,during_camera:!!duringCamera,
+      capture_gap_ms:continuous?h.captured_ms-previous.hand.captured_ms:null,
+      receipt_gap_ms:continuous?receivedAt-previous.received_ms:null,hand};
+    this.records.push(record);if(this.records.length>this.limit)this.records.shift();return record;
+  }
+  matchFrame(frame){
+    if(!frame||frame.encoding!=='jpeg'||frame.source!=='inputjpeg'||frame.session!==this.session||frame.hp_boot!==this.boot)return null;
+    const matches=this.records.filter(r=>r.session===frame.session&&r.hp_boot===frame.hp_boot&&
+      r.hand.captured_ms===frame.capturedMs&&r.hand.width===frame.width&&r.hand.height===frame.height);
+    // A duplicate timestamp across segments is ambiguous; never pick a box.
+    return matches.length===1?matches[0]:null;
+  }
+  exportJsonl(frame,matched){
+    const rows=[{type:'hand_diagnostics',v:1,session:this.session,hp_boot:this.boot,count:this.records.length,
+      scope:'Current USB connection only; hand observations and camera metadata; no image, cloud configuration or reply text.'},...this.records];
+    if(frame&&frame.session===this.session&&frame.hp_boot===this.boot){
+      const exact=frame.source==='inputjpeg'&&frame.encoding==='jpeg'&&matched&&matched.session===frame.session&&matched.hp_boot===frame.hp_boot&&
+        matched.hand.captured_ms===frame.capturedMs&&matched.hand.width===frame.width&&matched.hand.height===frame.height;
+      rows.push({type:'camera_metadata',session:frame.session,hp_boot:frame.hp_boot,source:frame.source,
+        encoding:frame.encoding,width:frame.width,height:frame.height,captured_ms:frame.capturedMs,
+        matched:exact?{seq:matched.hand.seq,epoch:matched.hand.epoch,box:[...matched.hand.box],valid:matched.hand.valid,
+          gesture:matched.hand.gesture,classification_valid:matched.hand.classification_valid}:null});
+    }
+    return rows.map(row=>JSON.stringify(row)).join('\n')+'\n';
   }
 }

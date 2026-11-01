@@ -3,13 +3,13 @@ from pathlib import Path
 import sys
 import threading
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.parse
 import urllib.request
-from http.server import ThreadingHTTPServer
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "server"))
-from gesture_agent_bridge import Bridge, BridgeError, Device, LjydChat, handler_for
+from gesture_agent_bridge import Bridge, BridgeError, Device, LjydChat, create_server
 
 
 class BridgeTests(unittest.TestCase):
@@ -67,7 +67,7 @@ class BridgeTests(unittest.TestCase):
         self.assertTrue(self.bridge.submit(self.auth, second)["accepted"])
 
     def test_real_local_http_roundtrip(self):
-        server = ThreadingHTTPServer(("127.0.0.1", 0), handler_for(self.bridge))
+        server = create_server(self.bridge, port=0)
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         try:
             url = f"http://127.0.0.1:{server.server_port}/v1/gesture"
@@ -76,6 +76,23 @@ class BridgeTests(unittest.TestCase):
             with urllib.request.urlopen(request) as response:
                 self.assertEqual(json.load(response), {"accepted": True, "event_id": self.payload["event_id"]})
         finally: server.shutdown(); thread.join(); server.server_close()
+
+    def test_lan_http_requires_opt_in_and_explicit_rfc1918_bind(self):
+        for bind in ("10.37.185.13", "172.16.0.1", "192.168.1.2"):
+            with self.subTest(bind=bind):
+                with patch("gesture_agent_bridge.ThreadingHTTPServer") as constructor:
+                    with self.assertRaises(ValueError): create_server(self.bridge, bind)
+                    constructor.assert_not_called()
+                    server = create_server(self.bridge, bind, 8787, allow_insecure_local_http=True)
+                    self.assertIs(server, constructor.return_value)
+                    self.assertEqual(constructor.call_args.args[0], (bind, 8787))
+        for bind in ("0.0.0.0", "8.8.8.8", "bridge.example", "172.32.0.1", "169.254.1.2",
+                     "100.64.0.1", "::1", "::"):
+            with self.subTest(bind=bind):
+                with patch("gesture_agent_bridge.ThreadingHTTPServer") as constructor:
+                    with self.assertRaises(ValueError):
+                        create_server(self.bridge, bind, allow_insecure_local_http=True)
+                    constructor.assert_not_called()
 
 
 class UpstreamTests(unittest.TestCase):

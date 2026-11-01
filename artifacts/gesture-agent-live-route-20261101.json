@@ -72,12 +72,11 @@
     }
   ],
   "remaining": [
-    "Deploy local HTTPS bridge selected by user",
-    "Connect Mac and device on reachable network",
-    "Configure explicit test gesture mapping",
+    "Complete Mac LAN HTTP bridge credential setup",
+    "Restore device Wi-Fi association",
     "Verify real gesture, hold deduplication and release/repeat",
-    "Fix local render queue drain before unsupported hardware completion result"
+    "Verify audible reply on new local-drain firmware"
   ],
-  "sdk_audio_finding": "VB701N lacks DRAIN capability; current SDK returns ENOSYS before local render queue drain. Do not report physical playback complete.",
+  "sdk_audio_finding": "VB701N lacks hardware DRAIN acknowledgement. Production engine now drains local queued writes before ENOSYS; fix host-tested and deployed in Mac application, audible repeat on that image pending.",
   "credentials_exported": false
 }

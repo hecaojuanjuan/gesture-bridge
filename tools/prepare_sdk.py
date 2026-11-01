@@ -68,6 +68,52 @@ def drain_local_audio_before_unsupported(source):
         '            qm_audio_normalize_result(qm_audio_device_playback_drain(\n')
 
 
+def restart_agora_session(source):
+    """Scope connection notices to one start/stop cycle in the copied adapter.
+
+    The SDK keeps the transport alive across stop/start. Its global CONNECTED
+    deduplication flag otherwise suppresses every join after the first one.
+    Reject callbacks from a stopped or replaced connection as well.
+    """
+    source = replace(source, '    qm_bool joined;\n',
+                     '    qm_bool joined;\n    qm_bool callbacks_enabled;\n')
+    source = replace(source, 'static qm_bool agora_is_agent_uid(uint32_t uid)\n',
+        'static qm_bool agora_callback_current(connection_id_t conn_id)\n'
+        '{\n'
+        '    return s_agora_ctx != NULL && s_agora_ctx->callbacks_enabled &&\n'
+        '           s_agora_ctx->conn_id == conn_id;\n'
+        '}\n\n'
+        'static qm_bool agora_is_agent_uid(uint32_t uid)\n')
+    for name in ("join_channel_success", "reconnecting", "connection_lost",
+                 "rejoin_channel_success", "user_joined", "user_offline",
+                 "user_mute_audio", "error", "audio_data", "stream_message"):
+        pattern = rf"(static void agora_on_{name}\([^{{]+\n\{{\n)"
+        source, count = re.subn(pattern,
+            r'\1    if (!agora_callback_current(conn_id)) return;\n', source)
+        if count != 1:
+            raise RuntimeError(f"Upstream Agora callback seam changed: {name}")
+    source = replace(source, '    ret = agora_rtc_join_channel(ctx->conn_id,\n',
+        '    /* A new connection must publish its own CONNECTED notice. */\n'
+        '    s_agora_connected_emitted = QM_FALSE;\n'
+        '    s_agora_uplink_log_emitted = QM_FALSE;\n'
+        '    s_agora_downlink_log_emitted = QM_FALSE;\n'
+        '    ctx->callbacks_enabled = QM_TRUE;\n'
+        '    ret = agora_rtc_join_channel(ctx->conn_id,\n')
+    source = replace(source,
+        'cleanup:\n    qm_free(service_opt);\n',
+        'cleanup:\n'
+        '    if (ret != QM_EOK) ctx->callbacks_enabled = QM_FALSE;\n'
+        '    qm_free(service_opt);\n')
+    return replace(source,
+        '    if (ctx->joined) {\n'
+        '        if (agora_rtc_leave_channel(ctx->conn_id) < 0) {\n',
+        '    /* Disable before leave/destroy, which may invoke callbacks. */\n'
+        '    ctx->callbacks_enabled = QM_FALSE;\n'
+        '    s_agora_connected_emitted = QM_FALSE;\n'
+        '    if (ctx->joined) {\n'
+        '        if (agora_rtc_leave_channel(ctx->conn_id) < 0) {\n')
+
+
 def apply_cloud_identity(app, config_path=ROOT / ".local/cloud.json"):
     """Override only the copied app; keep credentials out of shared patches."""
     if not config_path.exists():
@@ -205,7 +251,7 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
                      '    if (!g_mic_logged) {'))
     probe_source("components/qm_agent/src/transport/"
                  "qm_agent_transport_agora.c", lambda s: replace(
-                     replace(s, '#include "qm_agent_internal.h"',
+                     replace(restart_agora_session(s), '#include "qm_agent_internal.h"',
                              '#include "qm_agent_internal.h"\n'
                              '#include "hv_voice_probe.h"'),
                      '    return agora_rtc_send_audio_data('
@@ -276,7 +322,9 @@ def prepare(mode, vision="coco", work_name=None, face_selftest=False):
         ROOT / "tools/verify_audio.py")], check=True)
 
     edit("qm_config/qm_config.h", lambda s: s +
-         "\n#define CONFIG_HEADVOICE_SUPPORT 1\n")
+         "\n#define CONFIG_HEADVOICE_SUPPORT 1\n"
+         "/* USB dictionary: up to 180 UTF-8 bytes encoded as 360 hex digits. */\n"
+         "#define CONFIG_QM_CLI_INBUF_SIZE 512\n")
     edit("main.c", lambda s: replace(
         replace(s, '#include "qm.h"', '#include "qm.h"\n'
                 '#include "headvoice_app.h"'),

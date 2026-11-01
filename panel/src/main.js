@@ -1,376 +1,337 @@
 import './style.css';
-import {MODES, RequestTracker, PoseStream, poseState, resetReason, reportState} from './protocol.mjs';
+import './workbench-shell.css';
+import {icon} from './setup-art.mjs';
+import {RequestTracker,resetReason} from './protocol.mjs';
 import {connectSerial} from './serial.js';
-import {HandStream, handState, handCandidate, handFresh, handCompletionCounts} from './hand.mjs';
-const $ = id => document.getElementById(id);
-const swatches = [{name:'湖蓝',rgb:[80,190,255]}, {name:'薄荷',rgb:[75,220,160]},
-  {name:'暖橙',rgb:[255,145,60]}, {name:'玫红',rgb:[240,80,130]}, {name:'柔紫',rgb:[160,115,255]}, {name:'白色',rgb:[255,255,255]}];
-let draft = {mode:1, brightness:20, rgb:[80,190,255]}, transport = null;
-let report = null, receivedAt = 0, verifiedAt = -Infinity, lastPoll = 0, serialNumber = 0;
-let connecting = false, closing = false, dirty = false, reportRoundTrip = 0, restarts = 0;
-let initialProbe = null;
-let transportKind = null, poseMessage = '等待匹配设备回执后接收诊断观测';
-const poseStream = new PoseStream();
-const handStream = new HandStream();
-let visionBackend = null;
-const camera = {frame:null, receivedAt:0, busy:false, auto:false, progress:0,
-  error:'', nextAt:0, sequence:0};
-const requests = new RequestTracker();
-document.querySelector('#app').innerHTML = `
-<header><a class="brand" href="#"><span class="brand-mark">颔</span><span>颔语 <small>HEADVOICE</small></span></a><a href="./setup.html" style="color:#236555;font-size:14px;text-underline-offset:5px">手势建库 · 设计预览 ↗</a><span class="device-tag">XJWB03 · PID 11785</span></header>
-<main>
-  <section class="intro"><div><span class="eyebrow">DEVICE STUDIO / 01</span><h1>看见状态，<br>让表达有回应。</h1><p>灯光控制与视觉诊断，汇集在这里。</p></div>
-  <aside class="connection"><span id="connection-state" class="connection-label">○ 尚未连接设备</span><p id="connection-detail">连接后读取设备状态。颜色预览不会发送指令。</p><div class="connection-actions"><button id="serial-connect" class="primary">连接 USB 设备 ↗</button><button id="cloud-connect">连接灵机</button><button id="disconnect" hidden>断开</button></div></aside></section>
-  <div id="notice" role="status" aria-live="polite">选择颜色，连接设备后应用。</div>
-  <section class="card camera-card" aria-labelledby="camera-heading">
-    <div class="card-heading"><div><span class="eyebrow">CAMERA VIEW</span><h2 id="camera-heading">摄像头画面</h2></div><span class="pill">USB · 低帧率预览</span></div>
-    <div class="camera-layout"><div class="camera-screen" id="camera-screen" aria-busy="false">
-      <canvas id="camera-canvas" width="160" height="120" role="img" aria-label="开发板摄像头最近一次接收的画面" hidden></canvas>
-      <div class="camera-empty" id="camera-empty"><span class="camera-icon" aria-hidden="true">◎</span><strong>尚未获取画面</strong><span>连接 USB 后，读取开发板摄像头。</span></div>
-      <span class="camera-stamp" id="camera-stamp" hidden>最近接收的画面</span>
-    </div><div class="camera-controls"><p id="camera-status" role="status" aria-live="polite">连接 USB 后可获取画面。</p>
-      <progress id="camera-progress" value="0" max="100" aria-label="画面接收进度" hidden></progress>
-      <p class="camera-details" id="camera-details">画面仅保留在本页，不会上传。</p>
-      <div class="camera-actions"><button id="camera-capture" class="primary" disabled>获取画面</button><button id="camera-auto" aria-pressed="false" disabled>自动刷新</button></div>
-      <p class="hint">每张画面通过 USB 传输需要几秒。接收期间本页无法调灯，设备状态灯和试灯计时继续运行。自动刷新可随时停止，切到其他页面时也会停止。</p>
-      <p class="hint">画面预览不代表手势或姿态识别已启用。手机灵机云端暂不支持此画面入口。</p>
-    </div></div>
-  </section>
-  <div class="workspace">
-    <section class="card light-card"><div class="card-heading"><div><span class="eyebrow">RGB LIGHT</span><h2>灯光工作台</h2></div><span class="pill">8 颗 WS2812</span></div>
-      <div class="light-stage"><div class="ring" id="ring" aria-label="灯光颜色预览">${Array.from({length:8},(_,i)=>`<i style="--i:${i}"></i>`).join('')}<div class="ring-center"><span>COLOR PREVIEW</span><strong id="hex-label">#50BEFF</strong><small>颜色预览</small></div></div><div class="stage-caption"><span id="draft-label">自选颜色 · 20%</span><span id="draft-status">待应用</span></div></div>
-      <fieldset><legend>灯光模式</legend><div class="mode-group">${MODES.map((name,i)=>`<button type="button" data-mode="${i}" aria-pressed="${i===1}">${name}</button>`).join('')}</div></fieldset>
-      <div id="color-controls"><div class="label-line"><label for="color">选择颜色</label><input id="color" type="color" value="#50beff" aria-label="自定义颜色"></div><div class="swatches">${swatches.map((s,i)=>`<button data-color="${i}" aria-label="${s.name}" title="${s.name}" style="--swatch:rgb(${s.rgb})" aria-pressed="${i===0}"></button>`).join('')}</div><div class="label-line"><label for="brightness">亮度</label><output id="brightness-value">20%</output></div><input id="brightness" type="range" min="0" max="100" step="1" value="20"></div>
-      <p class="hint" id="mode-help">调节完成后应用。亮度已限制在适合联调的范围。</p>
-      <div class="bottom-actions"><button class="primary" id="apply" disabled>应用到灯板</button><button id="test" disabled>试灯 5 秒</button></div>
-      <p class="hint">试灯顺序：红 → 绿 → 蓝 → 白 → 灭，结束后自动恢复。</p>
-    </section>
-    <div class="right-stack"><section class="card"><div class="card-heading"><div><span class="eyebrow">DEVICE REPORT</span><h2>设备回执</h2></div><button id="refresh" class="text-button" disabled>刷新 ↻</button></div><div class="report-state"><span class="status-dot" id="report-dot"></span><strong id="report-title">等待设备回应</strong></div><dl class="readings"><div><dt>当前模式</dt><dd id="actual-mode">—</dd></div><div><dt>设定亮度</dt><dd id="actual-brightness">—</dd></div><div><dt>最近回执</dt><dd id="actual-time">—</dd></div></dl><p class="hint" id="actual-boot">上次启动：—</p><p class="hint">驱动回执表示设备已处理指令，灯板是否亮起仍需目视确认。</p></section>
-    <section class="card pose-card"><div class="card-heading"><div><span class="eyebrow">VISION CHECK</span><h2 id="vision-title">视觉诊断</h2></div><span class="pill" id="stage">未连接</span></div><div class="pose-visual" id="pose-visual" aria-hidden="true" hidden><div class="face" id="face"><b></b><b></b><i></i></div><div class="zero-line"></div><span>眼线倾角</span></div><div class="hand-summary" id="hand-visual" hidden><strong id="hand-readiness">等待手部观测</strong><span id="hand-detection">—</span></div><div class="pose-stats"><div><strong id="pose-tilt">—</strong><span id="pose-primary-label">诊断值</span></div><div><strong id="pose-infer">—</strong><span>推理耗时</span></div><div><strong id="pose-age">—</strong><span>设备报告帧龄</span></div></div><div class="pose-stats pose-stat-pair"><div><strong id="pose-people">—</strong><span id="pose-count-label">检测目标数</span></div><div><strong id="pose-received">—</strong><span>本页最近接收</span></div></div><p id="pose-status" class="pose-status">等待诊断观测</p>
-      <div id="hand-completions" class="hand-completions" hidden aria-labelledby="hand-completions-title">
-        <h3 id="hand-completions-title">设备本次启动累计</h3>
-        <p id="hand-completions-missing" class="hint">设备未提供累计计数。</p>
-        <dl id="hand-completions-values" class="hand-counts" hidden><div><dt>张掌</dt><dd id="hand-palm-count">—</dd></div><div><dt id="hand-second-label">—</dt><dd id="hand-second-count">—</dd></div></dl>
-        <p id="hand-completions-note" class="hint" hidden>设备确认的累计次数，不是本页观察次数；持续保持同一手势不会重复计数。计数不证明灯圈实际亮起。</p>
-      </div>
-      <p id="pose-source" class="hint">连接后显示诊断数据来源。</p><p class="hint" id="vision-help">等待设备提供诊断类型。检测到目标不代表动作已识别或播报已生效。</p></section></div>
+import {HandStream,HandDiagnostics,handScores,handProgress,handState,handCandidate,handFresh,handCompletionCounts,HAND_MAX_AGE_MS} from './hand.mjs';
+import {AgentStream,AGENT_LABELS,AGENT_DETAILS,agentStateLabel,dictionaryCommand,parseDictionary,validMeaning} from './agent.mjs';
+const $=id=>document.getElementById(id);
+let transport=null,connecting=false,closing=false,generation=0,report=null,verifiedAt=-Infinity,lastPoll=0,probe=null;
+let dictionary=null,dictPending=null,saving=false,dictLoading=false,dictStatus='连接设备后读取当前绑定。',editDirty=false;
+let scanRearming=false,lastDictionaryPoll=0;
+let sessionRevision=0,lastCounts=null,eventBaseline=null,eventDelta=0;
+let pageActive=true,navigating=false,pollTimer=null,disconnectTask=null;
+const draft={open_palm:'我想喝水',v_sign:''};
+const requests=new RequestTracker(),handStream=new HandStream(),agentStream=new AgentStream();
+const diagnostics=new HandDiagnostics(200);
+const camera={frame:null,match:null,busy:false,error:'',progress:0,receivedAt:0,sequence:0};
+document.querySelector('#app').innerHTML=`
+<a class="skip-link" href="#workbench">跳到主要内容</a>
+<aside class="panel-sidebar">
+  <a href="./index.html" class="brand"><span class="brand-mark">颔</span><span>颔语<small>GESTURE BRIDGE</small></span></a>
+  <div class="nav-caption">我的沟通空间</div>
+  <nav aria-label="主导航">
+    <a class="nav-item" href="./setup.html#setup">${icon('plus')}<span>手势建库</span></a>
+    <a class="nav-item" href="./setup.html#dictionary">${icon('book')}<span>我的词典</span></a>
+    <a class="nav-item active" href="./index.html" aria-current="page">${icon('monitor')}<span>设备控制</span><i></i></a>
+  </nav>
+  <div class="sidebar-bottom"><div class="gentle-note"><span class="note-symbol">“</span><p>每一个小动作，<br>都有想说的话。</p><span class="little-line"></span></div>
+    <a class="panel-guide" href="./setup.html#setup">${icon('grid',19)} 从图卡开始建库 ${icon('arrow',15)}</a>
+    <div class="sidebar-foot">HEADVOICE <span>设备控制 · USB 实机工作台</span></div>
   </div>
-  <section class="legend"><span class="eyebrow">状态指示模式</span><span id="legend-pose" hidden>白 · 中立校准　黄 · 等待确认　蓝 · 正在播放</span><span id="legend-hand" hidden>绿 · 已确认张掌　蓝 · 已确认握拳</span><small id="legend-help">状态灯含义由当前固件决定，等待诊断类型确认。</small></section>
-  <footer><span>颔语 / 让细小的动作被听见</span><span>控制设置在设备重启后恢复默认</span></footer>
-</main>`;
-function notice(text, error=false) { $('notice').textContent=text; $('notice').classList.toggle('error',error); }
-function resetPose(message='等待匹配设备回执后接收诊断观测') {
-  poseStream.reset(); handStream.reset(); visionBackend=null; poseMessage=message;
+</aside>
+<div class="workbench-body">
+<header class="panel-topbar"><div class="breadcrumb">控制面板 <span>/</span> <strong>设备控制</strong></div><div class="top-actions"><span class="device-tag">${icon('monitor',15)} USB 实机工作台</span><button id="workbench-font" class="size-toggle" aria-pressed="false" aria-label="切换大字模式">A<span>大字</span></button></div></header>
+<main id="workbench" tabindex="-1">
+  <section class="connection-bar"><div><h1>让手势成为表达</h1><p id="connection-state">尚未连接设备</p></div><div class="actions"><button id="serial-connect" class="primary">连接 USB 设备</button><button id="disconnect" hidden>断开</button><button id="refresh" disabled>重新读取</button></div></section>
+  <p id="notice" role="status" aria-live="polite">连接开发板，然后为手势设置固定含义。</p>
+  <ol class="steps" aria-label="操作流程"><li><span>01</span>连接设备</li><li><span>02</span>写入手势含义</li><li><span>03</span>做出手势</li><li><span>04</span>听见回应</li></ol>
+  <div class="workspace">
+    <section class="card binding-card"><div class="card-heading"><div><span class="eyebrow">01 / 固定表达</span><h2>这个手势，代表什么</h2></div><span id="binding-badge" class="badge">未读取</span></div>
+      <p class="intro">含义保存到开发板。写入并回读后，设备会将确认的手势交给 Agent。</p>
+      <label for="meaning-palm" class="meaning-label"><span class="gesture-icon" aria-hidden="true">✋</span><span>张开手掌<small>open_palm</small></span></label>
+      <input id="meaning-palm" type="text" value="我想喝水" maxlength="180" autocomplete="off" placeholder="例如：我想喝水">
+      <p id="device-palm" class="device-value">设备当前绑定：未读取</p>
+      <label for="meaning-v" class="meaning-label"><span class="gesture-icon" aria-hidden="true">✌</span><span>V 字手势<small>v_sign</small></span></label>
+      <input id="meaning-v" type="text" value="" maxlength="180" autocomplete="off" placeholder="暂不使用可留空">
+      <p id="device-v" class="device-value">设备当前绑定：未读取</p>
+      <div class="actions binding-actions"><button id="save-bindings" class="primary" disabled>保存到设备并核对</button><button id="read-bindings" disabled>读取设备绑定</button></div>
+      <p id="dictionary-status" class="status-line" role="status">连接设备后读取当前绑定。</p>
+      <p class="hint">每项最多 180 个 UTF-8 字节（约 60 个汉字）。留空即解除该手势绑定。</p>
+    </section>
+    <section class="card expression-card"><div class="card-heading"><div><span class="eyebrow">02 / 实际表达</span><h2>做出手势，等待回应</h2></div><span id="agent-badge" class="badge">等待</span></div>
+      <p class="intro">将手掌放在摄像头前并保持稳定。完成一次表达后移开手，再开始下一次。</p>
+      <div class="recognition"><span>当前分类候选</span><strong id="hand-candidate">—</strong><small id="hand-status">等待设备诊断</small></div>
+      <div class="counts"><div><span>设备累计张掌</span><strong id="palm-count">—</strong></div><div><span>设备累计 V 字</span><strong id="v-count">—</strong></div></div>
+      <p id="gesture-status" class="hint">等待本次连接之后的设备观测。</p>
+      <p id="hand-progress" class="status-line">单帧候选不等于手势完成。</p>
+      <div class="scan-control"><div><strong id="scan-state">等待设备识别状态</strong><p id="scan-detail" class="hint">设备确认一次手势后暂停，下一轮由你手动开始。</p></div><button id="scan-next" class="primary" disabled>开始下一次</button></div>
+      <div class="reply-box"><span class="eyebrow">AGENT 回应</span><p id="agent-state" role="status">等待已确认手势触发</p><blockquote id="agent-reply">真实回复会显示在这里。</blockquote><p id="agent-detail" class="hint">文本来自设备语音事务；实际声音请通过扬声器确认。</p></div>
+      <p id="agent-note" class="status-line" role="status"></p>
+    </section>
+  </div>
+  <details class="card diagnostics"><summary>摄像头与连接诊断 <span>按需展开</span></summary><div class="diagnostic-grid">
+    <div><div class="camera-screen"><canvas id="camera-canvas" width="160" height="120" hidden aria-label="开发板最近一次摄像头画面"></canvas><span id="camera-empty">尚未获取画面</span></div><div class="actions"><button id="camera-capture" disabled>获取一帧画面</button><span id="camera-stamp" class="hint"></span></div><progress id="camera-progress" max="100" value="0" hidden></progress><p id="camera-status" class="hint">画面只保留在本页，接收时暂停手部观测显示。</p><p id="camera-match" class="hint">尚无可配对画面。</p></div>
+    <div><dl class="readings"><div><dt>分类器</dt><dd id="classifier">—</dd></div><div><dt>推理耗时</dt><dd id="infer-time">—</dd></div><div><dt>设备帧龄</dt><dd id="frame-age">—</dd></div><div><dt>设备帧龄上限</dt><dd id="age-limit">600 ms · 兼容默认值</dd></div><div><dt>上次启动</dt><dd id="boot-reason">—</dd></div><div><dt>最近回执</dt><dd id="receipt-age">—</dd></div></dl><p class="hint">分类候选不等于完成事件。累计值只采用设备报告；取图后重新等待状态确认。帧龄不包含 USB 传输延迟。</p></div>
+  </div><section class="hand-debug"><div class="card-heading"><h3>最近原始手部观测</h3><button id="hand-export" disabled>导出最近 200 条 JSONL</button></div><p id="hand-debug-age" class="hint">等待观测。</p><dl class="readings debug-readings"><div><dt>原始标签 / Top 1</dt><dd id="hand-raw">—</dd></div><div><dt>Top 1 / 领先第二名</dt><dd id="hand-score">—</dd></div><div><dt>检测分数 / 候选手数</dt><dd id="hand-detect">—</dd></div><div><dt>采样间隔 / 本页接收间隔</dt><dd id="hand-gap">—</dd></div><div><dt>检测有效 / 分类有效</dt><dd id="hand-validity">—</dd></div><div><dt>分类状态码 / confirmed</dt><dd id="hand-flags">—</dd></div><div><dt>gate visible / latched</dt><dd id="hand-gate">—</dd></div><div><dt>候选样本数 / 检测框</dt><dd id="hand-samples">—</dd></div></dl><p id="hand-top3" class="hint"></p><p class="hint">当前源码规则参考：最高分 ≥ 0.80、领先 ≥ 0.20、至少 3 个样本且保持 ≥ 600 ms、连续间隔 ≤ 800 ms。设备没有回报这些确认阈值，页面不据此宣称具体拒绝原因；帧龄上限采用设备回报。</p><p id="hand-log-status" class="hint">本页缓存仅含手部观测；不包含画面、绑定内容、Agent 文本或云端凭据，不上传。断开或重启后清除。</p></section></details>
+  <footer>设备绑定与真实回应集中在此页 · 仅使用桌面 Chrome 的 USB 连接<br><a href="./setup.html#setup">体验图卡建库</a><span aria-hidden="true"> · </span><a href="./setup.html#dictionary">查看本机演示词典</a></footer>
+</main></div>`;
+function notice(text,error=false){$('notice').textContent=text;$('notice').classList.toggle('error',error);}
+function now(){return performance.now();}
+function live(){return pageActive && !!transport && !!report && now()-verifiedAt<15000;}
+function nextId(){return 1+crypto.getRandomValues(new Uint32Array(1))[0]%999999999;}
+function matchingDraft(){return !!dictionary && draft.open_palm===dictionary.bindings.open_palm && draft.v_sign===dictionary.bindings.v_sign;}
+function clearCamera(){++camera.sequence;camera.frame=null;camera.match=null;camera.busy=false;camera.error='';camera.progress=0;$('camera-canvas').width=160;$('camera-canvas').height=120;}
+function cancelDictionary(message){const p=dictPending;dictPending=null;p?.reject(Error(message));}
+function resetSession(message='连接设备后读取当前绑定。'){
+  ++sessionRevision;cancelDictionary('设备连接状态变化，请重新读取');dictionary=null;agentStream.reset();
+  handStream.reset();diagnostics.reset(sessionRevision);lastCounts=null;eventBaseline=null;eventDelta=0;dictStatus=message;clearCamera();
 }
-function receivePose(raw) {
-  if (transportKind!=='serial' || camera.busy) return;
-  const result=poseStream.receive(raw,performance.now());
-  if (result.invalidated) resetPose('诊断时间不连续，等待匹配设备回执重新确认');
-  if (result.accepted) {
-    if (visionBackend && visionBackend!=='pose') resetPose('诊断类型变化，等待匹配设备回执重新确认');
-    else visionBackend='pose';
-  }
-  if (result.accepted || result.invalidated) render();
+function render(){
+  const connected=live(),at=now(),maxAge=dictionary?.max_age_ms ?? HAND_MAX_AGE_MS;
+  $('connection-state').textContent=connected ? '● USB 已连接 · 设备已响应' : transport ? probe ? '正在等待设备启动…' : 'USB 已打开 · 等待新回执' : '尚未连接设备';
+  $('serial-connect').hidden=!!transport;$('serial-connect').disabled=connecting||closing;
+  $('disconnect').hidden=!transport;$('refresh').disabled=!transport||saving||dictLoading||camera.busy;
+  const locked=!connected||saving||dictLoading||scanRearming||camera.busy||!!dictPending;
+  $('save-bindings').disabled=locked||!dictionary||!validMeaning(draft.open_palm)||!validMeaning(draft.v_sign);
+  $('read-bindings').disabled=locked;
+  $('meaning-palm').disabled=$('meaning-v').disabled=saving;
+  $('save-bindings').textContent=saving ? '正在写入并核对…' : '保存到设备并核对';
+  $('binding-badge').textContent=!dictionary ? '未读取' : !connected ? '历史回读' : !matchingDraft() ? '有未保存修改' : dictionary.persisted ? '设备已保存' : '设备当前配置';
+  $('device-palm').textContent='设备当前绑定：'+(dictionary ? dictionary.bindings.open_palm||'未绑定' : '未读取');
+  $('device-v').textContent='设备当前绑定：'+(dictionary ? dictionary.bindings.v_sign||'未绑定' : '未读取');
+  $('dictionary-status').textContent=dictStatus;
+  const h=!camera.busy&&handStream.enabled ? handStream.hand : null,elapsed=h?at-handStream.receivedAt:0;
+  const scanSupported=dictionary?.scan_supported===true,scanPaused=scanSupported&&!dictionary.scan_armed;
+  const lastGesture=({open_palm:'张掌',v_sign:'V 字',closed_fist:'握拳'})[dictionary?.last_gesture];
+  const counts=scanSupported?{palm:dictionary.palm_count,second:dictionary.v_count}:h?handCompletionCounts(h):null;
+  $('hand-candidate').textContent=scanPaused&&lastGesture?lastGesture+' · 本轮已确认':h?handCandidate(h,elapsed,maxAge):'—';
+  $('hand-status').textContent=scanPaused?'设备已锁定本轮结果，识别已暂停。':camera.busy?'取图期间暂停诊断':h?handState(h,elapsed,maxAge):'等待设备诊断';
+  $('palm-count').textContent=counts?String(counts.palm):'—';$('v-count').textContent=counts?String(counts.second):'—';
+  $('gesture-status').textContent=scanSupported?`设备回读累计：张掌 ${counts.palm} / V 字 ${counts.second}。暂停后保留本轮确认，保持手势不会再次触发。`:counts ? `${handFresh(h,elapsed,maxAge)?'设备本次启动累计':'最近收到的累计值'}；本次连接后观察到 ${eventDelta} 次新增张掌完成。` : '等待本次连接之后的设备观测。';
+  $('hand-progress').textContent=scanPaused?'设备已暂停本轮识别；保留已确认结果，不再用过期单帧清除它。Agent 失败也不会自动重试。':camera.busy?'取图期间暂停确认状态显示，原始观测继续缓存。':handProgress(h,elapsed,maxAge);
+  $('scan-state').textContent=!dictionary?'等待设备识别状态':!scanSupported?'此固件未确认支持单次识别':dictionary.agent_busy?'Agent 正在处理本轮表达':dictionary.scan_armed?'可以识别 · 等待一次确认':'本轮已锁定 · 识别暂停';
+  $('scan-detail').textContent=!scanSupported?'请使用支持单次识别的固件；页面不会假装已暂停设备。':`设备轮次 ${dictionary.scan_generation}。${dictionary.agent_busy?'等待语音事务结束后，才能开始下一次。':dictionary.scan_armed?'只有完整确认的手势会锁定本轮。':'放下手并准备好后，再手动开始下一次。'}`;
+  $('scan-next').disabled=locked||!scanSupported||dictionary.scan_armed||dictionary.agent_busy;
+  $('scan-next').textContent=scanRearming?'正在确认下一轮…':'开始下一次';
+  const a=agentStream.current;
+  $('agent-badge').textContent=!a?'等待':a.state==='failed'||a.state==='cleanup_failed'?'失败':a.terminal?'已结束':'处理中';
+  $('agent-state').textContent=agentStateLabel(a);
+  $('agent-reply').textContent=a?.text||'真实回复会显示在这里。';
+  $('agent-detail').textContent=a?`请求 ${a.id} · ${Math.max(0,Math.floor((at-a.at)/1000))} 秒前更新${a.code?' · 代码 '+a.code:''}。${a.detail?AGENT_DETAILS[a.detail]+'。':''}${a.truncated?'回复文本不完整。':''}${a.state==='playback_completion_unsupported'?'设备不提供播完回执，请以实际听到的声音为准。':'文本来自设备语音事务；实际声音请通过扬声器确认。'}`:'文本来自设备语音事务；实际声音请通过扬声器确认。';
+  $('agent-note').textContent=!connected&&a?'连接回执已过期；以上是最近收到的事务状态。':agentStream.note;
+  $('classifier').textContent=h?h.classifier_ready?(h.classifier||'已加载'):'未加载':'—';
+  $('infer-time').textContent=h?h.infer_ms+' ms':'—';$('frame-age').textContent=h?h.age_ms+' ms':'—';
+  $('age-limit').textContent=maxAge+' ms'+(dictionary?' · 设备报告':' · 兼容默认值');
+  $('boot-reason').textContent=report?resetReason(report.reset_reason):'—';$('receipt-age').textContent=report?Math.floor((at-verifiedAt)/1000)+' 秒前':'—';
+  $('camera-capture').disabled=!connected||camera.busy||saving||dictLoading||!!dictPending||!!requests.pending;
+  $('camera-capture').textContent=camera.busy?'正在接收…':'获取一帧画面';$('camera-canvas').hidden=!camera.frame;$('camera-empty').hidden=!!camera.frame;
+  $('camera-progress').hidden=!camera.busy;$('camera-progress').value=camera.progress;
+  $('camera-stamp').textContent=camera.frame?`${camera.frame.width} × ${camera.frame.height} · ${Math.floor((at-camera.receivedAt)/1000)} 秒前接收`:'';
+  $('camera-status').textContent=camera.error|| (camera.busy?`接收画面 ${camera.progress}%`:'画面只保留在本页，接收时暂停手部观测显示。');
+  const matched=camera.match;
+  $('camera-match').textContent=!camera.frame?'尚无可配对画面。':matched
+    ? `已精确配对同帧：captured_ms ${matched.hand.captured_ms} · seq ${matched.hand.seq} · 检测框 [${matched.hand.box.join(', ')}] · ${matched.hand.gesture} · detection valid=${matched.hand.valid}。这是检测框，分类器按此框裁剪。`
+    : '尚未收到同一采集时间与尺寸的 HG 观测，不把当前分类贴到这张历史图上。';
+  renderHandDiagnostics(at,maxAge);
 }
-function receiveHand(raw) {
-  if (transportKind!=='serial' || camera.busy) return;
-  const result=handStream.receive(raw,performance.now());
-  if (result.invalidated) resetPose('手部诊断状态变化，等待匹配设备回执重新确认');
-  if (result.accepted) {
-    if (visionBackend && visionBackend!=='hand') resetPose('诊断类型变化，等待匹配设备回执重新确认');
-    else visionBackend='hand';
-  }
-  if (result.accepted || result.invalidated) render();
+function renderHandDiagnostics(at,maxAge){
+  const entry=diagnostics.records.at(-1),h=entry?.hand,scores=handScores(h);
+  const value=v=>v===undefined?'未提供':String(v),percent=v=>(v*100).toFixed(1)+'%';
+  $('hand-debug-age').textContent=h?`seq ${h.seq} · epoch ${h.epoch} · captured_ms ${h.captured_ms} · ${((at-entry.received_ms)/1000).toFixed(1)} 秒前接收${entry.during_camera?'（取图期间）':''} · ${handFresh(h,at-entry.received_ms,maxAge)?'帧龄范围内':'已过期，仅历史诊断'}`:'等待当前连接的已确认设备观测。';
+  $('hand-raw').textContent=h?`${h.gesture} / ${scores?.top.label??'无有效分数'}`:'—';
+  $('hand-score').textContent=scores?`${percent(scores.top.score)} / ${percent(scores.margin)}`:'—';
+  $('hand-detect').textContent=h?`${h.detect_score.toFixed(3)} / ${h.hands}`:'—';
+  $('hand-gap').textContent=entry?`${entry.capture_gap_ms??'—'} ms / ${entry.receipt_gap_ms===null?'—':Math.round(entry.receipt_gap_ms)} ms`:'—';
+  $('hand-validity').textContent=h?`${value(h.valid)} / ${value(h.classification_valid)}`:'—';
+  $('hand-flags').textContent=h?`${value(h.classifier_status)} / ${value(h.confirmed)}`:'—';
+  $('hand-gate').textContent=h?`${value(h.gate_visible)} / ${value(h.gate_latched)}`:'—';
+  $('hand-samples').textContent=h?`${value(h.candidate_samples)} / [${h.box.join(', ')}]`:'—';
+  $('hand-top3').textContent=scores?'前三类：'+scores.top3.map(v=>`${v.label} ${percent(v.score)}`).join(' · '):'未提供可用分类分数。';
+  $('hand-export').disabled=!diagnostics.records.length;
+  $('hand-log-status').textContent=`本页已缓存 ${diagnostics.records.length}/200 条手部观测（包含取图期间）；导出仅含这些字段与同帧配对元数据，不含画面、绑定内容、Agent 文本或云端凭据，不上传。断开或重启后清除。`;
 }
-function renderPose(now,live) {
-  const usb=transportKind==='serial';
-  const confirmed=report && requests.boot===report.boot;
-  const hand=usb && !camera.busy && visionBackend==='hand' && handStream.enabled ? handStream.hand : null;
-  const elapsed=hand ? Math.max(0,now-handStream.receivedAt) : 0;
-  let pose=null, at=0;
-  if (usb && !camera.busy && visionBackend==='pose' && poseStream.enabled && poseStream.pose) {
-    const p=poseStream.pose;
-    pose={age_ms:p.age_ms,people:p.people,tilt:p.tilt,tracking:p.tracking_valid,
-      valid:p.valid,infer_ms:p.infer_ms};
-    at=poseStream.receivedAt;
-  } else if (!usb && transport && live && confirmed && report.stage>=2 && report.pose.age_ms<4294967295) {
-    pose=report.pose; at=receivedAt;
-  }
-  const knownPose=!!pose;
-  $('vision-title').textContent=hand ? '手部诊断' : knownPose ? '姿态诊断' : '视觉诊断';
-  $('stage').textContent=!confirmed ? '未确认' : hand ? '手部检测' : knownPose ? '姿态诊断'
-    : report.stage<2 ? ['基线','采集'][report.stage] : '诊断类型未确认';
-  $('pose-visual').hidden=!knownPose;
-  $('hand-visual').hidden=!hand;
-  $('hand-readiness').textContent=hand?.classifier_ready
-    ? hand.classifier==='espdl_gesture11' ? '11 类分类器已加载' : '分类器已加载' : '分类器未加载';
-  $('hand-detection').textContent=hand
-    ? `单手检测${hand.valid ? '有效' : '无效'} · 分数 ${hand.detect_score>0 ? hand.detect_score.toFixed(2) : '—'}${handFresh(hand,elapsed) ? '' : ' · 上次观测已过期'}` : '—';
-  // Counts are device telemetry from the accepted observation, never a sum of
-  // raw candidates, confirmed flags, or how many messages this page received.
-  const counts=hand ? handCompletionCounts(hand) : null;
-  $('hand-completions').hidden=!hand;
-  $('hand-completions-title').textContent=counts && !handFresh(hand,elapsed)
-    ? '最近收到的累计值' : '设备本次启动累计';
-  $('hand-completions-missing').hidden=!!counts;
-  $('hand-completions-values').hidden=!counts;
-  $('hand-completions-note').hidden=!counts;
-  $('hand-palm-count').textContent=counts ? String(counts.palm) : '—';
-  $('hand-second-label').textContent=counts?.secondLabel ?? '—';
-  $('hand-second-count').textContent=counts ? String(counts.second) : '—';
-  $('pose-primary-label').textContent=hand ? '分类原始候选' : knownPose ? '二维眼线倾角' : '诊断值';
-  $('pose-count-label').textContent=hand ? '手部候选数' : '检测目标数';
-  $('pose-tilt').textContent=hand ? handCandidate(hand,elapsed) : pose?.tracking ? pose.tilt.toFixed(1)+'°' : '—';
-  $('pose-infer').textContent=hand ? hand.infer_ms+' ms' : pose ? pose.infer_ms+' ms' : '—';
-  $('pose-age').textContent=hand ? hand.age_ms+' ms' : pose ? pose.age_ms+' ms' : '—';
-  $('pose-people').textContent=hand ? String(hand.hands) : pose ? String(pose.people) : '—';
-  $('pose-received').textContent=hand ? (elapsed/1000).toFixed(1)+' 秒前' : pose ? (Math.max(0,now-at)/1000).toFixed(1)+' 秒前' : '—';
-  $('face').style.transform=`rotate(${pose?.tracking ? Math.max(-45,Math.min(45,pose.tilt)) : 0}deg)`;
-  $('pose-status').textContent=usb && camera.busy ? '画面传输期间暂停视觉诊断显示'
-    : hand ? handState(hand,elapsed)
-    : pose ? poseState({stage:report.stage,pose},Math.max(0,now-at))
-    : !transport ? '等待诊断观测'
-    : confirmed && report.stage<2 ? '当前阶段未提供视觉诊断'
-    : usb ? poseMessage : '当前云端回执未提供识别后端，无法判断手部模型状态';
-  $('pose-source').textContent=hand ? 'USB 手部诊断流 · 检测结果与分类原始候选分开显示；本页不将观测记为动作完成事件。'
-    : usb ? 'USB 被动诊断流 · 设备采样时间与本页接收时间分开记录；检测目标的含义由当前模型决定。'
-    : transport ? '云端姿态快照 · 每 8 秒查询，不提供实时姿态流；旧回执未标明识别后端，不据阶段推断手势状态。'
-    : '连接后显示诊断数据来源。';
-  $('vision-help').textContent=hand ? '设备帧龄与本页停留合计超过 600 ms 时，候选清空并标为过期；USB 传输延迟未计入，不能据此保证实时有效。'
-    : knownPose ? '设备报告帧龄不包含传输及本页等待时间。400 ms 条件保持不变；诊断观测不代表动作窗口连续，也不表示动作或播报已生效。'
-    : '等待设备提供诊断类型。检测到目标不代表动作已识别或播报已生效。';
-  $('legend-hand').textContent=hand?.classifier==='espdl_gesture11'
-    ? '绿 · 已确认张掌　蓝 · 已确认V字' : '绿 · 已确认张掌　蓝 · 已确认握拳';
-  $('legend-hand').hidden=!hand || !hand.classifier_ready;
-  $('legend-pose').hidden=!knownPose || report.stage!==3;
-  $('legend-help').textContent=hand ? hand.classifier_ready
-    ? '训练版状态灯跟随板端稳定确认；原始候选不直接点灯，实际灯效仍需目视核对。'
-    : `当前仅检测手部，尚无${hand.classifier==='espdl_gesture11' ? '张掌／V字' : '张掌／握拳'}分类灯效。`
-    : knownPose ? report.stage===3 ? '状态灯由动作固件驱动，诊断观测不等于播放完成。' : '当前为姿态诊断阶段，不承诺动作灯效。'
-    : '状态灯含义由当前固件决定，尚未确认识别后端。';
+function exportHandDiagnostics(){
+  if(!diagnostics.records.length)return;
+  const text=diagnostics.exportJsonl(camera.frame,camera.match);
+  const url=URL.createObjectURL(new Blob([text],{type:'application/x-ndjson;charset=utf-8'}));
+  const link=document.createElement('a');link.href=url;link.download='gesture-hand-diagnostics.jsonl';link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-
-function clearCamera() {
-  ++camera.sequence;
-  camera.frame=null; camera.receivedAt=0; camera.busy=false;
-  camera.auto=false; camera.progress=0; camera.error=''; camera.nextAt=0;
-  // Reset the canvas backing store so a disconnected image is not retained.
-  $('camera-canvas').width=160; $('camera-canvas').height=120;
+async function sendStatus(){
+  if(!transport||requests.pending||camera.busy||dictPending) return;
+  const id=nextId(),current=transport;
+  try{const wire=requests.begin(id,'get',null,now());await current.send(wire);}
+  catch(e){if(current===transport&&requests.pending?.id===id){requests.pending=null;notice('读取失败：'+e.message,true);}}
 }
-function renderCamera(now, live) {
-  const supported=typeof transport?.snapshot==='function';
-  $('camera-capture').disabled=!supported || !live || camera.busy || !!requests.pending;
-  $('camera-auto').disabled=!camera.auto && (!supported || !live || camera.busy || !!requests.pending);
-  $('camera-auto').textContent=camera.auto ? '停止刷新' : '自动刷新';
-  $('camera-auto').setAttribute('aria-pressed',String(camera.auto));
-  $('camera-capture').textContent=camera.busy ? '正在接收…' : '获取画面';
-  $('camera-screen').setAttribute('aria-busy',String(camera.busy));
-  $('camera-canvas').hidden=!camera.frame;
-  $('camera-empty').hidden=!!camera.frame;
-  $('camera-stamp').hidden=!camera.frame;
-  const ago=Math.max(0,Math.floor((now-camera.receivedAt)/1000));
-  $('camera-stamp').textContent=`最近画面 · ${ago} 秒前接收`;
-  $('camera-progress').hidden=!camera.busy;
-  $('camera-progress').value=camera.progress;
-  let status=!transport ? '连接 USB 后可获取画面。' : !supported ? '此连接暂不支持画面，请使用桌面 Chrome 的 USB 连接。'
-    : camera.busy ? (camera.progress ? `正在接收画面：${camera.progress}%` : '正在等待摄像头画面…')
-    : camera.error ? `获取失败：${camera.error}${camera.frame ? '（保留上次画面）' : ''}`
-    : !live ? '等待设备状态确认后可获取画面。'
-    : camera.frame ? (camera.auto ? '自动刷新中；每次接收完整画面后更新。' : '已停止刷新；显示最近一次完整画面。')
-    : '设备已连接，可以获取画面。';
-  $('camera-status').textContent=status;
-  $('camera-status').classList.toggle('error',!!camera.error);
-  $('camera-details').textContent=camera.frame
-    ? `${camera.frame.width} × ${camera.frame.height} · 获取用时 ${(camera.frame.transferMs/1000).toFixed(1)} 秒 · 仅保留在本页`
-    : '画面仅保留在本页，不会上传。';
-}
-async function captureCamera() {
-  if (typeof transport?.snapshot!=='function' || camera.busy || requests.pending ||
-      performance.now()-verifiedAt>=15000 || document.hidden) return;
-  const current=transport, generation=serialNumber, sequence=++camera.sequence;
-  const currentRequest=()=>current===transport && generation===serialNumber && sequence===camera.sequence;
-  const source=visionBackend==='hand' && handStream.enabled && handStream.hand ? 'inputjpeg' : undefined;
-  camera.busy=true; camera.error=''; camera.progress=0;
-  resetPose('画面传输结束后，等待匹配设备回执重新接收诊断'); render();
-  try {
-    const frame=await current.snapshot({source,onProgress:({received,total})=>{
-      if (currentRequest()) {camera.progress=total ? Math.floor(received/total*100) : 0;render();}
-    }});
-    if (!currentRequest()) return;
-    const canvas=$('camera-canvas'); canvas.width=frame.width; canvas.height=frame.height;
-    const context=canvas.getContext('2d');
-    if (!context) throw Error('浏览器无法绘制画面');
-    const pixels=context.createImageData(frame.width,frame.height);
-    pixels.data.set(frame.rgba); context.putImageData(pixels,0,0);
-    camera.frame=frame; camera.receivedAt=performance.now();
-  } catch(e) {
-    if (currentRequest()) {camera.error=e.message; camera.auto=false;}
-  } finally {
-    if (currentRequest()) {
-      camera.busy=false; camera.nextAt=performance.now()+3000;
-      lastPoll=performance.now(); void send('get'); render();
-    }
-  }
-}
-function toggleCameraAuto() {
-  if (camera.auto) {camera.auto=false;render();return;}
-  if (typeof transport?.snapshot!=='function' || camera.busy || requests.pending ||
-      performance.now()-verifiedAt>=15000 || document.hidden) return;
-  camera.auto=true; void captureCamera();
-}
-function updateDraft() {
-  const hex = '#'+draft.rgb.map(n=>n.toString(16).padStart(2,'0')).join('');
-  $('ring').style.setProperty('--light', `rgb(${draft.rgb})`);
-  $('ring').classList.toggle('off',draft.mode!==1 || draft.brightness===0);
-  $('hex-label').textContent=draft.mode===1 ? hex.toUpperCase() : MODES[draft.mode];
-  $('draft-label').textContent=MODES[draft.mode]+(draft.mode===1 ? ` · ${draft.brightness}%` : '');
-  $('color').value=hex; $('brightness').value=draft.brightness;
-  $('brightness-value').textContent=draft.brightness+'%';
-  document.querySelectorAll('[data-mode]').forEach(el=>el.setAttribute('aria-pressed',Number(el.dataset.mode)===draft.mode));
-  document.querySelectorAll('[data-color]').forEach(el=>el.setAttribute('aria-pressed',swatches[el.dataset.color].rgb.every((n,i)=>n===draft.rgb[i])));
-  $('color-controls').classList.toggle('muted',draft.mode!==1);
-  $('color').disabled=$('brightness').disabled=draft.mode!==1;
-  document.querySelectorAll('[data-color]').forEach(el=>el.disabled=draft.mode!==1);
-  $('mode-help').textContent=['灯光跟随当前固件的状态；确认诊断类型后，下方显示对应说明。','调节完成后应用。亮度已限制在适合联调的范围。','关闭状态指示和自选灯光；试灯仍可单独运行。'][draft.mode];
-}
-function render() {
-  const now=performance.now(), live=!!transport && now-verifiedAt < 15000;
-  const synced=live && report?.ok && requests.boot===report.boot &&
-    draft.mode===report.mode && draft.brightness===report.brightness &&
-    draft.rgb.every((v,i)=>v===report.rgb[i]);
-  $('draft-status').textContent=requests.pending?.verb==='set' ? '等待回执' : synced ? '已同步' : '待应用';
-  $('connection-state').textContent=transport ? `${live ? '●' : '○'} ${transport.name}${live ? ' · 设备已响应' : initialProbe ? ' · 设备启动中，等待回执' : ' · 等待设备回执'}` : '○ 尚未连接设备';
-  $('connection-detail').textContent=initialProbe ? 'USB 已打开，正在读取状态；设备启动期间会在 20 秒内重试读取。' : transport ? '以设备返回的状态为准；无回执时不会显示执行成功。' : '连接后读取设备状态。颜色预览不会发送指令。';
-  $('serial-connect').hidden=$('cloud-connect').hidden=!!transport;
-  $('serial-connect').disabled=$('cloud-connect').disabled=connecting || closing;
-  $('disconnect').hidden=!transport;
-  $('apply').disabled=$('test').disabled=!live || !!requests.pending || camera.busy;
-  $('refresh').disabled=!transport || !!requests.pending || camera.busy;
-  $('report-dot').classList.toggle('live',live && report?.ok);
-  $('report-title').textContent=reportState(report,live,now-receivedAt,reportRoundTrip);
-  $('actual-mode').textContent=report ? MODES[report.mode] : '—';
-  $('actual-brightness').textContent=report ? report.brightness+'%' : '—';
-  $('actual-time').textContent=report ? `${Math.floor((now-receivedAt)/1000)} 秒前` : '—';
-  $('actual-boot').textContent=report && requests.boot===report.boot
-    ? `上次启动：${resetReason(report.reset_reason)}${restarts ? ` · 本次连接已确认 ${restarts} 次重启` : ''}`
-    : '上次启动：等待匹配回执';
-  renderPose(now,live);
-  renderCamera(now,live);
-}
-function receive(raw) {
-  const now=performance.now();
-  const result=requests.receive(raw,now);
-  if (!result.report) return;
-  // Cloud snapshots may arrive out of order or from a previous device boot.
-  // Only correlated replies may replace an already displayed report.
-  if (report && !result.matched) return;
-  report=result.report; receivedAt=now;
-  reportRoundTrip=result.matched ? result.roundTripMs : 0;
-  // Preserve the device-reported age. Receipt elapsed time is shown separately;
-  // neither value is a claim about current freshness across transport delays.
-  if (result.matched) {
-    verifiedAt=receivedAt;
-    if (initialProbe) { initialProbe=null; lastPoll=now; }
-    if (result.restarted) {++restarts; clearCamera(); resetPose();}
-    if (transportKind==='serial' && !camera.busy) {
-      const poseConfirmed=poseStream.confirm(report), handConfirmed=handStream.confirm(report);
-      if (poseConfirmed || handConfirmed) poseMessage='等待此状态确认之后采样的 USB 诊断观测';
-    }
-    if (!dirty && result.verb==='get') { draft={mode:report.mode,brightness:report.brightness,rgb:[...report.rgb]}; updateDraft(); }
-    const outcome=result.applied ? (result.verb==='get' ? '已收到设备当前状态。' : result.verb==='test' ? '已收到试灯回执；设备计时 5 秒后恢复，以刷新后的回执为准。' : '设备已执行灯光设置，请目视核对灯板。') : '设备未成功执行，请检查固件与 RGB 接线。';
-    notice((result.restarted ? `设备已重新启动（${resetReason(report.reset_reason)}）。` : '')+outcome,!result.applied);
-    if (result.applied && result.verb==='set') dirty=!(draft.mode===report.mode &&
-      draft.brightness===report.brightness && draft.rgb.every((v,i)=>v===report.rgb[i]));
-  }
+function receiveReport(raw){
+  const result=requests.receive(raw,now());
+  if(!result.matched) return;
+  if(result.restarted) resetSession('设备已重启，正在重新读取绑定。');
+  report=result.report;verifiedAt=now();lastPoll=now();probe=null;
+  diagnostics.confirm(report.boot);
+  if(!camera.busy)handStream.confirm(report);
+  if(!dictionary&&!dictPending&&!dictLoading&&!saving) void readDictionary();
   render();
 }
-async function send(verb) {
-  if (!transport || requests.pending || camera.busy) return;
-  const id = 1 + (crypto.getRandomValues(new Uint32Array(1))[0] % 999999999);
-  const current=transport;
-  try {
-    const wire=requests.begin(id,verb,draft,performance.now());
-    notice(verb==='get' ? initialProbe ? '正在等待设备启动并读取状态…' : '正在读取设备状态…' : '指令已提交，等待设备回执…'); render();
-    await current.send(wire);
-  } catch(e) { if (current===transport && requests.pending?.id===id) { requests.pending=null; notice('发送失败：'+e.message,true); render(); } }
+function receiveHand(raw){
+  const entry=diagnostics.receive(raw,now(),camera.busy);
+  if(entry&&camera.frame&&entry.hand.captured_ms===camera.frame.capturedMs)camera.match=diagnostics.matchFrame(camera.frame);
+  if(!live()||camera.busy){if(entry)render();return;}
+  const result=handStream.receive(raw,now());
+  if(result.invalidated){lastCounts=null;eventBaseline=null;eventDelta=0;void sendStatus();}
+  if(result.accepted){
+    const c=handCompletionCounts(handStream.hand);
+    if(c){if(eventBaseline===null)eventBaseline=c.palm;eventDelta=Math.max(0,c.palm-eventBaseline);lastCounts=c;}
+  }
+  if(result.accepted||result.invalidated)render();
 }
-async function disconnect(message='已断开连接。') {
-  const old=transport; transport=null; transportKind=null; ++serialNumber; requests.reset(); verifiedAt=-Infinity; initialProbe=null;
-  resetPose();
-  clearCamera();
-  closing=true;
-  render(); notice(message);
-  try { await old?.close(); } catch { /* A removed serial port may already be closed. */ }
-  finally { closing=false; render(); }
+function receiveDictionary(raw){
+  const r=parseDictionary(raw),p=dictPending;
+  if(!r||!p||r.id!==p.id||now()-p.at>=10000||!live())return;
+  if(p.boot&&r.boot!==p.boot){resetAfterBoot('词典启动标识已变化');return;}
+  dictPending=null;
+  if(!r.ok)p.reject(Error(`设备拒绝词典操作：${r.code}`));else p.resolve(r);
 }
-async function connect(kind) {
-  if (connecting || closing || transport) return;
-  connecting=true; const generation=++serialNumber; render();
-  const onReport=data=>{ if (generation===serialNumber) receive(data); };
-  const lost=message=>{ if (generation===serialNumber) void disconnect(message); };
-  const onPose=data=>{ if (generation===serialNumber) receivePose(data); };
-  const onHand=data=>{ if (generation===serialNumber) receiveHand(data); };
-  const onReset=message=>{ if (generation===serialNumber) {
-    const writePending=requests.pending && requests.pending.verb!=='get';
-    requests.invalidateBoot(); report=null; receivedAt=0; reportRoundTrip=0;
-    verifiedAt=-Infinity; lastPoll=performance.now();
-    resetPose(message+'，等待匹配设备回执重新确认'); clearCamera();
-    if (transportKind==='serial') {
-      initialProbe={until:lastPoll+20000,nextAt:lastPoll+2000};
-      void send('get');
+function requestDictionary(verb='get',key,value){
+  if(!live()||dictPending||camera.busy||typeof transport?.dictionary!=='function')return Promise.reject(Error('设备尚未就绪，请先重新读取状态。'));
+  const id=nextId(),current=transport;let wire;
+  try{wire=dictionaryCommand(id,verb,key,value);}catch(e){return Promise.reject(e);}
+  return new Promise((resolve,reject)=>{
+    dictPending={id,verb,key,value,at:now(),boot:dictionary?.boot??null,resolve,reject};
+    void current.dictionary(wire).catch(e=>{if(current===transport&&dictPending?.id===id){dictPending=null;reject(e);}});
+  });
+}
+function installDictionary(r){
+  dictionary=r;lastDictionaryPoll=now();agentStream.confirm(r.boot);
+  if(!editDirty){draft.open_palm=r.bindings.open_palm;draft.v_sign=r.bindings.v_sign;$('meaning-palm').value=draft.open_palm;$('meaning-v').value=draft.v_sign;}
+}
+async function readDictionary(silent=false){
+  if(dictLoading||saving||scanRearming||dictPending||!live())return;
+  dictLoading=true;lastDictionaryPoll=now();const revision=sessionRevision;if(!silent)dictStatus='正在读取设备词典…';render();
+  try{const r=await requestDictionary();if(revision!==sessionRevision)return;installDictionary(r);if(!silent)dictStatus=r.persisted?'已读取设备持久化词典。':'已读取设备当前绑定；尚无成功保存到存储的确认。';}
+  catch(e){if(revision===sessionRevision){dictStatus=e.message;notice(e.message,true);}}
+  finally{dictLoading=false;render();}
+}
+async function startNext(){
+  if(!live()||dictPending||dictLoading||saving||scanRearming||camera.busy||dictionary?.scan_supported!==true||dictionary.scan_armed||dictionary.agent_busy)return;
+  scanRearming=true;const revision=sessionRevision;render();
+  try{
+    const ack=await requestDictionary('arm');if(revision!==sessionRevision)return;
+    if(!ack.scan_supported||!ack.scan_armed)throw Error('设备未确认开始下一轮。');
+    const readback=await requestDictionary();if(revision!==sessionRevision)return;
+    installDictionary(readback);
+    if(!readback.scan_supported||!readback.scan_armed||readback.scan_generation!==ack.scan_generation)throw Error('下一轮状态未通过回读核对，请重新读取；不会自动重发。');
+    handStream.reset();eventBaseline=null;eventDelta=0;void sendStatus();notice('设备已开始下一轮。准备好后做出一次手势。');
+  }catch(e){if(revision===sessionRevision)notice(e.message+' 操作结果需以设备回读为准。',true);}
+  finally{scanRearming=false;render();}
+}
+async function saveBindings(){
+  if(saving||dictLoading||scanRearming||dictPending||!dictionary||!live()||camera.busy)return;
+  if(!validMeaning(draft.open_palm)||!validMeaning(draft.v_sign)){notice('含义过长或含控制字符，请修改后重试。',true);return;}
+  saving=true;const revision=sessionRevision,target={...draft};dictStatus='正在将含义写入设备…';render();
+  try{
+    // Always store both bindings so a first save also persists firmware defaults.
+    for(const key of ['open_palm','v_sign']){
+      const r=await requestDictionary('set',key,target[key]);
+      if(revision!==sessionRevision)return;
+      if(!r.persisted||r.bindings[key]!==target[key])throw Error('设备未确认持久化写入，结果尚未核对。');
     }
-    notice(message+'，等待新的设备回执。'+
-      (writePending ? '上一条写入结果未知，不会自动重发。' : ''),true);
-    render();
-  }};
-  try {
-    const candidate=kind==='serial' ? await connectSerial(onReport,lost,{onPose,onHand,onReset}) :
-      (await import('./cloud.js')).connectCloud(onReport,lost,()=>{ if (transport && generation===serialNumber) void send('get'); });
-    // A loss callback may fire while opening the port or initializing the SDK.
-    // Such a candidate must be closed instead of becoming a ghost connection.
-    if (generation!==serialNumber) { await candidate.close(); return; }
-    transport=candidate; transportKind=kind; resetPose();
-    requests.reset(); report=null; verifiedAt=-Infinity; restarts=0; reportRoundTrip=0; lastPoll=performance.now();
-    // Opening USB can reset the board and lose the first command. Keep the
-    // same port open and probe only the side-effect-free get while it boots.
-    initialProbe=kind==='serial' ? {until:lastPoll+20000,nextAt:lastPoll+2000} : null;
-    await send('get');
-  } catch(e) { if (generation===serialNumber) notice(e.name==='NotFoundError' ? '未选择串口，尚未连接。' : e.message,true); }
-  finally { connecting=false; render(); }
+    dictStatus='写入已回应，正在重新读取核对…';render();
+    const r=await requestDictionary();if(revision!==sessionRevision)return;
+    installDictionary(r);
+    if(!r.persisted||r.bindings.open_palm!==target.open_palm||r.bindings.v_sign!==target.v_sign)throw Error('设备回读与本次设置不一致，请检查当前绑定。');
+    editDirty=false;dictStatus='已写入设备，并通过重新读取确认。重启后保留。';notice('绑定已保存。现在可以做出手势，查看真实回应。');
+  }catch(e){if(revision===sessionRevision){dictionary=null;agentStream.reset();dictStatus=e.message+' 请重新读取；此前成功写入的项目可能已保留。';notice(dictStatus,true);}}
+  finally{saving=false;render();}
 }
-document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{draft.mode=Number(el.dataset.mode);dirty=true;updateDraft();});
-document.querySelectorAll('[data-color]').forEach(el=>el.onclick=()=>{draft.rgb=[...swatches[el.dataset.color].rgb];dirty=true;updateDraft();});
-$('color').oninput=e=>{draft.rgb=e.target.value.slice(1).match(/../g).map(s=>parseInt(s,16));dirty=true;updateDraft();};
-$('brightness').oninput=e=>{draft.brightness=Number(e.target.value);dirty=true;updateDraft();};
-$('apply').onclick=()=>send('set'); $('test').onclick=()=>send('test'); $('refresh').onclick=()=>send('get');
-$('serial-connect').onclick=()=>connect('serial'); $('cloud-connect').onclick=()=>connect('cloud');
-$('disconnect').onclick=()=>disconnect();
+function receiveAgent(raw){if(live()&&dictionary&&agentStream.receive(raw,now()))render();}
+function resetAfterBoot(message){
+  const writing=saving;requests.invalidateBoot();report=null;verifiedAt=-Infinity;resetSession(message+'，等待新回执。');
+  lastPoll=now();probe={until:now()+20000,nextAt:now()+2000};void sendStatus();
+  notice(message+'。'+(writing?'上次写入结果未知，请重新读取。':'正在重新确认设备。'),true);render();
+}
+async function connect(){
+  if(!pageActive||navigating||transport||connecting||closing)return;
+  connecting=true;const token=++generation;render();
+  const only=fn=>value=>{if(token===generation)fn(value);};
+  try{
+    const candidate=await connectSerial(only(receiveReport),only(message=>{void disconnect(message);}),{
+      onHand:only(receiveHand),onDictionary:only(receiveDictionary),onAgent:only(receiveAgent),onReset:only(resetAfterBoot)});
+    if(token!==generation){await candidate.close();return;}
+    transport=candidate;requests.reset();resetSession();report=null;verifiedAt=-Infinity;
+    probe={until:now()+20000,nextAt:now()+2000};lastPoll=now();await sendStatus();notice('USB 已打开，正在读取设备状态。');
+  }catch(e){if(token===generation){
+    const message=e.name==='NotFoundError'?'未选择 USB 设备。'
+      : e.name==='NetworkError'||/Failed to open serial port/i.test(e.message??'')
+      ? '无法打开 USB 串口，可能正被烧录程序或其他调试窗口占用。关闭占用程序后重试。'
+      : e.message;
+    notice(message,true);
+  }}
+  finally{connecting=false;render();}
+}
+async function disconnect(message='已断开连接。'){
+  if(disconnectTask)return disconnectTask;
+  const old=transport;transport=null;++generation;requests.reset();probe=null;report=null;verifiedAt=-Infinity;resetSession();closing=true;render();notice(message);
+  disconnectTask=(async()=>{try{await old?.close();}catch{}finally{closing=false;disconnectTask=null;render();}})();
+  return disconnectTask;
+}
+async function navigatePanel(event){
+  if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+  const link=event.target.closest?.('a[href]'),href=link?.getAttribute('href');
+  if(!link||link.hasAttribute('download')||(link.target&&link.target!=='_self')||!/^\.\/(?:index\.html|setup\.html(?:#(?:setup|dictionary))?)$/.test(href??''))return;
+  if(href==='./index.html'){event.preventDefault();$('workbench').focus({preventScroll:true});return;}
+  if(saving||dictLoading||scanRearming||dictPending||camera.busy||connecting||closing||navigating){
+    event.preventDefault();notice('当前操作正在进行，请等待完成后再切换页面。',true);return;
+  }
+  if(!transport)return;
+  event.preventDefault();navigating=true;
+  await disconnect('USB 连接已关闭，正在切换页面。');
+  if(pageActive&&navigating)window.location.assign(href);
+}
+function suspendPage(){
+  pageActive=false;navigating=false;clearInterval(pollTimer);pollTimer=null;
+  void disconnect('已离开设备控制。返回后请重新连接 USB 设备。');
+}
+function resumePage(){
+  if(pageActive)return;
+  pageActive=true;navigating=false;startPolling();render();
+}
+async function captureCamera(){
+  if(!live()||camera.busy||dictPending||saving||dictLoading||requests.pending)return;
+  const current=transport,token=generation,sequence=++camera.sequence;
+  const source=handStream.hand?'inputjpeg':undefined;
+  camera.busy=true;camera.error='';camera.progress=0;handStream.reset();eventBaseline=null;eventDelta=0;render();
+  const active=()=>current===transport&&token===generation&&sequence===camera.sequence;
+  try{
+    const frame=await current.snapshot({source,onProgress:({received,total})=>{if(active()){camera.progress=total?Math.floor(received/total*100):0;render();}}});
+    if(!active())return;
+    const canvas=$('camera-canvas');canvas.width=frame.width;canvas.height=frame.height;
+    const context=canvas.getContext('2d');if(!context)throw Error('浏览器无法绘制画面');
+    const pixels=context.createImageData(frame.width,frame.height);pixels.data.set(frame.rgba);context.putImageData(pixels,0,0);
+    camera.frame={...frame,source,session:sessionRevision,hp_boot:diagnostics.boot};camera.match=diagnostics.matchFrame(camera.frame);camera.receivedAt=now();
+  }catch(e){if(active())camera.error=e.message;}
+  finally{if(active()){camera.busy=false;lastPoll=now();void sendStatus();render();}}
+}
+$('meaning-palm').oninput=e=>{draft.open_palm=e.target.value;editDirty=true;render();};
+$('meaning-v').oninput=e=>{draft.v_sign=e.target.value;editDirty=true;render();};
+$('serial-connect').onclick=()=>connect();$('disconnect').onclick=()=>disconnect();
+$('save-bindings').onclick=()=>saveBindings();$('read-bindings').onclick=()=>readDictionary();
 $('camera-capture').onclick=()=>captureCamera();
-$('camera-auto').onclick=()=>toggleCameraAuto();
-document.addEventListener?.('visibilitychange',()=>{
-  if (document.hidden) {camera.auto=false;render();}
-});
-setInterval(()=>{
-  const now=performance.now();
-  if (initialProbe) {
-    if (now>=initialProbe.until) {
-      initialProbe=null;
-      if (requests.pending?.verb==='get') requests.pending=null;
-      verifiedAt=-Infinity; lastPoll=now;
-      notice('20 秒内未收到设备回执。USB 已打开，请检查供电与固件后刷新。',true);
-    } else if (now>=initialProbe.nextAt && (!requests.pending || requests.pending.verb==='get')) {
-      requests.pending=null; initialProbe.nextAt=now+2000;
-      void send('get');
-    }
-  } else {
-    if(requests.expire(now)) {
-      verifiedAt=-Infinity; lastPoll=now;
-      notice('10 秒内未收到匹配回执，执行结果未知。请检查设备后刷新。',true);
-    }
-    if(transport && !requests.pending && !camera.busy && now-lastPoll>=8000) {lastPoll=now;void send('get');}
+$('hand-export').onclick=()=>exportHandDiagnostics();
+$('scan-next').onclick=()=>startNext();
+$('refresh').onclick=()=>{if(!transport||saving||dictLoading||camera.busy)return;void sendStatus();if(live())void readDictionary();};
+$('workbench-font').onclick=()=>{
+  const large=document.body.classList.toggle('large-text');
+  $('workbench-font').setAttribute('aria-pressed',String(large));
+};
+document.addEventListener('click',navigatePanel);
+window.addEventListener('pagehide',suspendPage);
+window.addEventListener('pageshow',resumePage);
+function poll(){
+  if(!pageActive)return;
+  const at=now();
+  if(dictPending&&at-dictPending.at>=10000){cancelDictionary('10 秒内未收到词典回执。请检查设备固件是否支持，写入不自动重试。');}
+  if(probe){
+    if(at>=probe.until){probe=null;requests.pending=null;verifiedAt=-Infinity;notice('20 秒内未收到设备回执，请检查供电与固件后重新读取。',true);}
+    else if(at>=probe.nextAt){requests.pending=null;probe.nextAt=at+2000;void sendStatus();}
+  }else{
+    if(requests.expire(at)){verifiedAt=-Infinity;notice('设备状态回执超时，请检查连接。',true);}
+    if(transport&&!requests.pending&&!dictPending&&!camera.busy&&at-lastPoll>=8000){lastPoll=at;void sendStatus();}
+    if(dictionary?.scan_supported===true&&!camera.busy&&at-lastDictionaryPoll>=2000)void readDictionary(true);
   }
-  if (camera.auto && !camera.busy && now>=camera.nextAt && !document.hidden) void captureCamera();
   render();
-},250);
-updateDraft(); render();
-if (window.ReactNativeWebView || window.__wxjs_environment==='miniprogram' || /MicroMessenger/i.test(navigator.userAgent)) void connect('cloud');
+}
+function startPolling(){if(pollTimer===null)pollTimer=setInterval(poll,250);}
+startPolling();
+render();

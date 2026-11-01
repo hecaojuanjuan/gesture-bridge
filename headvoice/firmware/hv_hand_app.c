@@ -23,6 +23,13 @@
 #ifndef HV_HAND_NATIVE_CLASSIFIER
 #define HV_HAND_NATIVE_CLASSIFIER 0
 #endif
+#ifndef HV_HAND_SINGLE_SHOT
+#if HV_HAND_NATIVE_CLASSIFIER && defined(HV_GESTURE_AGENT_CONFIG_HEADER)
+#define HV_HAND_SINGLE_SHOT 1
+#else
+#define HV_HAND_SINGLE_SHOT 0
+#endif
+#endif
 #if HV_HAND_NATIVE_CLASSIFIER
 #include "hv_hand_native_classifier.h"
 #ifndef HV_HAND_NATIVE_PARTITION
@@ -65,6 +72,12 @@ static portMUX_TYPE s_guard = portMUX_INITIALIZER_UNLOCKED;
 static unsigned s_epoch;
 static atomic_uint s_captured, s_dropped;
 static bool s_classifierReady;
+static struct {
+  bool armed, dispatching;
+  uint32_t generation, palm_count, v_count;
+  uint64_t armed_after_ms;
+  const char *last_gesture;
+} s_scan = {.armed = true, .generation = 1, .last_gesture = "none"};
 #if !HV_HAND_NATIVE_CLASSIFIER
 static uint8_t *s_gray;
 static float *s_classifierWork;
@@ -80,11 +93,37 @@ static struct {
 
 typedef struct {
   hv_hand_gate_t gate;
-  unsigned epoch, sequence, palmCount, fistCount, vCount;
+  unsigned epoch, sequence, palmCount, fistCount, vCount, scanGeneration;
   uint64_t lastMetrics;
 } hand_inference_state_t;
 
 static uint64_t now_ms(void) { return (uint64_t)(esp_timer_get_time() / 1000); }
+
+void headvoice_scan_status(headvoice_scan_status_t *out)
+{
+  if (!out) return;
+  portENTER_CRITICAL(&s_guard);
+  *out = (headvoice_scan_status_t){.supported = HV_HAND_SINGLE_SHOT,
+    .armed = HV_HAND_SINGLE_SHOT && s_scan.armed, .generation = s_scan.generation,
+    .palm_count = s_scan.palm_count, .v_count = s_scan.v_count,
+    .last_gesture = s_scan.last_gesture};
+  portEXIT_CRITICAL(&s_guard);
+}
+
+bool headvoice_scan_arm(void)
+{
+  portENTER_CRITICAL(&s_guard);
+  bool ok = HV_HAND_SINGLE_SHOT && !s_scan.dispatching;
+  if (ok && !s_scan.armed) {
+    ++s_scan.generation;
+    if (!s_scan.generation) ++s_scan.generation;
+    s_scan.armed_after_ms = now_ms();
+    s_scan.armed = true;
+    s_feedback.valid = false;
+  }
+  portEXIT_CRITICAL(&s_guard);
+  return ok;
+}
 
 static unsigned stream_epoch(bool invalid)
 {
@@ -268,6 +307,16 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
     }
     uint8_t *rgb = NULL;
     uint16_t width = 0, height = 0;
+    unsigned scanGeneration;
+    bool scanArmed;
+    portENTER_CRITICAL(&s_guard);
+    scanGeneration = s_scan.generation;
+    scanArmed = !HV_HAND_SINGLE_SHOT || (s_scan.armed && captured >= s_scan.armed_after_ms);
+    portEXIT_CRITICAL(&s_guard);
+    if (HV_HAND_SINGLE_SHOT && state->scanGeneration != scanGeneration) {
+      hv_hand_gate_init(&state->gate);
+      state->scanGeneration = scanGeneration;
+    }
 #if HV_ROTATE_CW90
     esp_err_t ret = yolo11_pose_uyvy_to_rgb888_cw90(
 #else
@@ -280,6 +329,11 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
     uint64_t detectStarted = now_ms();
     if (ret == ESP_OK) {
       hv_camera_preview_offer_model_input(rgb, width, height, captured);
+    }
+    /* The camera remains available for explicit inputjpeg requests. A
+     * completed one-shot never calls either model again until explicit arm. */
+    if (!scanArmed) { vTaskDelay(pdMS_TO_TICKS(50)); return; }
+    if (ret == ESP_OK) {
       ret = hv_hand_detect_analyze_rgb888(rgb, width, height, &hand);
     }
     uint32_t detectMs = (uint32_t)(now_ms() - detectStarted);
@@ -409,16 +463,33 @@ static void process_frame(hand_frame_t *frame, hand_inference_state_t *state)
     bool confirmed = classified && state->gate.visible == state->gate.latched &&
                      is_target(state->gate.visible);
     if (event != HV_HAND_GATE_EVENT_NONE) {
-      hv_gesture_agent_submit(event, captured);
+      if (HV_HAND_SINGLE_SHOT) {
+        portENTER_CRITICAL(&s_guard);
+        bool owns_scan = s_scan.armed && s_scan.generation == scanGeneration;
+        if (owns_scan) {
+          s_scan.armed = false;
+          s_scan.dispatching = true;
+          s_scan.last_gesture = hv_hand_gate_kind_name(state->gate.latched);
+        }
+        portEXIT_CRITICAL(&s_guard);
+        if (!owns_scan) return;
+      }
       if (event == HV_HAND_GATE_EVENT_OPEN_PALM) ++state->palmCount;
       else if (event == HV_HAND_GATE_EVENT_CLOSED_FIST) ++state->fistCount;
       else if (event == HV_HAND_GATE_EVENT_V_SIGN) ++state->vCount;
+      portENTER_CRITICAL(&s_guard);
+      s_scan.palm_count = state->palmCount; s_scan.v_count = state->vCount;
+      portEXIT_CRITICAL(&s_guard);
+      hv_gesture_agent_submit(event, captured);
+      portENTER_CRITICAL(&s_guard); s_scan.dispatching = false; portEXIT_CRITICAL(&s_guard);
       printf("HG {\"v\":1,\"event\":\"gesture\",\"gesture\":\"%s\","
              "\"captured_ms\":%llu,\"at_ms\":%llu,\"epoch\":%u,"
+             "\"scan_supported\":%s,\"scan_armed\":false,\"scan_generation\":%u,"
              HAND_CLASSIFIER_JSON HAND_SECOND_COUNT_JSON
              "\"classifier_ready\":true,\"palm_count\":%u}\n",
              hv_hand_gate_kind_name(state->gate.latched), (unsigned long long)captured,
-             (unsigned long long)now, epoch, second_count(state), state->palmCount);
+             (unsigned long long)now, epoch, HV_HAND_SINGLE_SHOT ? "true" : "false",
+             scanGeneration, second_count(state), state->palmCount);
     }
     /* Keep detector fields unchanged for same-frame JPEG sample collection.
      * gesture/scores are raw classifier output; only the gesture event denotes

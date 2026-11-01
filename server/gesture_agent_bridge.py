@@ -7,6 +7,7 @@ physical-device routing remains a deployment acceptance test.
 import argparse
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import re
@@ -189,11 +190,29 @@ def handler_for(bridge):
     return Handler
 
 
+def create_server(bridge, bind="127.0.0.1", port=8787, allow_insecure_local_http=False):
+    """HTTP is loopback-only unless local IPv4 testing is explicitly enabled."""
+    if bind == "localhost":
+        bind = "127.0.0.1"
+    try:
+        address = ipaddress.IPv4Address(bind)
+    except ipaddress.AddressValueError:
+        raise ValueError("HTTP bridge bind must be a literal local IPv4 address") from None
+    local_networks = (ipaddress.ip_network("10.0.0.0/8"), ipaddress.ip_network("172.16.0.0/12"),
+                      ipaddress.ip_network("192.168.0.0/16"))
+    if not address.is_loopback and not (allow_insecure_local_http and
+                                        any(address in network for network in local_networks)):
+        raise ValueError("Non-loopback HTTP requires --allow-insecure-local-http and an RFC1918 bind address")
+    return ThreadingHTTPServer((str(address), port), handler_for(bridge))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True)
     parser.add_argument("--bind", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8787)
+    parser.add_argument("--allow-insecure-local-http", action="store_true",
+                        help="Allow plaintext HTTP on one explicit RFC1918 IPv4 address for LAN testing")
     args = parser.parse_args()
     with open(args.config, encoding="utf-8") as file:
         config = json.load(file)
@@ -206,8 +225,8 @@ def main():
             raise ValueError("Device pid/did must identify the physical device, not the agent draft")
         devices.append(Device(token, item["pid"], item["did"]))
     chat = LjydChat(os.environ.get("LJYD_MERCHANT_TOKEN", ""), config.get("environment", "prod"))
-    server = ThreadingHTTPServer((args.bind, args.port), handler_for(Bridge(devices, chat)))
-    print(f"Gesture bridge listening on {args.bind}:{args.port}; use an HTTPS reverse proxy", flush=True)
+    server = create_server(Bridge(devices, chat), args.bind, args.port, args.allow_insecure_local_http)
+    print(f"Gesture bridge listening on http://{args.bind}:{args.port}", flush=True)
     server.serve_forever()
 
 

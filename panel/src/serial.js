@@ -2,8 +2,9 @@ import {CameraSnapshotParser} from './camera.mjs';
 import {JpegSnapshotParser,decodeJpegFrame} from './jpeg.mjs';
 import {parsePose} from './protocol.mjs';
 import {parseHand} from './hand.mjs';
+import {parseDictionary,parseAgent} from './agent.mjs';
 
-export async function connectSerial(onReport, onLost, {onPose,onHand,onReset,decodeJpeg=decodeJpegFrame}={}) {
+export async function connectSerial(onReport, onLost, {onPose,onHand,onDictionary,onAgent,onReset,decodeJpeg=decodeJpegFrame}={}) {
   if (!navigator.serial) throw Error('此浏览器不支持串口，请使用桌面版 Chrome。');
   const port = await navigator.serial.requestPort();
   await port.open({baudRate: 115200, bufferSize: 8192});
@@ -78,6 +79,16 @@ export async function connectSerial(onReport, onLost, {onPose,onHand,onReset,dec
             const hand=parseHand(line.slice(handStart+3).trim());
             if(hand) onHand(hand);
           }
+          const dictionaryStart=line.indexOf('HGD {');
+          if(dictionaryStart>=0 && onDictionary) {
+            const value=parseDictionary(line.slice(dictionaryStart+4).trim());
+            if(value) onDictionary(value);
+          }
+          const agentStart=line.indexOf('HG_AGENT {');
+          if(agentStart>=0 && onAgent) {
+            const value=parseAgent(line.slice(agentStart+9).trim());
+            if(value) onAgent(value);
+          }
           const cameraStart=snapshot ? line.indexOf(snapshot.protocol+' ') : -1;
           if (cameraStart>=0 && snapshot?.accepting) {
             const current=snapshot;
@@ -107,6 +118,11 @@ export async function connectSerial(onReport, onLost, {onPose,onHand,onReset,dec
     name: 'USB 串口',
     send(wire) {
       return write(`hv_panel ${wire}\r\n`);
+    },
+    dictionary(wire) {
+      if(typeof wire!=='string' || !/^[1-9][0-9]{0,8} (?:get|arm|set (?:open_palm|v_sign) (?:-|(?:[0-9a-fA-F]{2}){1,180}))$/.test(wire))
+        return Promise.reject(Error('无效词典指令'));
+      return write(`hg_dict ${wire}\r\n`);
     },
     snapshot({onProgress,source='camera'}={}) {
       if (closing || disconnected) return Promise.reject(Error('串口已断开'));

@@ -33,8 +33,13 @@ static bool probe_aborted(void)
 static void probe_run(const char *marker)
 {
   /* begin() is the only session reservation. A busy voice/gesture is untouched. */
-  int ret = probe_aborted() ? -QM_EINTR : hv_gesture_agent_port_begin();
-  if (ret != QM_EOK) { probe_report(marker, "unavailable", ret); return; }
+  const char *begin_detail = "cancelled";
+  int ret = probe_aborted() ? -QM_EINTR : hv_gesture_agent_port_begin_detail(&begin_detail);
+  if (ret != QM_EOK) {
+    printf("HG_PROBE {\"v\":1,\"marker\":\"%s\",\"state\":\"unavailable\","
+           "\"code\":%d,\"detail\":\"%s\"}\n", marker, ret, begin_detail);
+    return;
+  }
   probe_report(marker, "connecting", 0);
   uint64_t deadline = probe_now() + 15000, quiet_since = 0;
   for (;;) {
@@ -100,9 +105,15 @@ static bool probe_marker_valid(const char *marker)
 static void probe_command(char *buffer, int size, int argc, char **argv)
 {
   (void)buffer; (void)size;
+  if (argc == 2 && !strcmp(argv[1], "status")) {
+    const char *detail = NULL;
+    int ret = hv_gesture_agent_port_status(&detail);
+    qm_cli_printf("HG_AGENT_STATUS {\"v\":1,\"code\":%d,\"detail\":\"%s\"}\r\n", ret, detail);
+    return;
+  }
   if (argc != 3 || !probe_marker_valid(argv[2]) ||
       (strcmp(argv[1], "probe") && strcmp(argv[1], "abort"))) {
-    qm_cli_printf("hg_agent probe|abort GB<8 uppercase hex digits>\r\n");
+    qm_cli_printf("hg_agent status | probe|abort GB<8 uppercase hex digits>\r\n");
     return;
   }
   const char *marker = argv[2];
@@ -132,7 +143,7 @@ esp_err_t hv_gesture_probe_init(void)
 {
   if (s_probe_registered) return ESP_OK;
   static const struct qm_cli_command command = {
-    .name = "hg_agent", .help = "probe|abort GB<8 hex>: owned text-response diagnostics",
+    .name = "hg_agent", .help = "status | probe|abort GB<8 hex>: session diagnostics",
     .function = probe_command,
   };
   int ret = qm_cli_register_command(&command);
